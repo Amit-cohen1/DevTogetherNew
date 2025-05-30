@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+DevTogether Project Cursor Rules
+Project Overview
+DevTogether is a React TypeScript web platform connecting early-career developers with nonprofit organizations through real-world, skill-building projects. It features role-based authentication, project management, real-time messaging, and application workflows.
+Tech Stack
+
+Frontend: React 18+ with TypeScript, Tailwind CSS
+Backend: Supabase 
+Routing: React Router v7
+State Management: React Context API
+Forms: React Hook Form
+Icons: Lucide React
+
+Build Tool: Create React App

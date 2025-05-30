@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Custom global styles */
+@layer base {
+    body {
+        @apply antialiased text-neutral-900 bg-neutral-50;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-semibold text-neutral-900;
+    }
+
+    /* Focus styles for accessibility */
+    *:focus {
+        @apply outline-none;
+    }
+
+    *:focus-visible {
+        @apply ring-2 ring-primary-500 ring-offset-2;
+    }
+}
+
+/* Custom component classes */
+@layer components {
+
+    /* Buttons */
+    .btn-primary {
+        @apply px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors duration-200 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .btn-secondary {
+        @apply px-4 py-2 bg-secondary-600 text-white font-medium rounded-lg hover:bg-secondary-700 transition-colors duration-200 focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .btn-outline {
+        @apply px-4 py-2 border-2 border-primary-600 text-primary-600 font-medium rounded-lg hover:bg-primary-50 transition-colors duration-200 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .btn-ghost {
+        @apply px-4 py-2 text-neutral-700 font-medium rounded-lg hover:bg-neutral-100 transition-colors duration-200 focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    /* Cards */
+    .card {
+        @apply bg-white rounded-xl shadow-soft p-6 border border-neutral-200;
+    }
+
+    .card-hover {
+        @apply card hover:shadow-lg transition-shadow duration-200;
+    }
+
+    /* Form elements */
+    .input {
+        @apply w-full px-3 py-2 border border-neutral-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 transition-colors duration-200;
+    }
+
+    .textarea {
+        @apply w-full px-3 py-2 border border-neutral-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 transition-colors duration-200 resize-none;
+    }
+
+    .select {
+        @apply w-full px-3 py-2 border border-neutral-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 transition-colors duration-200 bg-white;
+    }
+
+    .label {
+        @apply block text-sm font-medium text-neutral-700 mb-1;
+    }
+
+    .error-text {
+        @apply text-sm text-error-500 mt-1;
+    }
+
+    /* Badges */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+
+    .badge-primary {
+        @apply badge bg-primary-100 text-primary-800;
+    }
+
+    .badge-secondary {
+        @apply badge bg-secondary-100 text-secondary-800;
+    }
+
+    .badge-success {
+        @apply badge bg-success-50 text-success-700;
+    }
+
+    .badge-warning {
+        @apply badge bg-warning-50 text-warning-700;
+    }
+
+    .badge-error {
+        @apply badge bg-error-50 text-error-700;
+    }
+
+    /* Container */
+    .container-custom {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    /* Section spacing */
+    .section {
+        @apply py-12 md:py-16 lg:py-20;
+    }
+
+    /* Gradient text */
+    .gradient-text {
+        @apply bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent;
+    }
+}
+
+/* Custom utilities */
+@layer utilities {
+
+    /* Hide scrollbar */
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Text truncation */
+    .truncate-2-lines {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .truncate-3-lines {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Animation delays */
+    .animation-delay-100 {
+        animation-delay: 100ms;
+    }
+
+    .animation-delay-200 {
+        animation-delay: 200ms;
+    }
+
+    .animation-delay-300 {
+        animation-delay: 300ms;
+    }
+}
