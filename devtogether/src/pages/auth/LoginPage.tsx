@@ -71,6 +71,14 @@ export const LoginPage: React.FC = () => {
             <div className="max-w-md w-full space-y-8">
                 {/* Header */}
                 <div className="text-center">
+                    <Link to="/" className="flex items-center justify-center space-x-3 mb-6">
+                        <img
+                            src="/images/devtogether-icon.svg"
+                            alt="DevTogether"
+                            className="w-12 h-12"
+                        />
+                        <span className="text-2xl font-bold text-gray-900">DevTogether</span>
+                    </Link>
                     <h2 className="mt-6 text-3xl font-bold text-gray-900">
                         Welcome back
                     </h2>

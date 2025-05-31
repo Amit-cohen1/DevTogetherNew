@@ -62,10 +62,12 @@ export const Footer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
                     {/* Brand Section */}
                     <div className="lg:col-span-1">
-                        <div className="flex items-center space-x-2 mb-4">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">DT</span>
-                            </div>
+                        <div className="flex items-center space-x-3 mb-4">
+                            <img
+                                src="/images/devtogether-icon.svg"
+                                alt="DevTogether"
+                                className="w-10 h-10 brightness-0 invert"
+                            />
                             <span className="text-xl font-bold">DevTogether</span>
                         </div>
                         <p className="text-gray-300 text-sm leading-relaxed mb-6">

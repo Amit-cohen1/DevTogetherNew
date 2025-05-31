@@ -29,28 +29,8 @@ import ProjectWorkspace from './components/workspace/ProjectWorkspace'
 import ApplicationsDashboard from './pages/applications/ApplicationsDashboard'
 import MyApplications from './pages/applications/MyApplications'
 
-// Temporary Dashboard Components (we'll build these in Phase 3)
-const DeveloperDashboard = () => (
-  <Layout>
-    <div className="bg-gray-50 flex items-center justify-center min-h-[60vh]">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Developer Dashboard</h1>
-        <p className="text-gray-600">Welcome to your dashboard! This will be built in Phase 3.</p>
-      </div>
-    </div>
-  </Layout>
-)
-
-const OrganizationDashboard = () => (
-  <Layout>
-    <div className="bg-gray-50 flex items-center justify-center min-h-[60vh]">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Organization Dashboard</h1>
-        <p className="text-gray-600">Welcome to your dashboard! This will be built in Phase 3.</p>
-      </div>
-    </div>
-  </Layout>
-)
+// Dashboard
+import DashboardPage from './pages/DashboardPage'
 
 const HomePage = () => (
   <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -143,6 +123,16 @@ function App() {
               }
             />
 
+            {/* Dashboard Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Profile Routes */}
             <Route
               path="/profile"
@@ -215,25 +205,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MyApplications />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Dashboard Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute requiredRole="developer">
-                  <DeveloperDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/organization/dashboard"
-              element={
-                <ProtectedRoute requiredRole="organization">
-                  <OrganizationDashboard />
                 </ProtectedRoute>
               }
             />

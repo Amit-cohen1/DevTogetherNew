@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- DevTogether Icon - Compact Version -->
+  
+  <!-- Code brackets and arrows -->
+  <g stroke="#2563eb" stroke-width="20" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left bracket -->
+    <path d="M80 80 L40 150 L40 250 L80 320"/>
+    
+    <!-- Right bracket -->
+    <path d="M320 80 L360 150 L360 250 L320 320"/>
+    
+    <!-- Slash -->
+    <path d="M240 90 L160 310"/>
+    
+    <!-- Left arrow -->
+    <path d="M180 140 L130 200 L180 260"/>
+    
+    <!-- Right arrow -->
+    <path d="M220 140 L270 200 L220 260"/>
+  </g>
+</svg> 

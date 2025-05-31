@@ -93,6 +93,14 @@ export const RegisterPage: React.FC = () => {
             <div className="max-w-md w-full space-y-8">
                 {/* Header */}
                 <div className="text-center">
+                    <Link to="/" className="flex items-center justify-center space-x-3 mb-6">
+                        <img
+                            src="/images/devtogether-icon.svg"
+                            alt="DevTogether"
+                            className="w-12 h-12"
+                        />
+                        <span className="text-2xl font-bold text-gray-900">DevTogether</span>
+                    </Link>
                     <h2 className="mt-6 text-3xl font-bold text-gray-900">
                         Create your account
                     </h2>
@@ -174,8 +182,8 @@ export const RegisterPage: React.FC = () => {
                                 type="button"
                                 onClick={() => handleRoleChange('developer')}
                                 className={`p-4 border-2 rounded-lg text-center transition-colors ${selectedRole === 'developer'
-                                        ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <User className="w-6 h-6 mx-auto mb-2" />
@@ -187,8 +195,8 @@ export const RegisterPage: React.FC = () => {
                                 type="button"
                                 onClick={() => handleRoleChange('organization')}
                                 className={`p-4 border-2 rounded-lg text-center transition-colors ${selectedRole === 'organization'
-                                        ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <Building className="w-6 h-6 mx-auto mb-2" />

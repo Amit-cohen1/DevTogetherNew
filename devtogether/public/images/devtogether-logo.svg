@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <!-- DevTogether Logo - No Background Version -->
+  
+  <!-- Code brackets with clean styling -->
+  <g stroke="#2563eb" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left bracket -->
+    <path d="M150 150 L100 250 L100 350 L150 450"/>
+    
+    <!-- Right bracket -->
+    <path d="M650 150 L700 250 L700 350 L650 450"/>
+    
+    <!-- Slash -->
+    <path d="M450 170 L350 430"/>
+    
+    <!-- Left arrow -->
+    <path d="M300 220 L240 280 L300 340"/>
+    
+    <!-- Right arrow -->
+    <path d="M500 220 L560 280 L500 340"/>
+  </g>
+  
+  <!-- DevTogether text -->
+  <text x="400" y="540" font-family="Arial, sans-serif" font-size="72" font-weight="700" text-anchor="middle" fill="#1f2937">
+    DevTogether
+  </text>
+</svg> 

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- DevTogether Favicon -->
+  <g stroke="#2563eb" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left bracket -->
+    <path d="M8 8 L4 14 L4 18 L8 24"/>
+    
+    <!-- Right bracket -->
+    <path d="M24 8 L28 14 L28 18 L24 24"/>
+    
+    <!-- Slash -->
+    <path d="M19 9 L13 23"/>
+    
+    <!-- Left arrow -->
+    <path d="M14 12 L10 16 L14 20"/>
+    
+    <!-- Right arrow -->
+    <path d="M18 12 L22 16 L18 20"/>
+  </g>
+</svg> 
