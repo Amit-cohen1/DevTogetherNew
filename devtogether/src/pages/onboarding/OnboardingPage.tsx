@@ -1,0 +1,159 @@
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout'
+import { DeveloperProfileStep } from './DeveloperProfileStep'
+import { OrganizationProfileStep } from './OrganizationProfileStep'
+import { WelcomeStep } from './WelcomeStep'
+
+const DEVELOPER_STEPS = [
+    {
+        id: 'welcome',
+        title: 'Welcome',
+        description: 'Getting started'
+    },
+    {
+        id: 'profile',
+        title: 'Profile',
+        description: 'Complete your profile'
+    },
+    {
+        id: 'complete',
+        title: 'Complete',
+        description: 'All set!'
+    }
+]
+
+const ORGANIZATION_STEPS = [
+    {
+        id: 'welcome',
+        title: 'Welcome',
+        description: 'Getting started'
+    },
+    {
+        id: 'profile',
+        title: 'Organization',
+        description: 'Organization details'
+    },
+    {
+        id: 'complete',
+        title: 'Complete',
+        description: 'All set!'
+    }
+]
+
+export const OnboardingPage: React.FC = () => {
+    const [currentStep, setCurrentStep] = useState(1)
+    const { profile, loading, isAuthenticated } = useAuth()
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        // Redirect if not authenticated
+        if (!loading && !isAuthenticated) {
+            navigate('/auth/login')
+            return
+        }
+
+        // If user already has a complete profile, redirect to dashboard
+        if (profile && profile.bio) {
+            const dashboardPath = profile.role === 'developer' ? '/dashboard' : '/organization/dashboard'
+            navigate(dashboardPath)
+        }
+    }, [loading, isAuthenticated, profile, navigate])
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+        )
+    }
+
+    if (!profile) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-lg font-medium text-gray-900">Loading profile...</h2>
+                </div>
+            </div>
+        )
+    }
+
+    const steps = profile.role === 'developer' ? DEVELOPER_STEPS : ORGANIZATION_STEPS
+    const title = profile.role === 'developer'
+        ? 'Welcome to DevTogether!'
+        : 'Welcome to DevTogether!'
+    const subtitle = profile.role === 'developer'
+        ? 'Let\'s set up your developer profile'
+        : 'Let\'s set up your organization profile'
+
+    const handleNext = () => {
+        if (currentStep < steps.length) {
+            setCurrentStep(currentStep + 1)
+        }
+    }
+
+    const handleBack = () => {
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1)
+        }
+    }
+
+    const handleComplete = () => {
+        const dashboardPath = profile.role === 'developer' ? '/dashboard' : '/organization/dashboard'
+        navigate(dashboardPath)
+    }
+
+    const renderCurrentStep = () => {
+        const stepId = steps[currentStep - 1]?.id
+
+        switch (stepId) {
+            case 'welcome':
+                return (
+                    <WelcomeStep
+                        userRole={profile.role}
+                        onNext={handleNext}
+                    />
+                )
+            case 'profile':
+                if (profile.role === 'developer') {
+                    return (
+                        <DeveloperProfileStep
+                            onNext={handleNext}
+                            onBack={handleBack}
+                        />
+                    )
+                } else {
+                    return (
+                        <OrganizationProfileStep
+                            onNext={handleNext}
+                            onBack={handleBack}
+                        />
+                    )
+                }
+            case 'complete':
+                return (
+                    <WelcomeStep
+                        userRole={profile.role}
+                        isComplete={true}
+                        onNext={handleComplete}
+                    />
+                )
+            default:
+                return null
+        }
+    }
+
+    return (
+        <OnboardingLayout
+            currentStep={currentStep}
+            steps={steps}
+            title={title}
+            subtitle={subtitle}
+        >
+            {renderCurrentStep()}
+        </OnboardingLayout>
+    )
+}
+
+export default OnboardingPage 

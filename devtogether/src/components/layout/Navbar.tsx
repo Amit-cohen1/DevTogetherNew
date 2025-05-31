@@ -1,0 +1,287 @@
+import React, { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { Button } from '../ui/Button'
+import {
+    Menu,
+    X,
+    User,
+    Settings,
+    LogOut,
+    Building,
+    Users,
+    Search,
+    Bell,
+    ChevronDown,
+    Home,
+    Plus
+} from 'lucide-react'
+
+export const Navbar: React.FC = () => {
+    const { user, profile, signOut, isDeveloper, isOrganization } = useAuth()
+    const navigate = useNavigate()
+    const location = useLocation()
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [userMenuOpen, setUserMenuOpen] = useState(false)
+    const userMenuRef = useRef<HTMLDivElement>(null)
+
+    // Close user menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setUserMenuOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setMobileMenuOpen(false)
+    }, [location.pathname])
+
+    const handleSignOut = async () => {
+        setUserMenuOpen(false)
+        await signOut()
+        navigate('/')
+    }
+
+    const displayName = profile?.role === 'developer'
+        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+        : profile?.organization_name
+
+    const isActive = (path: string) => {
+        return location.pathname === path || location.pathname.startsWith(path + '/')
+    }
+
+    // Clean navigation structure for developers
+    const developerNavItems = [
+        {
+            label: 'Browse Projects',
+            path: '/projects',
+            icon: Search,
+        },
+        {
+            label: 'My Applications',
+            path: '/my-applications',
+            icon: User,
+        }
+    ]
+
+    // Clean navigation structure for organizations  
+    const organizationNavItems = [
+        {
+            label: 'Browse Projects',
+            path: '/projects',
+            icon: Search,
+        },
+        {
+            label: 'My Projects',
+            path: '/organization/projects',
+            icon: Building,
+        },
+        {
+            label: 'Applications',
+            path: '/applications',
+            icon: Users,
+        }
+    ]
+
+    const navItems = isDeveloper ? developerNavItems : organizationNavItems
+
+    if (!user || !profile) {
+        return null // Don't show navbar if not authenticated
+    }
+
+    return (
+        <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16">
+                    {/* Left side - Logo and Navigation */}
+                    <div className="flex items-center space-x-8">
+                        {/* Logo */}
+                        <Link to="/dashboard" className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-sm">DT</span>
+                            </div>
+                            <span className="text-xl font-bold text-gray-900">DevTogether</span>
+                        </Link>
+
+                        {/* Desktop Navigation */}
+                        <div className="hidden md:flex space-x-1">
+                            <Link
+                                to="/dashboard"
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${isActive('/dashboard')
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <Home className="w-4 h-4" />
+                                Dashboard
+                            </Link>
+
+                            {navItems.map((item) => {
+                                const IconComponent = item.icon
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${isActive(item.path)
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <IconComponent className="w-4 h-4" />
+                                        {item.label}
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Right side - Notifications and User Menu */}
+                    <div className="flex items-center space-x-4">
+                        {/* Create Project Button for Organizations */}
+                        {isOrganization && (
+                            <Link to="/projects/create">
+                                <Button size="sm" className="flex items-center gap-2">
+                                    <Plus className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Create Project</span>
+                                </Button>
+                            </Link>
+                        )}
+
+                        {/* Notifications */}
+                        <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg flex items-center justify-center">
+                            <Bell className="w-5 h-5" />
+                            {/* Notification badge */}
+                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+
+                        {/* User Menu */}
+                        <div className="relative" ref={userMenuRef}>
+                            <button
+                                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+                                    {profile.avatar_url ? (
+                                        <img
+                                            src={profile.avatar_url}
+                                            alt={displayName || 'Profile'}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                            {profile.role === 'developer' ? (
+                                                <User className="w-4 h-4 text-gray-400" />
+                                            ) : (
+                                                <Building className="w-4 h-4 text-gray-400" />
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="hidden md:block text-left">
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {displayName || 'User'}
+                                    </p>
+                                    <p className="text-xs text-gray-500 capitalize">
+                                        {profile.role}
+                                    </p>
+                                </div>
+                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                            </button>
+
+                            {/* User Dropdown Menu */}
+                            {userMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                                    <div className="px-4 py-2 border-b border-gray-100">
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {displayName || 'User'}
+                                        </p>
+                                        <p className="text-xs text-gray-500">{profile.email}</p>
+                                    </div>
+
+                                    <Link
+                                        to="/profile"
+                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        <User className="w-4 h-4" />
+                                        View Profile
+                                    </Link>
+
+                                    <Link
+                                        to="/settings"
+                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        <Settings className="w-4 h-4" />
+                                        Settings
+                                    </Link>
+
+                                    <button
+                                        onClick={handleSignOut}
+                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Sign Out
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mobile menu button */}
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="md:hidden p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+                        >
+                            {mobileMenuOpen ? (
+                                <X className="w-6 h-6" />
+                            ) : (
+                                <Menu className="w-6 h-6" />
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Navigation Menu */}
+            {mobileMenuOpen && (
+                <div className="md:hidden border-t border-gray-200 bg-white">
+                    <div className="px-4 py-3 space-y-1">
+                        <Link
+                            to="/dashboard"
+                            className={`flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/dashboard')
+                                ? 'text-blue-600 bg-blue-50'
+                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                }`}
+                        >
+                            <Home className="w-5 h-5" />
+                            Dashboard
+                        </Link>
+
+                        {navItems.map((item) => {
+                            const IconComponent = item.icon
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive(item.path)
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <IconComponent className="w-5 h-5" />
+                                    {item.label}
+                                </Link>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+        </nav>
+    )
+} 
