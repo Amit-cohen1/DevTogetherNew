@@ -29,8 +29,17 @@ export const AuthCallbackPage: React.FC = () => {
                     return
                 }
 
-                // If user is authenticated, redirect to appropriate dashboard
+                // If user is authenticated, determine where to redirect
                 if (user && profile) {
+                    // Check if this is a new OAuth user without complete profile setup
+                    // New OAuth users will have the default 'developer' role but no bio
+                    if (!profile.bio && !profile.first_name && !profile.last_name && !profile.organization_name) {
+                        // This is likely a new OAuth user - redirect to role selection
+                        navigate('/auth/select-role', { replace: true })
+                        return
+                    }
+
+                    // Existing user with complete profile - redirect to dashboard
                     const redirectTo = profile.role === 'developer'
                         ? '/dashboard'
                         : '/organization/dashboard'

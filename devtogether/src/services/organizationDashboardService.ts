@@ -151,7 +151,7 @@ class OrganizationDashboardService {
                         status,
                         created_at,
                         developer_id,
-                        users!applications_developer_id_fkey (
+                        profiles!applications_developer_id_fkey (
                             id,
                             first_name,
                             last_name,
@@ -186,12 +186,12 @@ class OrganizationDashboardService {
                         created_at: app.created_at,
                         updated_at: app.updated_at || app.created_at,
                         developer: {
-                            id: app.users.id,
-                            first_name: app.users.first_name,
-                            last_name: app.users.last_name,
-                            email: app.users.email,
-                            avatar_url: app.users.avatar_url,
-                            skills: app.users.skills
+                            id: app.profiles.id,
+                            first_name: app.profiles.first_name,
+                            last_name: app.profiles.last_name,
+                            email: app.profiles.email,
+                            avatar_url: app.profiles.avatar_url,
+                            skills: app.profiles.skills
                         },
                         project: {
                             id: project.id,
@@ -243,7 +243,7 @@ class OrganizationDashboardService {
                     status,
                     created_at,
                     updated_at,
-                    developer:users!applications_developer_id_fkey (
+                    developer:profiles!applications_developer_id_fkey (
                         id,
                         first_name,
                         last_name,
@@ -308,7 +308,7 @@ class OrganizationDashboardService {
                     developer_id,
                     project_id,
                     created_at,
-                    developer:users!applications_developer_id_fkey (
+                    developer:profiles!applications_developer_id_fkey (
                         id,
                         first_name,
                         last_name,

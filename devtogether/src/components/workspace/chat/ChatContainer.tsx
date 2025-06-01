@@ -65,7 +65,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
         } finally {
             setLoadingMore(false);
         }
-    }, [projectId, user]);
+    }, [projectId, user?.id]);
 
     // Handle new messages
     const handleNewMessage = useCallback((message: MessageWithUser) => {
@@ -126,7 +126,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
                 error: 'Failed to send message'
             }));
         }
-    }, [projectId, user]);
+    }, [projectId, user?.id]);
 
     // Handle typing
     const handleTyping = useCallback(async (isTyping: boolean) => {
@@ -134,7 +134,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
 
         const userName = getUserDisplayName(user.id);
         await messageService.sendTypingIndicator(projectId, user.id, userName, isTyping);
-    }, [projectId, user, getUserDisplayName]);
+    }, [projectId, user?.id, getUserDisplayName]);
 
     // Edit message
     const handleEditMessage = useCallback(async (messageId: string, newContent: string) => {
@@ -150,7 +150,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
                 error: 'Failed to edit message'
             }));
         }
-    }, [user, loadMessages]);
+    }, [user?.id, loadMessages]);
 
     // Delete message
     const handleDeleteMessage = useCallback(async (messageId: string) => {
@@ -168,7 +168,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
                 error: 'Failed to delete message'
             }));
         }
-    }, [user]);
+    }, [user?.id]);
 
     // Load more messages
     const handleLoadMore = useCallback(() => {
@@ -241,7 +241,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
             console.log('Cleaning up chat subscriptions');
             messageService.unsubscribeFromMessages(projectId);
         };
-    }, [projectId, user, loadMessages, handleNewMessage, handleTypingUpdate, handleOnlineUsers]);
+    }, [projectId, user?.id]);
 
     // Clear error after 5 seconds
     useEffect(() => {

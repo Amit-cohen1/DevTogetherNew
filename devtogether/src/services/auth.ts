@@ -220,7 +220,7 @@ export class AuthService {
     static async getUserProfile(userId: string): Promise<{ profile: User | null; error: Error | null }> {
         try {
             const { data, error } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('*')
                 .eq('id', userId)
                 .maybeSingle()
@@ -247,26 +247,48 @@ export class AuthService {
                     last_name: authUser.user.user_metadata?.last_name || null,
                     organization_name: authUser.user.user_metadata?.organization_name || null,
                     bio: null,
-                    skills: null,
+                    skills: [],
                     location: null,
                     website: null,
                     linkedin: null,
                     github: null,
                     portfolio: null,
-                    avatar_url: null
+                    avatar_url: null,
+                    is_public: true,
+                    share_token: null,
+                    profile_views: 0
                 }
 
-                const { data: createdProfile, error: createError } = await supabase
-                    .from('users')
-                    .insert([newProfile])
-                    .select()
-                    .single()
+                try {
+                    const { data: createdProfile, error: createError } = await supabase
+                        .from('profiles')
+                        .insert([newProfile])
+                        .select()
+                        .single()
 
-                if (createError) {
-                    return { profile: null, error: new Error(`Failed to create profile: ${createError.message}`) }
+                    if (createError) {
+                        // If RLS error, provide helpful message
+                        if (createError.message.includes('row-level security policy')) {
+                            return {
+                                profile: null,
+                                error: new Error(
+                                    'Profile creation blocked by security policy. Please run the migration script in Supabase SQL Editor. See: migrate_existing_users.sql'
+                                )
+                            }
+                        }
+                        return { profile: null, error: new Error(`Failed to create profile: ${createError.message}`) }
+                    }
+
+                    return { profile: createdProfile, error: null }
+                } catch (insertError) {
+                    // If INSERT fails due to RLS, provide helpful guidance
+                    return {
+                        profile: null,
+                        error: new Error(
+                            'Cannot create profile due to database security policies. Please run the migration script: migrate_existing_users.sql'
+                        )
+                    }
                 }
-
-                return { profile: createdProfile, error: null }
             }
 
             return { profile: data, error: null }
@@ -287,7 +309,7 @@ export class AuthService {
     ): Promise<{ profile: User | null; error: Error | null }> {
         try {
             const { data, error } = await supabase
-                .from('users')
+                .from('profiles')
                 .update({ ...updates, updated_at: new Date().toISOString() })
                 .eq('id', userId)
                 .select()

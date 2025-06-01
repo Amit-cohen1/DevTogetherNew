@@ -38,7 +38,7 @@ class MessageService {
                 })
                 .select(`
           *,
-          sender:users!sender_id(*)
+          sender:profiles!sender_id(*)
         `)
                 .single();
 
@@ -60,7 +60,7 @@ class MessageService {
                 .from('messages')
                 .select(`
           *,
-          sender:users!sender_id(*)
+          sender:profiles!sender_id(*)
         `)
                 .eq('project_id', projectId)
                 .order('created_at', { ascending: false })
@@ -134,7 +134,7 @@ class MessageService {
                             .from('messages')
                             .select(`
                   *,
-                  sender:users!sender_id(*)
+                  sender:profiles!sender_id(*)
                 `)
                             .eq('id', payload.new.id)
                             .single();

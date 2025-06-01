@@ -42,7 +42,7 @@ class WorkspaceService {
 
             // Get organization owner details
             const { data: organizationUser, error: orgError } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('*')
                 .eq('id', project.organization_id)
                 .single();
@@ -56,7 +56,7 @@ class WorkspaceService {
                 .from('applications')
                 .select(`
           *,
-          users!developer_id(*)
+          profiles!developer_id(*)
         `)
                 .eq('project_id', projectId)
                 .eq('status', 'accepted');
@@ -83,8 +83,8 @@ class WorkspaceService {
             if (acceptedApplications) {
                 acceptedApplications.forEach((app: any) => {
                     teamMembers.push({
-                        id: app.users.id,
-                        user: app.users,
+                        id: app.profiles.id,
+                        user: app.profiles,
                         role: 'developer',
                         joinedAt: app.updated_at,
                         status: 'active',

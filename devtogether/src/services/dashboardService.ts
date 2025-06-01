@@ -129,38 +129,41 @@ class DashboardService {
 
     async getActiveProjects(userId: string): Promise<DashboardProject[]> {
         try {
+            // Get user's accepted applications with project details
             const { data, error } = await supabase
                 .from('applications')
                 .select(`
+          id,
           status,
+          developer_id,
+          project_id,
           projects (
             id,
             title,
             description,
+            organization_id,
             technology_stack,
-            difficulty_level,
-            status,
-            created_at,
             deadline,
-            organization_id
+            status,
+            created_at
           )
         `)
                 .eq('developer_id', userId)
-                .eq('status', 'accepted')
-                .order('created_at', { ascending: false });
+                .eq('status', 'accepted');
 
             if (error) throw error;
 
-            // Get enhanced project data with organization and team member details
+            // Process each project to add additional details
             const projectsWithDetails = await Promise.all(
                 (data || []).map(async (app: any) => {
                     const project = app.projects;
+                    if (!project) return null;
 
                     // Get organization details
                     let orgData = null;
                     if (project?.organization_id) {
                         const { data: org } = await supabase
-                            .from('users')
+                            .from('profiles')
                             .select('id, first_name, last_name, organization_name, avatar_url')
                             .eq('id', project.organization_id)
                             .single();
@@ -187,7 +190,7 @@ class DashboardService {
                     const { data: otherMembers } = await supabase
                         .from('applications')
                         .select(`
-                            users!developer_id(id, first_name, last_name, avatar_url)
+                            profiles!developer_id(id, first_name, last_name, avatar_url)
                         `)
                         .eq('project_id', project.id)
                         .eq('status', 'accepted')
@@ -195,11 +198,11 @@ class DashboardService {
 
                     if (otherMembers) {
                         otherMembers.forEach((member: any) => {
-                            if (member.users) {
+                            if (member.profiles) {
                                 teamMembers.push({
-                                    id: member.users.id,
-                                    name: `${member.users.first_name || ''} ${member.users.last_name || ''}`.trim(),
-                                    avatar: member.users.avatar_url,
+                                    id: member.profiles.id,
+                                    name: `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim(),
+                                    avatar: member.profiles.avatar_url,
                                     role: 'developer'
                                 });
                             }
@@ -208,7 +211,7 @@ class DashboardService {
 
                     // Add current user to team members
                     const { data: currentUser } = await supabase
-                        .from('users')
+                        .from('profiles')
                         .select('id, first_name, last_name, avatar_url')
                         .eq('id', userId)
                         .single();
@@ -284,7 +287,7 @@ class DashboardService {
                 (data || []).map(async (app: any) => {
                     if (app.projects?.organization_id) {
                         const { data: orgData } = await supabase
-                            .from('users')
+                            .from('profiles')
                             .select('first_name, last_name, organization_name')
                             .eq('id', app.projects.organization_id)
                             .single();
@@ -382,7 +385,7 @@ class DashboardService {
         try {
             // Get user profile to understand skills (only use fields that exist)
             const { data: profile, error: profileError } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('skills')
                 .eq('id', userId)
                 .single();
@@ -426,7 +429,7 @@ class DashboardService {
                     let orgData = null;
                     if (project.organization_id) {
                         const { data: org } = await supabase
-                            .from('users')
+                            .from('profiles')
                             .select('id, first_name, last_name, organization_name, avatar_url')
                             .eq('id', project.organization_id)
                             .single();
@@ -636,7 +639,7 @@ class DashboardService {
                         id,
                         title,
                         organization_id,
-                        users:users!projects_organization_id_fkey (
+                        users:profiles!projects_organization_id_fkey (
                             organization_name,
                             first_name,
                             last_name
@@ -699,50 +702,104 @@ class DashboardService {
                 }
             });
 
-            // Get recent messages
-            const { data: recentMessages, error: messagesError } = await supabase
+            // Get recent messages - split into two queries to avoid RLS issues
+            const activities_messages: any[] = [];
+
+            // First, get messages sent by the user
+            const { data: sentMessages, error: sentError } = await supabase
                 .from('messages')
                 .select(`
                     id,
                     content,
                     created_at,
                     sender_id,
+                    project_id,
                     projects (
                         id,
                         title
                     ),
-                    sender:users!messages_sender_id_fkey (
+                    sender:profiles!messages_sender_id_fkey (
                         first_name,
                         last_name,
                         organization_name,
                         role
                     )
                 `)
-                .or(`sender_id.eq.${userId},project_id.in.(select project_id from applications where developer_id = '${userId}' and status = 'accepted')`)
+                .eq('sender_id', userId)
                 .order('created_at', { ascending: false })
-                .limit(3);
+                .limit(5);
 
-            if (!messagesError && recentMessages) {
-                recentMessages.forEach((message: any) => {
-                    const senderName = message.sender?.organization_name ||
-                        `${message.sender?.first_name || ''} ${message.sender?.last_name || ''}`.trim() ||
-                        'Team member';
-
-                    const isSentByUser = message.sender_id === userId;
-
-                    activities.push({
-                        id: `message_${message.id}`,
-                        type: isSentByUser ? 'message_sent' : 'message_received',
-                        title: isSentByUser ? 'Message Sent' : 'New Message',
-                        description: isSentByUser
-                            ? `You sent a message in ${message.projects?.title}`
-                            : `${senderName} sent you a message in ${message.projects?.title}`,
-                        timestamp: this.formatActivityTime(message.created_at),
-                        relatedId: message.projects?.id,
-                        relatedData: message
-                    });
-                });
+            if (!sentError && sentMessages) {
+                activities_messages.push(...sentMessages);
             }
+
+            // Second, get user's accepted project IDs
+            const { data: acceptedProjects, error: projectsError } = await supabase
+                .from('applications')
+                .select('project_id')
+                .eq('developer_id', userId)
+                .eq('status', 'accepted');
+
+            if (!projectsError && acceptedProjects && acceptedProjects.length > 0) {
+                const projectIds = acceptedProjects.map((app: { project_id: string }) => app.project_id);
+
+                // Get messages from projects where user is a member
+                const { data: projectMessages, error: projMsgError } = await supabase
+                    .from('messages')
+                    .select(`
+                        id,
+                        content,
+                        created_at,
+                        sender_id,
+                        project_id,
+                        projects (
+                            id,
+                            title
+                        ),
+                        sender:profiles!messages_sender_id_fkey (
+                            first_name,
+                            last_name,
+                            organization_name,
+                            role
+                        )
+                    `)
+                    .in('project_id', projectIds)
+                    .neq('sender_id', userId) // Exclude messages already fetched above
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+
+                if (!projMsgError && projectMessages) {
+                    activities_messages.push(...projectMessages);
+                }
+            }
+
+            // Process all messages and remove duplicates
+            const uniqueMessages = activities_messages
+                .filter((message, index, self) =>
+                    index === self.findIndex(m => m.id === message.id)
+                )
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 3);
+
+            uniqueMessages.forEach((message: any) => {
+                const senderName = message.sender?.organization_name ||
+                    `${message.sender?.first_name || ''} ${message.sender?.last_name || ''}`.trim() ||
+                    'Team member';
+
+                const isSentByUser = message.sender_id === userId;
+
+                activities.push({
+                    id: `message_${message.id}`,
+                    type: isSentByUser ? 'message_sent' : 'message_received',
+                    title: isSentByUser ? 'Message Sent' : 'New Message',
+                    description: isSentByUser
+                        ? `You sent a message in ${message.projects?.title}`
+                        : `${senderName} sent you a message in ${message.projects?.title}`,
+                    timestamp: this.formatActivityTime(message.created_at),
+                    relatedId: message.projects?.id,
+                    relatedData: message
+                });
+            });
 
             // Sort all activities by timestamp and return limited results
             return activities

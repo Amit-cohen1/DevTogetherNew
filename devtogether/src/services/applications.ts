@@ -83,13 +83,13 @@ class ApplicationService {
                     .select(`
                         title,
                         organization_id,
-                        organization:users!projects_organization_id_fkey(organization_name)
+                        organization:profiles!projects_organization_id_fkey(organization_name)
                     `)
                     .eq('id', applicationData.project_id)
                     .single()
 
                 const { data: developerData } = await supabase
-                    .from('users')
+                    .from('profiles')
                     .select('first_name, last_name')
                     .eq('id', applicationData.developer_id)
                     .single()
@@ -131,13 +131,13 @@ class ApplicationService {
             title,
             organization_id,
             status,
-            organization:users!projects_organization_id_fkey(
+            organization:profiles!projects_organization_id_fkey(
               id,
               organization_name,
               avatar_url
             )
           ),
-          developer:users!applications_developer_id_fkey(
+          developer:profiles!applications_developer_id_fkey(
             id,
             first_name,
             last_name,
@@ -175,13 +175,13 @@ class ApplicationService {
             title,
             organization_id,
             status,
-            organization:users!projects_organization_id_fkey(
+            organization:profiles!projects_organization_id_fkey(
               id,
               organization_name,
               avatar_url
             )
           ),
-          developer:users!applications_developer_id_fkey(
+          developer:profiles!applications_developer_id_fkey(
             id,
             first_name,
             last_name,
@@ -219,13 +219,13 @@ class ApplicationService {
             title,
             organization_id,
             status,
-            organization:users!projects_organization_id_fkey(
+            organization:profiles!projects_organization_id_fkey(
               id,
               organization_name,
               avatar_url
             )
           ),
-          developer:users!applications_developer_id_fkey(
+          developer:profiles!applications_developer_id_fkey(
             id,
             first_name,
             last_name,
@@ -268,9 +268,9 @@ class ApplicationService {
                     *,
                     project:projects(
                         title,
-                        organization:users!projects_organization_id_fkey(organization_name)
+                        organization:profiles!projects_organization_id_fkey(organization_name)
                     ),
-                    developer:users!applications_developer_id_fkey(id)
+                    developer:profiles!applications_developer_id_fkey(id)
                 `)
                 .single()
 
@@ -358,18 +358,65 @@ class ApplicationService {
      */
     async hasApplied(projectId: string, developerId: string): Promise<boolean> {
         try {
+            // First, verify we have the required parameters
+            if (!projectId || !developerId) {
+                console.warn('hasApplied: Missing required parameters', { projectId, developerId });
+                return false;
+            }
+
+            // Check if we have a valid auth session
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError) {
+                console.error('hasApplied: Session error:', sessionError);
+                return false;
+            }
+
+            if (!session) {
+                console.warn('hasApplied: No active session');
+                return false;
+            }
+
+            // Verify the current user matches the developerId
+            if (session.user.id !== developerId) {
+                console.warn('hasApplied: User ID mismatch', { sessionUserId: session.user.id, developerId });
+                return false;
+            }
+
+            // Try the query with enhanced error handling
             const { data, error } = await supabase
                 .from('applications')
                 .select('id')
                 .eq('project_id', projectId)
                 .eq('developer_id', developerId)
-                .single()
+                .maybeSingle(); // Use maybeSingle instead of single to avoid PGRST116 errors
 
-            if (error && error.code !== 'PGRST116') throw error
-            return !!data
+            if (error) {
+                console.error('hasApplied: Query error:', error);
+                // If it's an RLS error, try alternative approach
+                if (error.code === 'PGRST301' || error.code === 'PGRST116' || error.message.includes('row-level security') || error.message.includes('Not Acceptable')) {
+                    console.warn('hasApplied: RLS restriction, trying alternative query');
+
+                    // Alternative approach: get all user's applications and check if project exists
+                    const { data: userApps, error: altError } = await supabase
+                        .from('applications')
+                        .select('project_id')
+                        .eq('developer_id', developerId);
+
+                    if (altError) {
+                        console.error('hasApplied: Alternative query also failed:', altError);
+                        return false;
+                    }
+
+                    return !!(userApps?.some((app: { project_id: string }) => app.project_id === projectId));
+                }
+                throw error;
+            }
+
+            return !!data;
         } catch (error) {
-            console.error('Error checking application status:', error)
-            return false
+            console.error('hasApplied: Unexpected error:', error);
+            // Return false on any error to prevent blocking the UI
+            return false;
         }
     }
 

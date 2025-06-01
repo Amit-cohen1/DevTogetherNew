@@ -10,12 +10,14 @@ import RegisterPage from './pages/auth/RegisterPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import VerifyEmailPage from './pages/auth/VerifyEmailPage'
 import AuthCallbackPage from './pages/auth/AuthCallbackPage'
+import RoleSelectionPage from './pages/auth/RoleSelectionPage'
 
 // Onboarding
 import OnboardingPage from './pages/onboarding/OnboardingPage'
 
 // Profile
 import ProfilePage from './pages/ProfilePage'
+import SharedProfilePage from './pages/SharedProfilePage'
 
 // Projects
 import CreateProjectPage from './pages/projects/CreateProjectPage'
@@ -32,28 +34,8 @@ import MyApplications from './pages/applications/MyApplications'
 // Dashboard
 import DashboardPage from './pages/DashboardPage'
 
-const HomePage = () => (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div className="text-center space-y-6">
-      <h1 className="text-4xl font-bold text-gray-900">DevTogether</h1>
-      <p className="text-xl text-gray-600">Connecting developers with nonprofit organizations</p>
-      <div className="space-x-4">
-        <a
-          href="/auth/login"
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
-        >
-          Sign In
-        </a>
-        <a
-          href="/auth/register"
-          className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-        >
-          Sign Up
-        </a>
-      </div>
-    </div>
-  </div>
-)
+// Homepage
+import HomePage from './pages/HomePage'
 
 function App() {
   return (
@@ -64,11 +46,7 @@ function App() {
             {/* Public Home Page */}
             <Route
               path="/"
-              element={
-                <PublicRoute>
-                  <HomePage />
-                </PublicRoute>
-              }
+              element={<HomePage />}
             />
 
             {/* Authentication Routes */}
@@ -113,6 +91,15 @@ function App() {
               element={<AuthCallbackPage />}
             />
 
+            <Route
+              path="/auth/select-role"
+              element={
+                <ProtectedRoute>
+                  <RoleSelectionPage />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Onboarding Route */}
             <Route
               path="/onboarding"
@@ -150,6 +137,12 @@ function App() {
                   <ProfilePage />
                 </ProtectedRoute>
               }
+            />
+
+            {/* Shared Profile Route (Public) */}
+            <Route
+              path="/profile/shared/:shareToken"
+              element={<SharedProfilePage />}
             />
 
             {/* Project Routes */}
@@ -205,6 +198,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MyApplications />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Organization Projects Route */}
+            <Route
+              path="/organization/projects"
+              element={
+                <ProtectedRoute requiredRole="organization">
+                  <ProjectsPage />
                 </ProtectedRoute>
               }
             />

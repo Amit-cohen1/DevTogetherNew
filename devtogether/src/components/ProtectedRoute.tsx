@@ -46,9 +46,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             : profile.role === requiredRole
 
         if (!hasRequiredRole) {
-            // Redirect to appropriate dashboard based on user role
-            const roleDashboard = profile.role === 'developer' ? '/dashboard' : '/organization/dashboard'
-            return <Navigate to={roleDashboard} replace />
+            // Redirect to dashboard for all users (both roles use the same route)
+            return <Navigate to="/dashboard" replace />
         }
     }
 
@@ -78,9 +77,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
 
     // If user is authenticated, redirect to appropriate dashboard
     if (isAuthenticated && profile) {
-        const defaultRedirect = redirectTo ||
-            (profile.role === 'developer' ? '/dashboard' : '/organization/dashboard')
-
+        const defaultRedirect = redirectTo || '/dashboard'
         return <Navigate to={defaultRedirect} replace />
     }
 
@@ -139,7 +136,12 @@ export const RoleRoute: React.FC<RoleRouteProps> = ({
                 <p className="text-gray-600 mb-6">
                     You don't have permission to access this page.
                 </p>
-                <Navigate to="/" replace />
+                <button
+                    onClick={() => window.location.href = '/'}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                    Go Home
+                </button>
             </div>
         </div>
     )

@@ -16,12 +16,10 @@ export const Layout: React.FC<LayoutProps> = ({
     showFooter = true,
     className = ''
 }) => {
-    const { user, profile } = useAuth()
-
     return (
         <div className="min-h-screen flex flex-col">
-            {/* Navigation */}
-            {showNavbar && user && profile && <Navbar />}
+            {/* Navigation - Now handles both authenticated and public states */}
+            {showNavbar && <Navbar />}
 
             {/* Main Content */}
             <main className={`flex-1 ${className}`}>

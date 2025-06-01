@@ -33,7 +33,7 @@ export const projectService = {
             .from('projects')
             .select(`
         *,
-        organization:users!projects_organization_id_fkey(*)
+        organization:profiles!projects_organization_id_fkey(*)
       `)
             .order('created_at', { ascending: false })
 
@@ -68,20 +68,83 @@ export const projectService = {
         return data || []
     },
 
+    // Get all projects with team member data (for project discovery page)
+    async getProjectsWithTeamMembers(filters?: {
+        status?: Project['status']
+        difficulty_level?: Project['difficulty_level']
+        application_type?: Project['application_type']
+        technology_stack?: string[]
+        organization_id?: string
+    }): Promise<Project[]> {
+        let query = supabase
+            .from('projects')
+            .select(`
+        *,
+        organization:profiles!projects_organization_id_fkey(*),
+        applications(
+          id,
+          status,
+          developer:profiles!applications_developer_id_fkey(
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        )
+      `)
+            .order('created_at', { ascending: false })
+
+        // Apply filters
+        if (filters?.status) {
+            query = query.eq('status', filters.status)
+        }
+
+        if (filters?.difficulty_level) {
+            query = query.eq('difficulty_level', filters.difficulty_level)
+        }
+
+        if (filters?.application_type) {
+            query = query.eq('application_type', filters.application_type)
+        }
+
+        if (filters?.organization_id) {
+            query = query.eq('organization_id', filters.organization_id)
+        }
+
+        if (filters?.technology_stack && filters.technology_stack.length > 0) {
+            query = query.overlaps('technology_stack', filters.technology_stack)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+            console.error('Error fetching projects with team members:', error)
+            throw new Error(error.message)
+        }
+
+        // Filter to only include accepted applications for each project
+        const projectsWithAcceptedMembers = data?.map((project: any) => ({
+            ...project,
+            applications: project.applications?.filter((app: any) => app.status === 'accepted') || []
+        })) || []
+
+        return projectsWithAcceptedMembers
+    },
+
     // Get a single project by ID
     async getProject(projectId: string): Promise<Project | null> {
         const { data, error } = await supabase
             .from('projects')
             .select(`
         *,
-        organization:users!projects_organization_id_fkey(*),
+        organization:profiles!projects_organization_id_fkey(*),
         project_members(
           *,
-          user:users(*)
+          user:profiles!project_members_user_id_fkey(*)
         ),
         applications(
           *,
-          developer:users!applications_developer_id_fkey(*)
+          developer:profiles!applications_developer_id_fkey(*)
         )
       `)
             .eq('id', projectId)
@@ -139,7 +202,7 @@ export const projectService = {
             .from('projects')
             .select(`
         *,
-        organization:users!projects_organization_id_fkey(*)
+        organization:profiles!projects_organization_id_fkey(*)
       `)
             .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
             .eq('status', 'open')

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { ArrowLeft, Users, Activity, Zap, MessageCircle, Loader } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Zap, MessageCircle, Loader, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { workspaceService, WorkspaceData } from '../../services/workspaceService';
 import TeamMemberList from './TeamMemberList';
@@ -9,6 +9,7 @@ import ProjectStatus from './ProjectStatus';
 import QuickActions from './QuickActions';
 import ChatContainer from './chat/ChatContainer';
 import { Layout } from '../layout/Layout';
+import StatusManagerNotification from './StatusManagerNotification';
 
 type WorkspaceSection = 'overview' | 'team' | 'status' | 'actions' | 'chat';
 
@@ -20,13 +21,7 @@ export default function ProjectWorkspace() {
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState<WorkspaceSection>('overview');
 
-    useEffect(() => {
-        if (projectId && user) {
-            loadWorkspaceData();
-        }
-    }, [projectId, user]);
-
-    const loadWorkspaceData = async () => {
+    const loadWorkspaceData = useCallback(async () => {
         if (!projectId || !user) return;
 
         setLoading(true);
@@ -52,7 +47,13 @@ export default function ProjectWorkspace() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId, user?.id]);
+
+    useEffect(() => {
+        if (projectId && user) {
+            loadWorkspaceData();
+        }
+    }, [projectId, user?.id, loadWorkspaceData]);
 
     const handleStatusUpdate = () => {
         // Reload workspace data to reflect status changes
@@ -106,6 +107,12 @@ export default function ProjectWorkspace() {
             member.user.id === user.id && member.status_manager === true
         )
     );
+
+    // Check if current user is a status manager (but not the owner)
+    const userIsStatusManager = user && userRole === 'developer' && !isOwner &&
+        teamMembers.some(member =>
+            member.user.id === user.id && member.status_manager === true
+        );
 
     const navigationItems = [
         { id: 'overview' as WorkspaceSection, label: 'Overview', icon: Activity },
@@ -188,6 +195,12 @@ export default function ProjectWorkspace() {
                             {/* Overview Section */}
                             {activeSection === 'overview' && (
                                 <div className="space-y-6">
+                                    {/* Status Manager Notification */}
+                                    <StatusManagerNotification
+                                        userIsStatusManager={!!userIsStatusManager}
+                                        projectId={project.id}
+                                    />
+
                                     <div className="bg-white rounded-lg border border-gray-200 p-6">
                                         <h2 className="text-xl font-semibold text-gray-900 mb-4">
                                             Project Overview
@@ -327,6 +340,38 @@ export default function ProjectWorkspace() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Your Role */}
+                            {userRole === 'developer' && (
+                                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                        Your Role
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded">
+                                                Developer
+                                            </span>
+                                        </div>
+                                        {userIsStatusManager && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-sm font-medium rounded border border-blue-200 flex items-center gap-1">
+                                                    Status Manager
+                                                    <Shield className="w-4 h-4 text-blue-600" />
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {userIsStatusManager && (
+                                            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                                                <p className="text-xs text-blue-700">
+                                                    You have additional permissions to manage project status and updates.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Quick Navigation */}
                             <div className="bg-white rounded-lg border border-gray-200 p-6">

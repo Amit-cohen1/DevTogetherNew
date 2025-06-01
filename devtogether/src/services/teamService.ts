@@ -45,10 +45,10 @@ class TeamService {
     // Get team members for a project
     async getTeamMembers(projectId: string): Promise<TeamMember[]> {
         try {
-            // Get organization owner
+            // Get project details first
             const { data: project, error: projectError } = await supabase
                 .from('projects')
-                .select('organization_id, created_at')
+                .select('*')
                 .eq('id', projectId)
                 .single();
 
@@ -56,7 +56,7 @@ class TeamService {
 
             // Get organization owner details
             const { data: owner, error: ownerError } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('*')
                 .eq('id', project.organization_id)
                 .single();
@@ -70,7 +70,7 @@ class TeamService {
                     developer_id,
                     created_at,
                     status_manager,
-                    users:developer_id (*)
+                    profiles:developer_id (*)
                 `)
                 .eq('project_id', projectId)
                 .eq('status', 'accepted');
@@ -93,7 +93,7 @@ class TeamService {
 
             // Add accepted developers
             applications?.forEach((app: any) => {
-                if (app.users) {
+                if (app.profiles) {
                     teamMembers.push({
                         id: `member-${app.developer_id}`,
                         project_id: projectId,
@@ -102,7 +102,7 @@ class TeamService {
                         joined_at: app.created_at,
                         status: 'active',
                         status_manager: app.status_manager,
-                        user: app.users
+                        user: app.profiles
                     });
                 }
             });

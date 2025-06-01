@@ -59,7 +59,7 @@ export const Navbar: React.FC = () => {
     // Clean navigation structure for developers
     const developerNavItems = [
         {
-            label: 'Browse Projects',
+            label: 'Discover Projects',
             path: '/projects',
             icon: Search,
         },
@@ -73,7 +73,7 @@ export const Navbar: React.FC = () => {
     // Clean navigation structure for organizations  
     const organizationNavItems = [
         {
-            label: 'Browse Projects',
+            label: 'Discover Projects',
             path: '/projects',
             icon: Search,
         },
@@ -91,8 +91,106 @@ export const Navbar: React.FC = () => {
 
     const navItems = isDeveloper ? developerNavItems : organizationNavItems
 
+    // Public navbar for non-authenticated users
     if (!user || !profile) {
-        return null // Don't show navbar if not authenticated
+        return (
+            <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center h-16">
+                        {/* Left side - Logo */}
+                        <div className="flex items-center">
+                            <Link to="/" className="flex items-center space-x-3">
+                                <img
+                                    src="/images/devtogether-icon.svg"
+                                    alt="DevTogether"
+                                    className="w-10 h-10"
+                                />
+                                <span className="text-xl font-bold text-gray-900">DevTogether</span>
+                            </Link>
+                        </div>
+
+                        {/* Center - Navigation Links */}
+                        <div className="hidden md:flex space-x-8">
+                            <Link to="/projects" className="text-gray-700 hover:text-gray-900 font-medium">
+                                Projects
+                            </Link>
+                            <a href="#" className="text-gray-700 hover:text-gray-900 font-medium">
+                                Organizations
+                            </a>
+                            <a href="#" className="text-gray-700 hover:text-gray-900 font-medium">
+                                About Us
+                            </a>
+                        </div>
+
+                        {/* Right side - Auth buttons */}
+                        <div className="flex items-center space-x-4">
+                            <Link to="/auth/login">
+                                <Button variant="outline" size="sm">
+                                    Sign In
+                                </Button>
+                            </Link>
+                            <Link to="/auth/register">
+                                <Button size="sm">
+                                    Join Now
+                                </Button>
+                            </Link>
+
+                            {/* Mobile menu button */}
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="md:hidden p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+                            >
+                                {mobileMenuOpen ? (
+                                    <X className="w-6 h-6" />
+                                ) : (
+                                    <Menu className="w-6 h-6" />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Navigation Menu */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden border-t border-gray-200 bg-white">
+                        <div className="px-4 py-3 space-y-1">
+                            <Link
+                                to="/projects"
+                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                            >
+                                Projects
+                            </Link>
+                            <a
+                                href="#"
+                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                            >
+                                Organizations
+                            </a>
+                            <a
+                                href="#"
+                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                            >
+                                About Us
+                            </a>
+                            <div className="pt-4 space-y-2">
+                                <Link
+                                    to="/auth/login"
+                                    className="block w-full text-center px-3 py-2 border border-gray-300 rounded-md text-base font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Sign In
+                                </Link>
+                                <Link
+                                    to="/auth/register"
+                                    className="block w-full text-center px-3 py-2 border border-transparent rounded-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
+                                >
+                                    Join Now
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </nav>
+        )
     }
 
     return (
@@ -102,7 +200,7 @@ export const Navbar: React.FC = () => {
                     {/* Left side - Logo and Navigation */}
                     <div className="flex items-center space-x-8">
                         {/* Logo */}
-                        <Link to="/dashboard" className="flex items-center space-x-3">
+                        <Link to="/" className="flex items-center space-x-3">
                             <img
                                 src="/images/devtogether-icon.svg"
                                 alt="DevTogether"
