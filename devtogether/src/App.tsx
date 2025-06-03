@@ -37,6 +37,10 @@ import DashboardPage from './pages/DashboardPage'
 // Homepage
 import HomePage from './pages/HomePage'
 
+// Landing Pages  
+import DeveloperLandingPage from './pages/DeveloperLandingPage'
+import OrganizationLandingPage from './pages/OrganizationLandingPage'
+
 function App() {
   return (
     <AuthProvider>
@@ -47,6 +51,17 @@ function App() {
             <Route
               path="/"
               element={<HomePage />}
+            />
+
+            {/* Public Landing Pages */}
+            <Route
+              path="/for-developers"
+              element={<DeveloperLandingPage />}
+            />
+
+            <Route
+              path="/for-organizations"
+              element={<OrganizationLandingPage />}
             />
 
             {/* Authentication Routes */}

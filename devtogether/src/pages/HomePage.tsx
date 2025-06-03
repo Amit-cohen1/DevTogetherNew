@@ -216,12 +216,12 @@ const HomePage: React.FC = () => {
                                     Connect with mission-driven organizations, build your portfolio, and make a difference through code.
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                                    <Link to="/auth/register?role=developer">
+                                    <Link to="/for-developers">
                                         <Button size="lg" variant="primary" className="!bg-white !text-blue-700 hover:!bg-gray-100 !border-0 font-semibold px-8 py-4">
                                             I'm a Developer
                                         </Button>
                                     </Link>
-                                    <Link to="/auth/register?role=organization">
+                                    <Link to="/for-organizations">
                                         <Button size="lg" variant="ghost" className="!border-2 !border-white !text-white hover:!bg-white hover:!text-blue-600 font-semibold px-8 py-4">
                                             I'm an Organization
                                         </Button>
@@ -459,12 +459,12 @@ const HomePage: React.FC = () => {
                             Join our community of developers and organizations making a difference through technology
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link to="/auth/register?role=developer">
+                            <Link to="/for-developers">
                                 <Button size="lg" variant="primary" className="!bg-white !text-blue-700 hover:!bg-gray-100 !border-0 font-semibold px-8 py-4">
                                     Join as a Developer
                                 </Button>
                             </Link>
-                            <Link to="/auth/register?role=organization">
+                            <Link to="/for-organizations">
                                 <Button size="lg" variant="ghost" className="!border-2 !border-white !text-white hover:!bg-white hover:!text-blue-600 font-semibold px-8 py-4">
                                     Post a Project
                                 </Button>
