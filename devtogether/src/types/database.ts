@@ -191,29 +191,6 @@ export interface Database {
                     updated_at?: string
                 }
             }
-            project_members: {
-                Row: {
-                    id: string
-                    project_id: string
-                    user_id: string
-                    role: 'lead' | 'member'
-                    joined_at: string
-                }
-                Insert: {
-                    id?: string
-                    project_id: string
-                    user_id: string
-                    role?: 'lead' | 'member'
-                    joined_at?: string
-                }
-                Update: {
-                    id?: string
-                    project_id?: string
-                    user_id?: string
-                    role?: 'lead' | 'member'
-                    joined_at?: string
-                }
-            }
             search_history: {
                 Row: {
                     id: string
@@ -347,6 +324,108 @@ export interface Database {
                     created_at?: string
                 }
             }
+            organization_images: {
+                Row: {
+                    id: string
+                    organization_id: string
+                    image_url: string
+                    category: 'team' | 'office' | 'events' | 'projects' | 'impact' | null
+                    title: string | null
+                    description: string | null
+                    display_order: number | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    organization_id: string
+                    image_url: string
+                    category?: 'team' | 'office' | 'events' | 'projects' | 'impact' | null
+                    title?: string | null
+                    description?: string | null
+                    display_order?: number | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    organization_id?: string
+                    image_url?: string
+                    category?: 'team' | 'office' | 'events' | 'projects' | 'impact' | null
+                    title?: string | null
+                    description?: string | null
+                    display_order?: number | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
+            organization_metrics: {
+                Row: {
+                    id: string
+                    organization_id: string
+                    metric_name: string
+                    metric_value: string
+                    metric_type: 'number' | 'percentage' | 'text' | null
+                    display_order: number | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    organization_id: string
+                    metric_name: string
+                    metric_value: string
+                    metric_type?: 'number' | 'percentage' | 'text' | null
+                    display_order?: number | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    organization_id?: string
+                    metric_name?: string
+                    metric_value?: string
+                    metric_type?: 'number' | 'percentage' | 'text' | null
+                    display_order?: number | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
+            developer_testimonials: {
+                Row: {
+                    id: string
+                    organization_id: string
+                    developer_id: string
+                    testimonial_text: string
+                    project_id: string | null
+                    rating: number | null
+                    is_featured: boolean | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    organization_id: string
+                    developer_id: string
+                    testimonial_text: string
+                    project_id?: string | null
+                    rating?: number | null
+                    is_featured?: boolean | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    organization_id?: string
+                    developer_id?: string
+                    testimonial_text?: string
+                    project_id?: string | null
+                    rating?: number | null
+                    is_featured?: boolean | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
         }
         Views: {
             [_ in never]: never
@@ -372,7 +451,6 @@ export type User = Tables<'profiles'>
 export type Project = Tables<'projects'>
 export type Application = Tables<'applications'>
 export type Message = Tables<'messages'>
-export type ProjectMember = Tables<'project_members'>
 export type ProfileAnalytics = Tables<'profile_analytics'>
 
 export type UserRole = User['role']
@@ -429,7 +507,7 @@ export interface SearchFilters {
 }
 
 export interface SearchResult {
-    projects: Project[]
+    projects: ProjectWithTeamMembers[]
     total_count: number
     search_time: number
     suggestions?: string[]
@@ -439,4 +517,74 @@ export interface SearchSuggestion {
     text: string
     type: 'project' | 'technology' | 'organization' | 'skill'
     count?: number
+}
+
+// Team Member interfaces for proper team composition
+export interface TeamMember {
+    id: string
+    type: 'organization' | 'developer'
+    profile: {
+        id: string
+        first_name: string | null
+        last_name: string | null
+        organization_name?: string | null
+        avatar_url: string | null
+        email?: string
+    }
+    role: 'owner' | 'member' | 'status_manager'
+    application?: Application // Only present for developers
+    joined_at?: string
+}
+
+export interface ProjectWithTeamMembers extends Project {
+    organization?: {
+        id: string
+        organization_name: string | null
+        avatar_url: string | null
+        email?: string
+    }
+    team_members: TeamMember[]
+    applications?: Array<{
+        id: string
+        status: string
+        status_manager?: boolean
+        developer: {
+            id: string
+            first_name: string | null
+            last_name: string | null
+            avatar_url: string | null
+        } | null
+    }>
+}
+
+// New enhanced organization profile types
+export type OrganizationImage = Tables<'organization_images'>
+export type OrganizationMetric = Tables<'organization_metrics'>
+export type DeveloperTestimonial = Tables<'developer_testimonials'>
+
+export type ImageCategory = OrganizationImage['category']
+export type MetricType = OrganizationMetric['metric_type']
+
+// Enhanced organization profile interfaces
+export interface OrganizationProfileData {
+    profile: User
+    images: OrganizationImage[]
+    metrics: OrganizationMetric[]
+    testimonials: DeveloperTestimonial[]
+    projects: ProjectWithTeamMembers[]
+    stats: {
+        totalProjects: number
+        activeProjects: number
+        completedProjects: number
+        totalDevelopers: number
+        successRate: number
+    }
+}
+
+export interface OrganizationGalleryImage {
+    id: string
+    url: string
+    title?: string
+    description?: string
+    category: ImageCategory
 } 

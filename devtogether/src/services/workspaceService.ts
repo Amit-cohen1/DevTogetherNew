@@ -1,6 +1,9 @@
 import { supabase } from '../utils/supabase';
 import { Project, User, Application } from '../types/database';
+import { projectService } from './projects';
+import type { TeamMember as DatabaseTeamMember, ProjectWithTeamMembers } from '../types/database';
 
+// Legacy interface for backward compatibility
 export interface TeamMember {
     id: string;
     user: User;
@@ -29,80 +32,75 @@ export interface ProjectStatusUpdate {
 class WorkspaceService {
     async getWorkspaceData(projectId: string, userId: string): Promise<WorkspaceData | null> {
         try {
-            // Get project details
-            const { data: project, error: projectError } = await supabase
-                .from('projects')
-                .select('*')
-                .eq('id', projectId)
-                .single();
+            // Use the new projectService to get unified team member data
+            const projectsWithMembers = await projectService.getProjectsWithTeamMembers();
 
-            if (projectError || !project) {
-                throw new Error('Project not found');
+            // Find the specific project
+            const projectWithMembers = projectsWithMembers.find(p => p.id === projectId);
+
+            if (!projectWithMembers) {
+                // Fallback to individual project fetch if not found
+                const project = await projectService.getProject(projectId);
+                if (!project) {
+                    throw new Error('Project not found');
+                }
+
+                // Convert to legacy format for backward compatibility
+                return {
+                    project,
+                    teamMembers: [],
+                    isOwner: project.organization_id === userId,
+                    isMember: project.organization_id === userId,
+                    userRole: project.organization_id === userId ? 'organization' : null
+                };
             }
 
-            // Get organization owner details
-            const { data: organizationUser, error: orgError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', project.organization_id)
-                .single();
+            // Convert new team member structure to legacy format for backward compatibility
+            const legacyTeamMembers: TeamMember[] = projectWithMembers.team_members.map((member: DatabaseTeamMember) => {
+                // Create user object based on member type
+                const user: User = {
+                    id: member.profile.id,
+                    email: member.profile.email || '',
+                    role: member.type as 'developer' | 'organization',
+                    first_name: member.profile.first_name,
+                    last_name: member.profile.last_name,
+                    organization_name: member.profile.organization_name || null,
+                    bio: null,
+                    skills: null,
+                    location: null,
+                    website: null,
+                    linkedin: null,
+                    github: null,
+                    portfolio: null,
+                    avatar_url: member.profile.avatar_url,
+                    is_public: null,
+                    share_token: null,
+                    profile_views: null,
+                    created_at: '',
+                    updated_at: ''
+                };
 
-            if (orgError || !organizationUser) {
-                throw new Error('Organization not found');
-            }
-
-            // Get accepted applications for team members
-            const { data: acceptedApplications, error: applicationsError } = await supabase
-                .from('applications')
-                .select(`
-          *,
-          profiles!developer_id(*)
-        `)
-                .eq('project_id', projectId)
-                .eq('status', 'accepted');
-
-            if (applicationsError) {
-                console.error('Error fetching team members:', applicationsError);
-                return null;
-            }
-
-            // Build team members list
-            const teamMembers: TeamMember[] = [];
-
-            // Add organization owner
-            teamMembers.push({
-                id: organizationUser.id,
-                user: organizationUser,
-                role: 'organization',
-                joinedAt: project.created_at,
-                status: 'active',
-                status_manager: true // Organization owners can always manage status
+                return {
+                    id: member.id,
+                    user,
+                    role: member.type,
+                    joinedAt: member.joined_at || projectWithMembers.created_at,
+                    status: 'active' as const,
+                    status_manager: member.role === 'owner' || member.role === 'status_manager'
+                };
             });
 
-            // Add accepted developers
-            if (acceptedApplications) {
-                acceptedApplications.forEach((app: any) => {
-                    teamMembers.push({
-                        id: app.profiles.id,
-                        user: app.profiles,
-                        role: 'developer',
-                        joinedAt: app.updated_at,
-                        status: 'active',
-                        status_manager: app.status_manager || false
-                    });
-                });
-            }
-
             // Check user permissions
-            const isOwner = project.organization_id === userId;
-            const isMember = teamMembers.some(member => member.user.id === userId);
+            const isOwner = projectWithMembers.organization_id === userId;
+            const isMember = projectWithMembers.team_members.some(member => member.profile.id === userId);
+
+            const userMember = projectWithMembers.team_members.find(m => m.profile.id === userId);
             const userRole = isOwner ? 'organization' :
-                teamMembers.find(m => m.user.id === userId && m.role === 'developer') ? 'developer' :
-                    null;
+                userMember?.type === 'developer' ? 'developer' : null;
 
             return {
-                project,
-                teamMembers,
+                project: projectWithMembers,
+                teamMembers: legacyTeamMembers,
                 isOwner,
                 isMember,
                 userRole
@@ -140,45 +138,15 @@ class WorkspaceService {
 
     async getUserActiveProjects(userId: string): Promise<Project[]> {
         try {
-            // Get projects where user is organization owner
-            const { data: ownedProjects, error: ownedError } = await supabase
-                .from('projects')
-                .select('*')
-                .eq('organization_id', userId);
+            // Use projectService to get projects with team members
+            const allProjects = await projectService.getProjectsWithTeamMembers();
 
-            if (ownedError) {
-                console.error('Error fetching owned projects:', ownedError);
-            }
+            // Filter projects where user is a team member (owner or accepted developer)
+            const userProjects = allProjects.filter(project =>
+                project.team_members.some(member => member.profile.id === userId)
+            );
 
-            // Get projects where user has accepted applications
-            const { data: acceptedApplications, error: acceptedError } = await supabase
-                .from('applications')
-                .select(`
-          projects(*)
-        `)
-                .eq('developer_id', userId)
-                .eq('status', 'accepted');
-
-            if (acceptedError) {
-                console.error('Error fetching accepted applications:', acceptedError);
-            }
-
-            // Combine and deduplicate projects
-            const allProjects: Project[] = [];
-
-            if (ownedProjects) {
-                allProjects.push(...ownedProjects);
-            }
-
-            if (acceptedApplications) {
-                acceptedApplications.forEach((app: any) => {
-                    if (app.projects && !allProjects.find(p => p.id === app.projects.id)) {
-                        allProjects.push(app.projects as Project);
-                    }
-                });
-            }
-
-            return allProjects;
+            return userProjects;
         } catch (error) {
             console.error('Error fetching user active projects:', error);
             return [];
@@ -197,19 +165,11 @@ class WorkspaceService {
 
     async getTeamMemberCount(projectId: string): Promise<number> {
         try {
-            const { count, error } = await supabase
-                .from('applications')
-                .select('id', { count: 'exact' })
-                .eq('project_id', projectId)
-                .eq('status', 'accepted');
+            // Use projectService to get unified team member count
+            const projectsWithMembers = await projectService.getProjectsWithTeamMembers();
 
-            if (error) {
-                console.error('Error getting team member count:', error);
-                return 0;
-            }
-
-            // Add 1 for the organization owner
-            return (count || 0) + 1;
+            const project = projectsWithMembers.find(p => p.id === projectId);
+            return project?.team_members.length || 0;
         } catch (error) {
             console.error('Error getting team member count:', error);
             return 0;

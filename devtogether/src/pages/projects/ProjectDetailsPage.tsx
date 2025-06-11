@@ -40,16 +40,6 @@ interface ProjectWithDetails extends Project {
         website: string | null
         location: string | null
     }
-    project_members?: Array<{
-        id: string
-        user: {
-            id: string
-            first_name: string | null
-            last_name: string | null
-            avatar_url: string | null
-        }
-        role: 'lead' | 'member'
-    }>
     applications?: Array<{
         id: string
         developer: {

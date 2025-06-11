@@ -1,5 +1,6 @@
 import { supabase } from '../utils/supabase'
 import { Project, Database } from '../types/database'
+import type { TeamMember, ProjectWithTeamMembers } from '../types/database'
 
 export type CreateProjectData = Database['public']['Tables']['projects']['Insert']
 export type UpdateProjectData = Database['public']['Tables']['projects']['Update']
@@ -75,20 +76,32 @@ export const projectService = {
         application_type?: Project['application_type']
         technology_stack?: string[]
         organization_id?: string
-    }): Promise<Project[]> {
+    }): Promise<ProjectWithTeamMembers[]> {
+        console.log('🔍 ProjectService.getProjectsWithTeamMembers called with filters:', filters)
+
         let query = supabase
             .from('projects')
             .select(`
         *,
-        organization:profiles!projects_organization_id_fkey(*),
+        organization:profiles!projects_organization_id_fkey(
+          id,
+          organization_name,
+          avatar_url,
+          email,
+          first_name,
+          last_name
+        ),
         applications(
           id,
           status,
+          status_manager,
+          created_at,
           developer:profiles!applications_developer_id_fkey(
             id,
             first_name,
             last_name,
-            avatar_url
+            avatar_url,
+            email
           )
         )
       `)
@@ -117,38 +130,115 @@ export const projectService = {
 
         const { data, error } = await query
 
+        console.log('📊 Raw Supabase query result:', { data, error })
+
         if (error) {
-            console.error('Error fetching projects with team members:', error)
+            console.error('❌ Error fetching projects with team members:', error)
             throw new Error(error.message)
         }
 
-        // Filter to only include accepted applications for each project
-        const projectsWithAcceptedMembers = data?.map((project: any) => ({
-            ...project,
-            applications: project.applications?.filter((app: any) => app.status === 'accepted') || []
-        })) || []
+        // Transform data to include proper team member composition
+        const projectsWithTeamMembers = data?.map((project: any) => {
+            console.log(`🏗️ Processing project: ${project.title}`)
+            console.log(`   Organization:`, project.organization)
+            console.log(`   Applications:`, project.applications)
 
-        return projectsWithAcceptedMembers
+            const teamMembers: TeamMember[] = []
+
+            // 1. Add organization owner as team leader (always first)
+            if (project.organization) {
+                const orgMember = {
+                    id: project.organization.id,
+                    type: 'organization' as const,
+                    profile: {
+                        id: project.organization.id,
+                        first_name: project.organization.first_name,
+                        last_name: project.organization.last_name,
+                        organization_name: project.organization.organization_name,
+                        avatar_url: project.organization.avatar_url,
+                        email: project.organization.email
+                    },
+                    role: 'owner' as const,
+                    joined_at: project.created_at // Project creation date
+                }
+                teamMembers.push(orgMember)
+                console.log(`   ✅ Added organization owner:`, orgMember.profile.organization_name)
+            }
+
+            // 2. Add accepted developers as team members
+            const acceptedApplications = project.applications?.filter((app: any) =>
+                app.status === 'accepted' && app.developer !== null
+            ) || []
+
+            console.log(`   🔍 Found ${acceptedApplications.length} accepted applications`)
+
+            acceptedApplications.forEach((application: any) => {
+                const isStatusManager = application.status_manager === true
+
+                const devMember = {
+                    id: application.developer.id,
+                    type: 'developer' as const,
+                    profile: {
+                        id: application.developer.id,
+                        first_name: application.developer.first_name,
+                        last_name: application.developer.last_name,
+                        avatar_url: application.developer.avatar_url,
+                        email: application.developer.email
+                    },
+                    role: isStatusManager ? 'status_manager' as const : 'member' as const,
+                    application: {
+                        id: application.id,
+                        project_id: project.id,
+                        developer_id: application.developer.id,
+                        status: application.status,
+                        status_manager: application.status_manager,
+                        created_at: application.created_at,
+                        updated_at: application.created_at,
+                        cover_letter: null,
+                        portfolio_links: null
+                    },
+                    joined_at: application.created_at
+                }
+
+                teamMembers.push(devMember)
+                console.log(`   ✅ Added developer:`, `${devMember.profile.first_name} ${devMember.profile.last_name}`, `(${devMember.role})`)
+            })
+
+            console.log(`   📊 Total team members for ${project.title}: ${teamMembers.length}`)
+
+            // Filter applications to only accepted ones with valid developers for backward compatibility
+            const validApplications = project.applications?.filter((app: any) =>
+                app.status === 'accepted' && app.developer !== null
+            ) || []
+
+            const result = {
+                ...project,
+                team_members: teamMembers,
+                applications: validApplications
+            }
+
+            console.log(`   🏁 Final team_members count: ${result.team_members.length}`)
+
+            return result
+        }) || []
+
+        console.log('✅ ProjectService.getProjectsWithTeamMembers completed, returning', projectsWithTeamMembers.length, 'projects')
+
+        return projectsWithTeamMembers
     },
 
     // Get a single project by ID
     async getProject(projectId: string): Promise<Project | null> {
+        console.log('🔍 ProjectService.getProject called for projectId:', projectId)
+
+        // Try a very simple query first to see if the basic project works
         const { data, error } = await supabase
             .from('projects')
-            .select(`
-        *,
-        organization:profiles!projects_organization_id_fkey(*),
-        project_members(
-          *,
-          user:profiles!project_members_user_id_fkey(*)
-        ),
-        applications(
-          *,
-          developer:profiles!applications_developer_id_fkey(*)
-        )
-      `)
+            .select('*')
             .eq('id', projectId)
             .single()
+
+        console.log('📊 Simple getProject query result:', { data, error })
 
         if (error) {
             if (error.code === 'PGRST116') {
@@ -158,7 +248,66 @@ export const projectService = {
             throw new Error(error.message)
         }
 
-        return data
+        // If basic query works, try with organization
+        const { data: dataWithOrg, error: errorWithOrg } = await supabase
+            .from('projects')
+            .select(`
+                *,
+                organization:profiles!projects_organization_id_fkey(*)
+            `)
+            .eq('id', projectId)
+            .single()
+
+        console.log('📊 getProject with organization result:', { dataWithOrg, errorWithOrg })
+
+        if (errorWithOrg) {
+            console.error('Error with organization join:', errorWithOrg)
+            // Return basic data if organization join fails
+            return data
+        }
+
+        // If organization works, try with applications
+        const { data: dataWithApps, error: errorWithApps } = await supabase
+            .from('projects')
+            .select(`
+                *,
+                organization:profiles!projects_organization_id_fkey(*),
+                applications(*)
+            `)
+            .eq('id', projectId)
+            .single()
+
+        console.log('📊 getProject with applications result:', { dataWithApps, errorWithApps })
+
+        if (errorWithApps) {
+            console.error('Error with applications join:', errorWithApps)
+            // Return data with organization if applications join fails
+            return dataWithOrg
+        }
+
+        // Finally try the full query
+        const { data: fullData, error: fullError } = await supabase
+            .from('projects')
+            .select(`
+                *,
+                organization:profiles!projects_organization_id_fkey(*),
+                applications(
+                  *,
+                  developer:profiles!applications_developer_id_fkey(*)
+                )
+            `)
+            .eq('id', projectId)
+            .single()
+
+        console.log('📊 getProject FULL query result:', { fullData, fullError })
+
+        if (fullError) {
+            console.error('Error with full query:', fullError)
+            // Return data with applications if full join fails
+            return dataWithApps
+        }
+
+        return fullData
     },
 
     // Update a project

@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { useNotifications } from '../../contexts/NotificationContext'
 import { Button } from '../ui/Button'
+import { NotificationDropdown } from '../notifications/NotificationDropdown'
 import {
     Menu,
     X,
@@ -19,11 +21,14 @@ import {
 
 export const Navbar: React.FC = () => {
     const { user, profile, signOut, isDeveloper, isOrganization } = useAuth()
+    const { unreadCount } = useNotifications()
     const navigate = useNavigate()
     const location = useLocation()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [userMenuOpen, setUserMenuOpen] = useState(false)
+    const [notificationMenuOpen, setNotificationMenuOpen] = useState(false)
     const userMenuRef = useRef<HTMLDivElement>(null)
+    const notificationMenuRef = useRef<HTMLDivElement>(null)
 
     // Close user menu when clicking outside
     useEffect(() => {
@@ -254,11 +259,25 @@ export const Navbar: React.FC = () => {
                         )}
 
                         {/* Notifications */}
-                        <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg flex items-center justify-center">
-                            <Bell className="w-5 h-5" />
-                            {/* Notification badge */}
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <div className="relative" ref={notificationMenuRef}>
+                            <button
+                                onClick={() => setNotificationMenuOpen(!notificationMenuOpen)}
+                                className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg flex items-center justify-center transition-colors"
+                            >
+                                <Bell className="w-5 h-5" />
+                                {/* Notification badge */}
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            <NotificationDropdown
+                                isOpen={notificationMenuOpen}
+                                onClose={() => setNotificationMenuOpen(false)}
+                            />
+                        </div>
 
                         {/* User Menu */}
                         <div className="relative" ref={userMenuRef}>

@@ -257,7 +257,8 @@ class DashboardService {
                 })
             );
 
-            return projectsWithDetails;
+            // Filter out null projects before returning
+            return projectsWithDetails.filter(project => project !== null) as DashboardProject[];
         } catch (error) {
             console.error('Error fetching active projects:', error);
             throw error;

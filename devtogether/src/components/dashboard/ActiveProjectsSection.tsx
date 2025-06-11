@@ -86,120 +86,123 @@ const ActiveProjectsSection: React.FC<ActiveProjectsSectionProps> = ({
             </div>
 
             <div className="space-y-4">
-                {projects.slice(0, 3).map((project) => (
-                    <div
-                        key={project.id}
-                        className="border border-gray-100 rounded-lg p-5 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
-                    >
-                        {/* Project Header */}
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-1">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                    <h4 className="font-semibold text-gray-900">{project.title}</h4>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-3">{project.users?.name}</p>
-                            </div>
-                            <button
-                                onClick={() => navigate(`/workspace/${project.id}`)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <ExternalLink className="w-4 h-4" />
-                            </button>
-                        </div>
-
-                        {/* Progress Bar */}
-                        {project.progress !== undefined && (
-                            <div className="mb-4">
-                                <div className="flex items-center justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">Progress</span>
-                                    <span className="font-semibold text-gray-900">{project.progress}%</span>
-                                </div>
-                                <div className={`${getProgressBgColor(project.progress)} rounded-full h-2 overflow-hidden`}>
-                                    <div
-                                        className={`${getProgressColor(project.progress)} h-2 rounded-full transition-all duration-500`}
-                                        style={{ width: `${project.progress}%` }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Due Date */}
-                        {project.dueDate && (
-                            <div className="flex items-center space-x-2 mb-4">
-                                <Clock className="w-4 h-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">Due Date</span>
-                                <span className="text-sm font-medium text-gray-900">{project.dueDate}</span>
-                            </div>
-                        )}
-
-                        {/* Technology Stack */}
-                        {project.technology_stack && project.technology_stack.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-4">
-                                {project.technology_stack.slice(0, 4).map((tech, index) => (
-                                    <span
-                                        key={index}
-                                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200"
-                                    >
-                                        {tech}
-                                    </span>
-                                ))}
-                                {project.technology_stack.length > 4 && (
-                                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                                        +{project.technology_stack.length - 4} more
-                                    </span>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Team Members and Action */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                {project.teamMembers && project.teamMembers.length > 0 && (
-                                    <div className="flex -space-x-2">
-                                        {project.teamMembers.slice(0, 3).map((member, index) => (
-                                            <div
-                                                key={member.id}
-                                                className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-600"
-                                                title={member.name}
-                                            >
-                                                {member.avatar ? (
-                                                    <img
-                                                        src={member.avatar}
-                                                        alt={member.name}
-                                                        className="w-full h-full rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    member.name.split(' ').map(n => n[0]).join('').toUpperCase()
-                                                )}
-                                            </div>
-                                        ))}
-                                        {project.teamMembers.length > 3 && (
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-500">
-                                                +{project.teamMembers.length - 3}
-                                            </div>
-                                        )}
+                {projects
+                    .filter(project => project !== null && project !== undefined)
+                    .slice(0, 3)
+                    .map((project) => (
+                        <div
+                            key={project.id}
+                            className="border border-gray-100 rounded-lg p-5 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+                        >
+                            {/* Project Header */}
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                        <h4 className="font-semibold text-gray-900">{project?.title || 'Untitled Project'}</h4>
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <button
-                                    onClick={() => navigate(`/projects/${project.id}`)}
-                                    className="text-xs text-gray-500 hover:text-gray-700 font-medium"
-                                >
-                                    View Details
-                                </button>
+                                    <p className="text-sm text-gray-600 mb-3">{project?.users?.name || 'Unknown Organization'}</p>
+                                </div>
                                 <button
                                     onClick={() => navigate(`/workspace/${project.id}`)}
-                                    className="inline-flex items-center space-x-1 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 transition-colors"
+                                    className="text-gray-400 hover:text-gray-600 transition-colors"
                                 >
-                                    <span>Open</span>
+                                    <ExternalLink className="w-4 h-4" />
                                 </button>
                             </div>
+
+                            {/* Progress Bar */}
+                            {project.progress !== undefined && (
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between text-sm mb-2">
+                                        <span className="text-gray-600 font-medium">Progress</span>
+                                        <span className="font-semibold text-gray-900">{project.progress}%</span>
+                                    </div>
+                                    <div className={`${getProgressBgColor(project.progress)} rounded-full h-2 overflow-hidden`}>
+                                        <div
+                                            className={`${getProgressColor(project.progress)} h-2 rounded-full transition-all duration-500`}
+                                            style={{ width: `${project.progress}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Due Date */}
+                            {project.dueDate && (
+                                <div className="flex items-center space-x-2 mb-4">
+                                    <Clock className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600">Due Date</span>
+                                    <span className="text-sm font-medium text-gray-900">{project.dueDate}</span>
+                                </div>
+                            )}
+
+                            {/* Technology Stack */}
+                            {project.technology_stack && project.technology_stack.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mb-4">
+                                    {project.technology_stack.slice(0, 4).map((tech, index) => (
+                                        <span
+                                            key={index}
+                                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200"
+                                        >
+                                            {tech}
+                                        </span>
+                                    ))}
+                                    {project.technology_stack.length > 4 && (
+                                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                                            +{project.technology_stack.length - 4} more
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Team Members and Action */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    {project.teamMembers && project.teamMembers.length > 0 && (
+                                        <div className="flex -space-x-2">
+                                            {project.teamMembers.slice(0, 3).map((member, index) => (
+                                                <div
+                                                    key={member.id}
+                                                    className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-600"
+                                                    title={member.name}
+                                                >
+                                                    {member.avatar ? (
+                                                        <img
+                                                            src={member.avatar}
+                                                            alt={member.name}
+                                                            className="w-full h-full rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        member.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {project.teamMembers.length > 3 && (
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-500">
+                                                    +{project.teamMembers.length - 3}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <button
+                                        onClick={() => navigate(`/projects/${project.id}`)}
+                                        className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                                    >
+                                        View Details
+                                    </button>
+                                    <button
+                                        onClick={() => navigate(`/workspace/${project.id}`)}
+                                        className="inline-flex items-center space-x-1 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 transition-colors"
+                                    >
+                                        <span>Open</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
             </div>
         </div>
     );

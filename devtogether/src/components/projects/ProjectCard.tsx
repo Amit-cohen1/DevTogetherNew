@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Project } from '../../types/database'
 import { useAuth } from '../../contexts/AuthContext'
 import { workspaceService } from '../../services/workspaceService'
+import type { ProjectWithTeamMembers, TeamMember } from '../../types/database'
 import {
     MapPin,
     Users,
@@ -15,27 +15,13 @@ import {
     Bookmark,
     Award,
     ArrowRight,
-    CheckCircle
+    CheckCircle,
+    Crown
 } from 'lucide-react'
 import { DIFFICULTY_LEVELS, APPLICATION_TYPES } from '../../utils/constants'
 
 interface ProjectCardProps {
-    project: Project & {
-        organization?: {
-            organization_name: string | null
-            avatar_url: string | null
-        }
-        applications?: Array<{
-            id: string
-            status: string
-            developer: {
-                id: string
-                first_name: string | null
-                last_name: string | null
-                avatar_url: string | null
-            }
-        }>
-    }
+    project: ProjectWithTeamMembers
     variant?: 'default' | 'large' | 'featured'
 }
 
@@ -45,7 +31,18 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
     const [isBookmarked, setIsBookmarked] = useState(false)
 
     // Debug logging
-    console.log('🃏 ProjectCard received project:', project.title, 'applications:', project.applications)
+    console.log('🃏 ProjectCard received project:', project.title)
+    console.log('  📋 Applications:', project.applications)
+    console.log('  👥 Team Members:', project.team_members)
+    console.log('  🏢 Organization:', project.organization)
+    console.log('  🔢 Team Members Count:', project.team_members?.length || 0)
+
+    // Add user context for debugging RLS issue
+    console.log('  🔐 Current user ID:', user?.id)
+    console.log('  🏛️ Project org ID:', project.organization_id)
+    console.log('  ✅ Is org owner?', user?.id === project.organization_id)
+    console.log('  🕐 User auth time:', user?.created_at)
+    console.log('  📧 User email:', user?.email)
 
     const difficultyInfo = DIFFICULTY_LEVELS.find(d => d.value === project.difficulty_level)
     const applicationTypeInfo = APPLICATION_TYPES.find(a => a.value === project.application_type)
@@ -215,7 +212,7 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                 </div>
 
                 {/* Team Members Section - More Prominent */}
-                {project.applications && project.applications.length > 0 && (
+                {project.team_members && project.team_members.length > 0 && (
                     <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-100">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center text-sm text-blue-800 font-medium">
@@ -224,35 +221,53 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                             </div>
                             <div className="flex items-center">
                                 <div className="flex -space-x-2 mr-3">
-                                    {project.applications.slice(0, 3).map((application) => (
-                                        <div
-                                            key={application.id}
-                                            className="w-7 h-7 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center overflow-hidden shadow-sm"
-                                            title={`${application.developer.first_name || ''} ${application.developer.last_name || ''}`.trim()}
-                                        >
-                                            {application.developer.avatar_url ? (
-                                                <img
-                                                    src={application.developer.avatar_url}
-                                                    alt={`${application.developer.first_name || ''} ${application.developer.last_name || ''}`.trim()}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <span className="text-xs text-blue-700 font-medium">
-                                                    {`${application.developer.first_name?.[0] || ''}${application.developer.last_name?.[0] || ''}`.toUpperCase()}
-                                                </span>
-                                            )}
-                                        </div>
-                                    ))}
-                                    {project.applications.length > 3 && (
+                                    {project.team_members.slice(0, 3).map((member: TeamMember) => {
+                                        const displayName = member.type === 'organization'
+                                            ? member.profile.organization_name || 'Organization'
+                                            : `${member.profile.first_name || ''} ${member.profile.last_name || ''}`.trim() || 'Unknown User';
+
+                                        const initials = member.type === 'organization'
+                                            ? (member.profile.organization_name?.[0] || 'O').toUpperCase()
+                                            : `${member.profile.first_name?.[0] || ''}${member.profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
+
+                                        return (
+                                            <div
+                                                key={member.id}
+                                                className={`w-7 h-7 rounded-full bg-white border-2 flex items-center justify-center overflow-hidden shadow-sm relative ${member.role === 'owner' ? 'border-yellow-300' : 'border-blue-200'
+                                                    }`}
+                                                title={`${displayName}${member.role === 'owner' ? ' (Owner)' : member.role === 'status_manager' ? ' (Status Manager)' : ''}`}
+                                            >
+                                                {member.profile.avatar_url ? (
+                                                    <img
+                                                        src={member.profile.avatar_url}
+                                                        alt={displayName}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <span className={`text-xs font-medium ${member.role === 'owner' ? 'text-yellow-700' : 'text-blue-700'
+                                                        }`}>
+                                                        {initials}
+                                                    </span>
+                                                )}
+                                                {member.role === 'owner' && (
+                                                    <Crown className="w-2.5 h-2.5 text-yellow-600 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
+                                                )}
+                                                {member.role === 'status_manager' && (
+                                                    <Star className="w-2.5 h-2.5 text-blue-600 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    {project.team_members.length > 3 && (
                                         <div className="w-7 h-7 rounded-full bg-blue-200 border-2 border-blue-200 flex items-center justify-center shadow-sm">
                                             <span className="text-xs text-blue-800 font-medium">
-                                                +{project.applications.length - 3}
+                                                +{project.team_members.length - 3}
                                             </span>
                                         </div>
                                     )}
                                 </div>
                                 <span className="text-xs text-blue-700 font-medium">
-                                    {project.applications.length} member{project.applications.length !== 1 ? 's' : ''}
+                                    {project.team_members.length} member{project.team_members.length !== 1 ? 's' : ''}
                                 </span>
                             </div>
                         </div>

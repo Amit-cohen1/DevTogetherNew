@@ -174,8 +174,9 @@ class OrganizationDashboardService {
                 const acceptedApplications = applications.filter((app: any) => app.status === 'accepted').length;
                 const teamMemberCount = acceptedApplications;
 
-                // Get recent applications (last 3)
+                // Get recent applications (last 3) - with null checks
                 const recentApplications = applications
+                    .filter((app: any) => app.profiles) // Filter out applications without profile data
                     .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .slice(0, 3)
                     .map((app: any) => ({
@@ -186,12 +187,12 @@ class OrganizationDashboardService {
                         created_at: app.created_at,
                         updated_at: app.updated_at || app.created_at,
                         developer: {
-                            id: app.profiles.id,
-                            first_name: app.profiles.first_name,
-                            last_name: app.profiles.last_name,
-                            email: app.profiles.email,
-                            avatar_url: app.profiles.avatar_url,
-                            skills: app.profiles.skills
+                            id: app.profiles?.id || app.developer_id,
+                            first_name: app.profiles?.first_name || null,
+                            last_name: app.profiles?.last_name || null,
+                            email: app.profiles?.email || '',
+                            avatar_url: app.profiles?.avatar_url || null,
+                            skills: app.profiles?.skills || []
                         },
                         project: {
                             id: project.id,
@@ -269,8 +270,18 @@ class OrganizationDashboardService {
                 status: app.status,
                 created_at: app.created_at,
                 updated_at: app.updated_at,
-                developer: app.developer,
-                project: app.project
+                developer: app.developer || {
+                    id: app.developer_id,
+                    first_name: null,
+                    last_name: null,
+                    email: '',
+                    avatar_url: null,
+                    skills: []
+                },
+                project: app.project || {
+                    id: app.project_id,
+                    title: 'Unknown Project'
+                }
             })) || [];
         } catch (error) {
             console.error('Error fetching recent applications:', error);
@@ -326,15 +337,15 @@ class OrganizationDashboardService {
 
             // Calculate member distribution by project
             const memberDistribution = projects?.map((project: any) => {
-                const projectMembers = teamApplications?.filter((app: any) => app.project_id === project.id) || [];
+                const projectMembers = teamApplications?.filter((app: any) => app.project_id === project.id && app.developer) || [];
                 return {
                     projectId: project.id,
                     projectTitle: project.title,
                     memberCount: projectMembers.length,
                     members: projectMembers.map((app: any) => ({
-                        id: app.developer.id,
-                        name: `${app.developer.first_name || ''} ${app.developer.last_name || ''}`.trim(),
-                        avatar_url: app.developer.avatar_url,
+                        id: app.developer?.id || app.developer_id,
+                        name: `${app.developer?.first_name || ''} ${app.developer?.last_name || ''}`.trim() || 'Unknown User',
+                        avatar_url: app.developer?.avatar_url || null,
                         role: 'developer' as const,
                         joinedAt: app.created_at,
                         projectCount: teamApplications?.filter((ta: any) => ta.developer_id === app.developer_id).length || 1
@@ -345,11 +356,13 @@ class OrganizationDashboardService {
             // Get unique team members
             const uniqueMembers = new Map();
             teamApplications?.forEach((app: any) => {
+                if (!app.developer) return; // Skip applications without developer data
+
                 const memberId = app.developer.id;
                 if (!uniqueMembers.has(memberId)) {
                     uniqueMembers.set(memberId, {
                         id: app.developer.id,
-                        name: `${app.developer.first_name || ''} ${app.developer.last_name || ''}`.trim(),
+                        name: `${app.developer.first_name || ''} ${app.developer.last_name || ''}`.trim() || 'Unknown User',
                         avatar_url: app.developer.avatar_url,
                         role: 'developer',
                         joinedAt: app.created_at,
@@ -362,13 +375,14 @@ class OrganizationDashboardService {
             const activeMembers = totalMembers; // For now, all members are considered active
             const averageProjectsPerMember = totalMembers > 0 ? (teamApplications?.length || 0) / totalMembers : 0;
 
-            // Get recent activity (latest team joins)
+            // Get recent activity (latest team joins) - with null checks
             const recentActivity = teamApplications
+                ?.filter((app: any) => app.developer && app.project) // Filter out applications without complete data
                 ?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                 .slice(0, 5)
                 .map((app: any) => ({
                     memberId: app.developer.id,
-                    memberName: `${app.developer.first_name || ''} ${app.developer.last_name || ''}`.trim(),
+                    memberName: `${app.developer.first_name || ''} ${app.developer.last_name || ''}`.trim() || 'Unknown User',
                     action: 'joined_project',
                     timestamp: app.created_at,
                     projectId: app.project.id,

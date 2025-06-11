@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { Grid, List, MoreVertical, Clock, Users, MapPin, Calendar, ArrowUpDown } from 'lucide-react'
-import { Project } from '../../types/database'
+import { ArrowUpDown, Grid, List, MoreVertical, Calendar, Clock, MapPin, Users } from 'lucide-react'
+import { ProjectWithTeamMembers } from '../../types/database'
 import { ProjectCard } from '../projects/ProjectCard'
 import { searchService } from '../../services/search'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface SearchResultsProps {
-    projects: Project[]
+    projects: ProjectWithTeamMembers[]
     totalCount: number
     searchTime: number
     currentQuery: string

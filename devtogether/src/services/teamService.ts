@@ -1,5 +1,7 @@
 import { supabase } from '../utils/supabase';
 import { User } from '../types/database';
+import { projectService } from './projects';
+import type { TeamMember as DatabaseTeamMember } from '../types/database';
 
 export interface TeamMember {
     id: string;
@@ -42,72 +44,55 @@ export interface TeamStats {
 }
 
 class TeamService {
-    // Get team members for a project
+    // Get team members for a project using the new team member structure
     async getTeamMembers(projectId: string): Promise<TeamMember[]> {
         try {
-            // Get project details first
-            const { data: project, error: projectError } = await supabase
-                .from('projects')
-                .select('*')
-                .eq('id', projectId)
-                .single();
+            // Use projectService to get unified team member data
+            const projectsWithMembers = await projectService.getProjectsWithTeamMembers();
+            const project = projectsWithMembers.find(p => p.id === projectId);
 
-            if (projectError) throw projectError;
+            if (!project) {
+                throw new Error('Project not found');
+            }
 
-            // Get organization owner details
-            const { data: owner, error: ownerError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', project.organization_id)
-                .single();
+            // Convert new team member structure to legacy format for backward compatibility
+            const legacyTeamMembers: TeamMember[] = project.team_members.map((member: DatabaseTeamMember) => {
+                // Create user object based on member type
+                const user: User = {
+                    id: member.profile.id,
+                    email: member.profile.email || '',
+                    role: member.type as 'developer' | 'organization',
+                    first_name: member.profile.first_name,
+                    last_name: member.profile.last_name,
+                    organization_name: member.profile.organization_name || null,
+                    bio: null,
+                    skills: null,
+                    location: null,
+                    website: null,
+                    linkedin: null,
+                    github: null,
+                    portfolio: null,
+                    avatar_url: member.profile.avatar_url,
+                    is_public: null,
+                    share_token: null,
+                    profile_views: null,
+                    created_at: '',
+                    updated_at: ''
+                };
 
-            if (ownerError) throw ownerError;
-
-            // Get developers with accepted applications
-            const { data: applications, error: applicationsError } = await supabase
-                .from('applications')
-                .select(`
-                    developer_id,
-                    created_at,
-                    status_manager,
-                    profiles:developer_id (*)
-                `)
-                .eq('project_id', projectId)
-                .eq('status', 'accepted');
-
-            if (applicationsError) throw applicationsError;
-
-            const teamMembers: TeamMember[] = [];
-
-            // Add organization owner
-            teamMembers.push({
-                id: `owner-${owner.id}`,
-                project_id: projectId,
-                user_id: owner.id,
-                role: 'owner',
-                joined_at: project.created_at || new Date().toISOString(),
-                status: 'active',
-                status_manager: true,
-                user: owner
+                return {
+                    id: `${member.type}-${member.id}`,
+                    project_id: projectId,
+                    user_id: member.profile.id,
+                    role: member.role === 'owner' ? 'owner' : 'member',
+                    joined_at: member.joined_at || project.created_at,
+                    status: 'active' as const,
+                    status_manager: member.role === 'owner' || member.role === 'status_manager',
+                    user
+                };
             });
 
-            // Add accepted developers
-            applications?.forEach((app: any) => {
-                if (app.profiles) {
-                    teamMembers.push({
-                        id: `member-${app.developer_id}`,
-                        project_id: projectId,
-                        user_id: app.developer_id,
-                        role: 'member',
-                        joined_at: app.created_at,
-                        status: 'active',
-                        status_manager: app.status_manager,
-                        user: app.profiles
-                    });
-                }
-            });
-
-            return teamMembers;
+            return legacyTeamMembers;
         } catch (error) {
             console.error('Error fetching team members:', error);
             throw error;

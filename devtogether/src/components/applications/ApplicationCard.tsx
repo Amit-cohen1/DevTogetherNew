@@ -63,7 +63,23 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
     }
 
     const hasPortfolioLinks = application.portfolio_links && application.portfolio_links.length > 0
-    const hasSkills = application.developer.skills && application.developer.skills.length > 0
+    const hasSkills = application.developer?.skills && application.developer.skills.length > 0
+
+    // Handle missing developer data
+    const developer = application.developer || {
+        id: application.developer_id || 'unknown',
+        first_name: null,
+        last_name: null,
+        email: 'Unknown User',
+        avatar_url: null,
+        bio: null,
+        skills: [],
+        portfolio: null,
+        github: null,
+        linkedin: null
+    }
+
+    const developerName = `${developer.first_name || ''} ${developer.last_name || ''}`.trim() || 'Unknown User'
 
     return (
         <div className={`bg-white rounded-lg border-2 transition-all hover:shadow-md ${isSelected ? 'border-primary-500 shadow-lg' : 'border-gray-200'
@@ -84,10 +100,10 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
 
                         {/* Avatar */}
                         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            {application.developer.avatar_url ? (
+                            {developer.avatar_url ? (
                                 <img
-                                    src={application.developer.avatar_url}
-                                    alt={`${application.developer.first_name} ${application.developer.last_name}`}
+                                    src={developer.avatar_url}
+                                    alt={developerName}
                                     className="w-12 h-12 rounded-full object-cover"
                                 />
                             ) : (
@@ -98,12 +114,12 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                         {/* Developer Info */}
                         <div>
                             <h3 className="font-semibold text-gray-900">
-                                {application.developer.first_name} {application.developer.last_name}
+                                {developerName}
                             </h3>
                             <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                                 <div className="flex items-center gap-1">
                                     <Mail className="w-4 h-4" />
-                                    <span>{application.developer.email}</span>
+                                    <span>{developer.email}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Calendar className="w-4 h-4" />
@@ -135,9 +151,9 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                 </div>
 
                 {/* Bio */}
-                {application.developer.bio && (
+                {developer.bio && (
                     <div className="mb-4">
-                        <p className="text-gray-700 text-sm line-clamp-2">{application.developer.bio}</p>
+                        <p className="text-gray-700 text-sm line-clamp-2">{developer.bio}</p>
                     </div>
                 )}
 
@@ -145,7 +161,7 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                 {hasSkills && (
                     <div className="mb-4">
                         <div className="flex flex-wrap gap-1">
-                            {application.developer.skills!.slice(0, 5).map((skill, index) => (
+                            {developer.skills!.slice(0, 5).map((skill, index) => (
                                 <span
                                     key={index}
                                     className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
@@ -154,9 +170,9 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                                     {skill}
                                 </span>
                             ))}
-                            {application.developer.skills!.length > 5 && (
+                            {developer.skills!.length > 5 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                                    +{application.developer.skills!.length - 5} more
+                                    +{developer.skills!.length - 5} more
                                 </span>
                             )}
                         </div>
@@ -165,9 +181,9 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
 
                 {/* Profile Links */}
                 <div className="flex items-center gap-4">
-                    {application.developer.portfolio && (
+                    {developer.portfolio && (
                         <a
-                            href={application.developer.portfolio}
+                            href={developer.portfolio}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
@@ -176,9 +192,9 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                             Portfolio
                         </a>
                     )}
-                    {application.developer.github && (
+                    {developer.github && (
                         <a
-                            href={application.developer.github}
+                            href={developer.github}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
@@ -187,9 +203,9 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                             GitHub
                         </a>
                     )}
-                    {application.developer.linkedin && (
+                    {developer.linkedin && (
                         <a
-                            href={application.developer.linkedin}
+                            href={developer.linkedin}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"

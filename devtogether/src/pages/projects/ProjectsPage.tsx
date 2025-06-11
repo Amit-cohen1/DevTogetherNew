@@ -33,7 +33,7 @@ export default function ProjectsPage() {
     // Search state
     const [query, setQuery] = useState(searchParams.get('q') || '')
     const [filters, setFilters] = useState<SearchFilters>({
-        status: ['open'] // Default to open projects
+        status: ['open'] // Will be updated based on user role in useEffect
     })
     const [results, setResults] = useState<SearchResult | null>(null)
     const [loading, setLoading] = useState(false)
@@ -61,22 +61,41 @@ export default function ProjectsPage() {
         const urlSort = searchParams.get('sort')
 
         if (urlQuery) setQuery(urlQuery)
-        if (urlFilters) {
-            try {
-                setFilters(JSON.parse(urlFilters))
-            } catch (e) {
-                console.error('Invalid filters in URL:', e)
-            }
-        }
         if (urlPage) setCurrentPage(parseInt(urlPage, 10))
         if (urlSort) setSortBy(urlSort as AdvancedSearchParams['sort_by'])
 
         // Always load projects on page load, with or without search query
         const sortValue = urlSort ? (urlSort as AdvancedSearchParams['sort_by']) : 'created_at'
         const searchQuery = urlQuery || ''
-        const searchFilters = urlFilters ? JSON.parse(urlFilters) : { status: ['open'] }
-        performSearch(searchQuery, searchFilters, 1, sortValue)
-    }, [searchParams])
+
+        // Smart default status filtering based on user role
+        let defaultStatusFilters: string[]
+        if (user && user.role === 'developer') {
+            // Developers should see projects they can apply to AND projects they're working on
+            defaultStatusFilters = ['open', 'in_progress']
+        } else {
+            // Organizations/visitors see only open projects by default
+            defaultStatusFilters = ['open']
+        }
+
+        // Determine final filters: URL filters take precedence, then role-based defaults
+        let finalFilters: SearchFilters
+        if (urlFilters) {
+            try {
+                finalFilters = JSON.parse(urlFilters)
+            } catch (e) {
+                console.error('Invalid filters in URL:', e)
+                finalFilters = { status: defaultStatusFilters }
+            }
+        } else {
+            finalFilters = { status: defaultStatusFilters }
+        }
+
+        // Update component state to reflect the actual filters being used
+        setFilters(finalFilters)
+
+        performSearch(searchQuery, finalFilters, 1, sortValue)
+    }, [searchParams, user])
 
     // Update URL when search parameters change
     const updateURL = useCallback((newQuery: string, newFilters: SearchFilters, page: number = 1) => {
@@ -205,7 +224,17 @@ export default function ProjectsPage() {
 
     // Handle clear all filters
     const handleClearFilters = () => {
-        const clearedFilters = { status: ['open'] }
+        // Smart default status filtering based on user role
+        let defaultStatusFilters: string[]
+        if (user && user.role === 'developer') {
+            // Developers should see projects they can apply to AND projects they're working on
+            defaultStatusFilters = ['open', 'in_progress']
+        } else {
+            // Organizations/visitors see only open projects by default
+            defaultStatusFilters = ['open']
+        }
+
+        const clearedFilters = { status: defaultStatusFilters }
         setFilters(clearedFilters)
         setCurrentPage(1)
         updateURL(query, clearedFilters, 1)

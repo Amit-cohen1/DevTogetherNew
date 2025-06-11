@@ -1,5 +1,6 @@
 import { supabase } from '../utils/supabase'
-import { Project, SearchHistory, SearchFilters, SearchResult, SearchSuggestion, PopularSearch } from '../types/database'
+import { Project, SearchHistory, SearchFilters, SearchResult, SearchSuggestion, PopularSearch, SearchAnalytics } from '../types/database'
+import { projectService } from './projects'
 
 export interface AdvancedSearchParams {
     query: string
@@ -17,113 +18,122 @@ export const searchService = {
         const { query, filters = {}, sort_by = 'relevance', sort_order = 'desc', page = 1, limit = 20 } = params
 
         try {
-            let supabaseQuery = supabase
-                .from('projects')
-                .select(`
-          *,
-          organization:profiles!projects_organization_id_fkey(
-            organization_name,
-            avatar_url
-          ),
-          applications(
-            id,
-            status,
-            developer:profiles!applications_developer_id_fkey(
-              id,
-              first_name,
-              last_name,
-              avatar_url
-            )
-          )
-        `, { count: 'exact' })
+            // Use the projectService to get projects with proper team member composition
+            const allProjects = await projectService.getProjectsWithTeamMembers({
+                status: filters.status?.length ? filters.status[0] as any : 'open',
+                difficulty_level: filters.difficulty_level?.length ? filters.difficulty_level[0] as any : undefined,
+                application_type: filters.application_type?.length ? filters.application_type[0] as any : undefined,
+                technology_stack: filters.technology_stack
+            })
 
-            // Full-text search across multiple fields
+            // Filter projects based on search query
+            let filteredProjects = allProjects
+
             if (query.trim()) {
-                supabaseQuery = supabaseQuery.or([
-                    `title.ilike.%${query}%`,
-                    `description.ilike.%${query}%`,
-                    `requirements.ilike.%${query}%`,
-                    `technology_stack.cs.{${query}}`
-                ].join(','))
+                const searchTerm = query.toLowerCase()
+                filteredProjects = allProjects.filter(project =>
+                    project.title.toLowerCase().includes(searchTerm) ||
+                    project.description.toLowerCase().includes(searchTerm) ||
+                    project.requirements.toLowerCase().includes(searchTerm) ||
+                    project.technology_stack.some(tech => tech.toLowerCase().includes(searchTerm)) ||
+                    project.organization?.organization_name?.toLowerCase().includes(searchTerm)
+                )
             }
 
-            // Apply filters
-            if (filters.technology_stack?.length) {
-                supabaseQuery = supabaseQuery.overlaps('technology_stack', filters.technology_stack)
+            // Apply additional filters
+            if (filters.difficulty_level?.length && filters.difficulty_level.length > 1) {
+                filteredProjects = filteredProjects.filter(project =>
+                    filters.difficulty_level!.includes(project.difficulty_level)
+                )
             }
 
-            if (filters.difficulty_level?.length) {
-                supabaseQuery = supabaseQuery.in('difficulty_level', filters.difficulty_level)
+            if (filters.application_type?.length && filters.application_type.length > 1) {
+                filteredProjects = filteredProjects.filter(project =>
+                    filters.application_type!.includes(project.application_type)
+                )
             }
 
-            if (filters.application_type?.length) {
-                supabaseQuery = supabaseQuery.in('application_type', filters.application_type)
-            }
-
-            if (filters.status?.length) {
-                supabaseQuery = supabaseQuery.in('status', filters.status)
-            } else {
-                // Default to open projects only if no status filter
-                supabaseQuery = supabaseQuery.eq('status', 'open')
+            if (filters.status?.length && filters.status.length > 1) {
+                filteredProjects = filteredProjects.filter(project =>
+                    filters.status!.includes(project.status)
+                )
             }
 
             if (filters.is_remote !== null && filters.is_remote !== undefined) {
-                supabaseQuery = supabaseQuery.eq('is_remote', filters.is_remote)
+                filteredProjects = filteredProjects.filter(project =>
+                    project.is_remote === filters.is_remote
+                )
             }
 
             // Date range filters
             if (filters.date_range?.start) {
-                supabaseQuery = supabaseQuery.gte('created_at', filters.date_range.start)
+                filteredProjects = filteredProjects.filter(project =>
+                    new Date(project.created_at) >= new Date(filters.date_range!.start!)
+                )
             }
 
             if (filters.date_range?.end) {
-                supabaseQuery = supabaseQuery.lte('created_at', filters.date_range.end)
+                filteredProjects = filteredProjects.filter(project =>
+                    new Date(project.created_at) <= new Date(filters.date_range!.end!)
+                )
             }
 
             // Sorting
             switch (sort_by) {
                 case 'created_at':
-                    supabaseQuery = supabaseQuery.order('created_at', { ascending: sort_order === 'asc' })
+                    filteredProjects.sort((a, b) => {
+                        const dateA = new Date(a.created_at).getTime()
+                        const dateB = new Date(b.created_at).getTime()
+                        return sort_order === 'asc' ? dateA - dateB : dateB - dateA
+                    })
                     break
                 case 'deadline':
-                    supabaseQuery = supabaseQuery.order('deadline', { ascending: sort_order === 'asc', nullsFirst: false })
+                    filteredProjects.sort((a, b) => {
+                        if (!a.deadline && !b.deadline) return 0
+                        if (!a.deadline) return 1
+                        if (!b.deadline) return -1
+                        const dateA = new Date(a.deadline).getTime()
+                        const dateB = new Date(b.deadline).getTime()
+                        return sort_order === 'asc' ? dateA - dateB : dateB - dateA
+                    })
                     break
                 case 'title':
-                    supabaseQuery = supabaseQuery.order('title', { ascending: sort_order === 'asc' })
+                    filteredProjects.sort((a, b) => {
+                        const comparison = a.title.localeCompare(b.title)
+                        return sort_order === 'asc' ? comparison : -comparison
+                    })
                     break
                 case 'popularity':
-                    // Sort by application count (to be implemented with joins)
-                    supabaseQuery = supabaseQuery.order('created_at', { ascending: false })
+                    // Sort by team member count
+                    filteredProjects.sort((a, b) => {
+                        const countA = a.team_members.length
+                        const countB = b.team_members.length
+                        return sort_order === 'asc' ? countA - countB : countB - countA
+                    })
                     break
                 default: // relevance
-                    supabaseQuery = supabaseQuery.order('created_at', { ascending: false })
+                    // For relevance, keep the natural order from database (created_at desc)
+                    filteredProjects.sort((a, b) => {
+                        const dateA = new Date(a.created_at).getTime()
+                        const dateB = new Date(b.created_at).getTime()
+                        return dateB - dateA
+                    })
             }
+
+            const totalCount = filteredProjects.length
 
             // Pagination
             const offset = (page - 1) * limit
-            supabaseQuery = supabaseQuery.range(offset, offset + limit - 1)
-
-            const { data, error, count } = await supabaseQuery
-
-            if (error) {
-                console.error('Search error:', error)
-                throw new Error(error.message)
-            }
+            const paginatedProjects = filteredProjects.slice(offset, offset + limit)
 
             const searchTime = Date.now() - startTime
 
             // Get search suggestions if query is short
             const suggestions = query.length < 3 ? await this.getSearchSuggestions(query) : []
 
-            // Filter to only include accepted applications for each project
-            const projectsWithAcceptedMembers = data?.map((project: any) => ({
-                ...project,
-                applications: project.applications?.filter((app: any) => app.status === 'accepted') || []
-            })) || []
-
             return {
-                projects: projectsWithAcceptedMembers,
-                total_count: count || 0,
+                projects: paginatedProjects,
+                total_count: totalCount,
                 search_time: searchTime,
                 suggestions: suggestions.map(s => s.text)
             }
@@ -350,39 +360,26 @@ export const searchService = {
         if (!query.trim()) return []
 
         try {
-            const { data } = await supabase
-                .from('projects')
-                .select(`
-          id,
-          title,
-          description,
-          technology_stack,
-          difficulty_level,
-          status,
-          organization:profiles!projects_organization_id_fkey(organization_name, avatar_url),
-          applications(
-            id,
-            status,
-            developer:profiles!applications_developer_id_fkey(
-              id,
-              first_name,
-              last_name,
-              avatar_url
+            // Use projectService to get projects with proper team member composition
+            const allProjects = await projectService.getProjectsWithTeamMembers({
+                status: 'open'
+            })
+
+            // Filter projects based on query
+            const searchTerm = query.toLowerCase()
+            const filteredProjects = allProjects.filter(project =>
+                project.title.toLowerCase().includes(searchTerm) ||
+                project.description.toLowerCase().includes(searchTerm) ||
+                project.technology_stack.some(tech => tech.toLowerCase().includes(searchTerm)) ||
+                project.organization?.organization_name?.toLowerCase().includes(searchTerm)
             )
-          )
-        `)
-                .or(`title.ilike.%${query}%,description.ilike.%${query}%,technology_stack.cs.{${query}}`)
-                .eq('status', 'open')
-                .order('created_at', { ascending: false })
-                .limit(limit)
 
-            // Filter to only include accepted applications
-            const projectsWithAcceptedMembers = data?.map((project: any) => ({
-                ...project,
-                applications: project.applications?.filter((app: any) => app.status === 'accepted') || []
-            })) || []
+            // Sort by relevance (created_at desc) and limit results
+            const sortedProjects = filteredProjects
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, limit)
 
-            return projectsWithAcceptedMembers
+            return sortedProjects
         } catch (error) {
             console.error('Quick search error:', error)
             return []
