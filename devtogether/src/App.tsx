@@ -42,6 +42,9 @@ import HomePage from './pages/HomePage'
 import DeveloperLandingPage from './pages/DeveloperLandingPage'
 import OrganizationLandingPage from './pages/OrganizationLandingPage'
 
+// Notifications
+import NotificationsPage from './pages/NotificationsPage'
+
 function App() {
   return (
     <AuthProvider>
@@ -219,12 +222,32 @@ function App() {
                 }
               />
 
+              {/* Notifications Route */}
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
+                    <NotificationsPage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Organization Projects Route */}
               <Route
                 path="/organization/projects"
                 element={
                   <ProtectedRoute requiredRole="organization">
                     <ProjectsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Notifications Route */}
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
+                    <NotificationsPage />
                   </ProtectedRoute>
                 }
               />

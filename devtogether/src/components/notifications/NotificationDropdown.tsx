@@ -192,10 +192,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
     return (
         <div
             ref={dropdownRef}
-            className="absolute right-0 top-full mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col"
         >
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
                     <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-80 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
                 {loading ? (
                     <div className="p-8 text-center">
                         <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -251,9 +251,9 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                 )}
             </div>
 
-            {/* Footer */}
+            {/* Footer - Always show if notifications exist */}
             {notifications.length > 0 && (
-                <div className="p-3 border-t border-gray-200 bg-gray-50">
+                <div className="p-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
                     <Link
                         to="/notifications"
                         onClick={onClose}
