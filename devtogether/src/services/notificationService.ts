@@ -23,6 +23,44 @@ class NotificationService {
     // Create a new notification
     async createNotification(data: NotificationCreateData): Promise<Notification | null> {
         try {
+            console.log('🔔 Creating notification:', {
+                user_id: data.user_id,
+                title: data.title,
+                type: data.type,
+                message: data.message.substring(0, 50) + '...'
+            });
+
+            // Validate input data
+            if (!data.user_id) {
+                console.error('❌ Notification creation failed: Missing user_id');
+                return null;
+            }
+            if (!data.title) {
+                console.error('❌ Notification creation failed: Missing title');
+                return null;
+            }
+            if (!data.message) {
+                console.error('❌ Notification creation failed: Missing message');
+                return null;
+            }
+            if (!data.type) {
+                console.error('❌ Notification creation failed: Missing type');
+                return null;
+            }
+
+            // Check current auth session
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError) {
+                console.error('❌ Session error during notification creation:', sessionError);
+                return null;
+            }
+            if (!session) {
+                console.error('❌ No active session during notification creation');
+                return null;
+            }
+
+            console.log('✅ Session check passed for user:', session.user.id);
+
             const { data: notification, error } = await supabase
                 .from('notifications')
                 .insert([{
@@ -37,13 +75,31 @@ class NotificationService {
                 .single();
 
             if (error) {
-                console.error('Error creating notification:', error);
+                console.error('❌ Database error creating notification:', {
+                    error: error,
+                    code: error.code,
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint
+                });
                 return null;
             }
 
+            if (!notification) {
+                console.error('❌ No notification returned from database');
+                return null;
+            }
+
+            console.log('✅ Notification created successfully:', {
+                id: notification.id,
+                user_id: notification.user_id,
+                title: notification.title,
+                type: notification.type
+            });
+
             return notification;
         } catch (error) {
-            console.error('Error creating notification:', error);
+            console.error('❌ Unexpected error creating notification:', error);
             return null;
         }
     }
@@ -189,6 +245,14 @@ class NotificationService {
         status: 'accepted' | 'rejected',
         projectId: string
     ): Promise<void> {
+        console.log('📤 Attempting to notify developer of application status change:', {
+            developerId,
+            organizationName,
+            projectTitle,
+            status,
+            projectId
+        });
+
         const title = status === 'accepted'
             ? '🎉 Application Accepted!'
             : 'Application Update';
@@ -197,7 +261,7 @@ class NotificationService {
             ? `Congratulations! ${organizationName} has accepted your application for ${projectTitle}.`
             : `Your application for ${projectTitle} has been reviewed by ${organizationName}.`;
 
-        await this.createNotification({
+        const result = await this.createNotification({
             user_id: developerId,
             title,
             message,
@@ -209,6 +273,13 @@ class NotificationService {
                 status
             }
         });
+
+        if (!result) {
+            console.error('❌ Failed to create application status notification for developer:', developerId);
+            throw new Error('Failed to create application status notification');
+        }
+
+        console.log('✅ Application status notification sent successfully to developer:', developerId);
     }
 
     // New application notifications for organizations
@@ -219,7 +290,15 @@ class NotificationService {
         applicationId: string,
         projectId: string
     ): Promise<void> {
-        await this.createNotification({
+        console.log('📤 Attempting to notify organization of new application:', {
+            organizationUserId,
+            developerName,
+            projectTitle,
+            applicationId,
+            projectId
+        });
+
+        const result = await this.createNotification({
             user_id: organizationUserId,
             title: '📝 New Application Received',
             message: `${developerName} has applied to your project: ${projectTitle}`,
@@ -231,6 +310,13 @@ class NotificationService {
                 developerName
             }
         });
+
+        if (!result) {
+            console.error('❌ Failed to create new application notification for organization:', organizationUserId);
+            throw new Error('Failed to create new application notification');
+        }
+
+        console.log('✅ New application notification sent successfully to organization:', organizationUserId);
     }
 
     // Project update notifications
