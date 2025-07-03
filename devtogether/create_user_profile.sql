@@ -76,3 +76,8 @@ WHERE id = auth.uid();
 
 -- If you're an organization, update the role manually:
 -- UPDATE public.profiles SET role = 'organization' WHERE id = auth.uid(); 
+
+-- NOTE: Enforce NOT NULL on first_name and last_name for data integrity
+-- Example migration:
+-- ALTER TABLE public.profiles ALTER COLUMN first_name SET NOT NULL;
+-- ALTER TABLE public.profiles ALTER COLUMN last_name SET NOT NULL; 

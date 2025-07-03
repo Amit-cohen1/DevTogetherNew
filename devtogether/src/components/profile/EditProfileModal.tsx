@@ -145,6 +145,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
 
     const onSubmit = async (data: ProfileFormData) => {
+        if (!data.first_name || !data.last_name) {
+            setError('First and last name are required.');
+            return;
+        }
         try {
             setLoading(true)
             setError(null)
@@ -258,13 +262,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="First Name"
-                                {...register('first_name', { required: 'First name is required' })}
                                 error={errors.first_name?.message}
+                                {...register('first_name', { required: 'First name is required' })}
                             />
                             <Input
                                 label="Last Name"
-                                {...register('last_name', { required: 'Last name is required' })}
                                 error={errors.last_name?.message}
+                                {...register('last_name', { required: 'Last name is required' })}
                             />
                         </div>
                     ) : (
