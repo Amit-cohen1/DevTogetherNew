@@ -43,4 +43,8 @@ CREATE INDEX IF NOT EXISTS idx_profiles_share_token ON profiles(share_token);
 COMMENT ON TABLE profile_analytics IS 'Track profile views and sharing analytics';
 COMMENT ON COLUMN profiles.is_public IS 'Whether profile is publicly shareable';
 COMMENT ON COLUMN profiles.share_token IS 'Unique token for sharing profile via link';
-COMMENT ON COLUMN profiles.profile_views IS 'Total number of profile views'; 
+COMMENT ON COLUMN profiles.profile_views IS 'Total number of profile views';
+
+-- Enforce NOT NULL on first_name and last_name for data integrity
+ALTER TABLE profiles ALTER COLUMN first_name SET NOT NULL;
+ALTER TABLE profiles ALTER COLUMN last_name SET NOT NULL; 

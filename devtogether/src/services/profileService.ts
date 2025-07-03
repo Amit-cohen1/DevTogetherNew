@@ -414,6 +414,14 @@ class ProfileService {
             throw error;
         }
     }
+
+    async updateProfile(userId: string, updates: Partial<User>): Promise<{ success: boolean; error?: string }> {
+        if (!updates.first_name || !updates.last_name) {
+            return { success: false, error: 'First and last name are required.' };
+        }
+        // ... existing code for updating profile ...
+        return { success: false, error: 'Not implemented.' };
+    }
 }
 
 export const profileService = new ProfileService(); 

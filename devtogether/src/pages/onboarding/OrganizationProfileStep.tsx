@@ -6,6 +6,8 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 
 interface OrganizationProfileFormData {
+    first_name: string
+    last_name: string
     bio: string
     location: string
     website: string
@@ -36,10 +38,16 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
     })
 
     const onSubmit = async (data: OrganizationProfileFormData) => {
+        if (!data.first_name || !data.last_name) {
+            alert('First and last name are required.')
+            return
+        }
         try {
             setIsSubmitting(true)
 
             const profileUpdates = {
+                first_name: data.first_name,
+                last_name: data.last_name,
                 bio: data.bio,
                 location: data.location || null,
                 website: data.website || null
@@ -71,6 +79,20 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Name Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                        label="First Name"
+                        error={errors.first_name?.message}
+                        {...register('first_name', { required: 'First name is required' })}
+                    />
+                    <Input
+                        label="Last Name"
+                        error={errors.last_name?.message}
+                        {...register('last_name', { required: 'Last name is required' })}
+                    />
+                </div>
+
                 {/* Mission/Bio */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
