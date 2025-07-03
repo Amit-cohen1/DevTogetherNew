@@ -16,7 +16,8 @@ import {
     Bell,
     ChevronDown,
     Home,
-    Plus
+    Plus,
+    Shield
 } from 'lucide-react'
 
 export const Navbar: React.FC = () => {
@@ -331,6 +332,18 @@ export const Navbar: React.FC = () => {
                                         <User className="w-4 h-4" />
                                         View Profile
                                     </Link>
+
+                                    {/* Admin link - only show for admin users */}
+                                    {profile.is_admin && (
+                                        <Link
+                                            to="/admin"
+                                            className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            <Shield className="w-4 h-4 text-purple-600" />
+                                            <span className="text-purple-600 font-medium">Admin Dashboard</span>
+                                        </Link>
+                                    )}
 
                                     <Link
                                         to="/settings"

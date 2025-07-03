@@ -76,6 +76,11 @@ class TeamService {
                     is_public: null,
                     share_token: null,
                     profile_views: null,
+                    is_admin: null,
+                    organization_verified: null,
+                    organization_verified_at: null,
+                    organization_verified_by: null,
+                    organization_rejection_reason: null,
                     created_at: '',
                     updated_at: ''
                 };
