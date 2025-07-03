@@ -31,6 +31,8 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
         formState: { errors }
     } = useForm<OrganizationProfileFormData>({
         defaultValues: {
+            first_name: profile?.first_name || '',
+            last_name: profile?.last_name || '',
             bio: profile?.bio || '',
             location: profile?.location || '',
             website: profile?.website || ''
@@ -38,13 +40,8 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
     })
 
     const onSubmit = async (data: OrganizationProfileFormData) => {
-        if (!data.first_name || !data.last_name) {
-            alert('First and last name are required.')
-            return
-        }
         try {
             setIsSubmitting(true)
-
             const profileUpdates = {
                 first_name: data.first_name,
                 last_name: data.last_name,
@@ -52,9 +49,7 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
                 location: data.location || null,
                 website: data.website || null
             }
-
             const { success, error } = await updateProfile(profileUpdates)
-
             if (success) {
                 onNext()
             } else {

@@ -363,5 +363,10 @@ export const projectService = {
         }
 
         return data || []
+    },
+
+    // Get all projects for an organization with team and org info (for management page)
+    async getOrganizationProjectsWithTeamMembers(organizationId: string): Promise<ProjectWithTeamMembers[]> {
+        return this.getProjectsWithTeamMembers({ organization_id: organizationId })
     }
 } 
