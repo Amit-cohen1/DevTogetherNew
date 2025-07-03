@@ -7,7 +7,7 @@ import { Navigate } from 'react-router-dom'
 import { Shield, AlertTriangle } from 'lucide-react'
 
 const AdminPage: React.FC = () => {
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [checkingAdmin, setCheckingAdmin] = useState(true)
 

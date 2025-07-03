@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute'
-import { Layout } from './components/layout'
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage'

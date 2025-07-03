@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { adminService, PendingOrganization } from '../../services/adminService'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../ui/Button'
@@ -33,29 +33,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadOrganizations()
-  }, [])
-
-  useEffect(() => {
-    filterAndSearchOrganizations()
-  }, [organizations, searchTerm, filterStatus])
-
-  const loadOrganizations = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await adminService.getAllOrganizations()
-      setOrganizations(data)
-    } catch (err) {
-      console.error('Error loading organizations:', err)
-      setError('Failed to load organizations')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const filterAndSearchOrganizations = () => {
+  const filterAndSearchOrganizations = useCallback(() => {
     let filtered = organizations
 
     // Apply status filter
@@ -78,6 +56,28 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
     }
 
     setFilteredOrganizations(filtered)
+  }, [organizations, searchTerm, filterStatus])
+
+  useEffect(() => {
+    loadOrganizations()
+  }, [])
+
+  useEffect(() => {
+    filterAndSearchOrganizations()
+  }, [filterAndSearchOrganizations])
+
+  const loadOrganizations = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await adminService.getAllOrganizations()
+      setOrganizations(data)
+    } catch (err) {
+      console.error('Error loading organizations:', err)
+      setError('Failed to load organizations')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleApprove = async (organizationId: string) => {

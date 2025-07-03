@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -18,12 +18,12 @@ import {
     Building2,
     Users,
     Clock,
-    TrendingUp,
     Target,
     AlertCircle,
     RefreshCw,
     Plus,
-    Settings
+    Settings,
+    ShieldAlert
 } from 'lucide-react';
 
 interface OrganizationDashboardData {
@@ -43,13 +43,7 @@ const OrganizationDashboard: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        if (user && profile?.role === 'organization') {
-            loadDashboardData();
-        }
-    }, [user, profile]);
-
-    const loadDashboardData = async () => {
+    const loadDashboardData = useCallback(async () => {
         try {
             setError(null);
             const data = await organizationDashboardService.refreshOrganizationData(user!.id);
@@ -60,7 +54,13 @@ const OrganizationDashboard: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (user && profile?.role === 'organization') {
+            loadDashboardData();
+        }
+    }, [user, profile, loadDashboardData]);
 
     const handleRefresh = async () => {
         setRefreshing(true);
@@ -138,8 +138,52 @@ const OrganizationDashboard: React.FC = () => {
 
     const { stats, projects, applications, teamAnalytics } = dashboardData;
 
+    // Check organization verification status
+    const isVerified = profile?.organization_verified === true;
+    const isPending = profile?.organization_verified === false && !profile?.organization_rejection_reason;
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Verification Status Banner */}
+            {!isVerified && (
+                <div className={`rounded-lg p-4 mb-6 border ${
+                    isPending ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'
+                }`}>
+                    <div className="flex items-start">
+                        <div className={`flex-shrink-0 ${
+                            isPending ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                            <ShieldAlert className="h-5 w-5" />
+                        </div>
+                        <div className="ml-3 flex-1">
+                            <h3 className={`text-sm font-medium ${
+                                isPending ? 'text-yellow-800' : 'text-red-800'
+                            }`}>
+                                {isPending ? 'Organization Verification Pending' : 'Organization Verification Required'}
+                            </h3>
+                            <div className={`mt-2 text-sm ${
+                                isPending ? 'text-yellow-700' : 'text-red-700'
+                            }`}>
+                                <p>
+                                    {isPending 
+                                        ? 'Your organization is currently under review by our admin team. You\'ll be able to create projects once approved.'
+                                        : `Your organization verification was not approved. Reason: ${profile?.organization_rejection_reason}`
+                                    }
+                                </p>
+                            </div>
+                            <div className="mt-3">
+                                <Button
+                                    onClick={() => navigate('/profile')}
+                                    size="sm"
+                                    className={isPending ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700'}
+                                >
+                                    {isPending ? 'View Profile' : 'Update Profile'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div>
@@ -160,12 +204,31 @@ const OrganizationDashboard: React.FC = () => {
                     >
                         Refresh
                     </Button>
-                    <Button
-                        onClick={() => navigate('/projects/create')}
-                        icon={<Plus className="w-4 h-4" />}
-                    >
-                        Create Project
-                    </Button>
+                    {profile?.organization_verified ? (
+                        <Button
+                            onClick={() => navigate('/projects/create')}
+                            icon={<Plus className="w-4 h-4" />}
+                        >
+                            Create Project
+                        </Button>
+                    ) : (
+                        <div className="relative group">
+                            <Button
+                                disabled
+                                icon={<ShieldAlert className="w-4 h-4" />}
+                                className="opacity-50 cursor-not-allowed"
+                            >
+                                Verification Required
+                            </Button>
+                            <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
+                                <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45"></div>
+                                {profile?.organization_rejection_reason 
+                                    ? "Organization verification was rejected. Please update your profile to create projects." 
+                                    : "Organization verification pending. You'll be able to create projects once approved by our admin team."
+                                }
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -239,10 +302,12 @@ const OrganizationDashboard: React.FC = () => {
                     <Button
                         variant="outline"
                         className="w-full justify-start"
-                        onClick={() => navigate('/projects/create')}
-                        icon={<Plus className="w-4 h-4" />}
+                        onClick={profile?.organization_verified ? () => navigate('/projects/create') : undefined}
+                        icon={profile?.organization_verified ? <Plus className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                        disabled={!profile?.organization_verified}
+                        title={profile?.organization_verified ? undefined : "Organization verification required to create projects"}
                     >
-                        Create New Project
+                        {profile?.organization_verified ? 'Create New Project' : 'Verification Required'}
                     </Button>
 
                     <Button

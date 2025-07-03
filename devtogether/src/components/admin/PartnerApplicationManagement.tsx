@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { adminService, PartnerApplication } from '../../services/adminService'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../ui/Button'
@@ -37,25 +37,7 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
     loadPartnerApplications()
   }, [])
 
-  useEffect(() => {
-    filterAndSearchApplications()
-  }, [applications, searchTerm, filterStatus])
-
-  const loadPartnerApplications = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await adminService.getPartnerApplications()
-      setApplications(data)
-    } catch (err) {
-      console.error('Error loading partner applications:', err)
-      setError('Failed to load partner applications')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const filterAndSearchApplications = () => {
+  const filterAndSearchApplications = useCallback(() => {
     let filtered = applications
 
     // Apply status filter
@@ -76,6 +58,24 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
     }
 
     setFilteredApplications(filtered)
+  }, [applications, searchTerm, filterStatus])
+
+  useEffect(() => {
+    filterAndSearchApplications()
+  }, [filterAndSearchApplications])
+
+  const loadPartnerApplications = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await adminService.getPartnerApplications()
+      setApplications(data)
+    } catch (err) {
+      console.error('Error loading partner applications:', err)
+      setError('Failed to load partner applications')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleApprove = async (applicationId: string) => {
