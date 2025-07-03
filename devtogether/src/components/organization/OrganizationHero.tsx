@@ -7,7 +7,6 @@ import {
     Award,
     ExternalLink,
     Globe,
-    Mail,
     Star
 } from 'lucide-react'
 
@@ -20,12 +19,14 @@ interface OrganizationHeroProps {
         totalDevelopers: number
         successRate: number
     }
+    testimonials?: Array<{ rating: number }>
     isOwnProfile?: boolean
 }
 
 export const OrganizationHero: React.FC<OrganizationHeroProps> = ({
     profile,
     stats,
+    testimonials = [],
     isOwnProfile = false
 }) => {
     const handleContactClick = () => {
@@ -41,6 +42,36 @@ export const OrganizationHero: React.FC<OrganizationHeroProps> = ({
             projectsSection.scrollIntoView({ behavior: 'smooth' })
         }
     }
+
+    // Calculate years active based on profile creation date
+    const getYearsActive = () => {
+        if (!profile.created_at) return 'New'
+        const createdYear = new Date(profile.created_at).getFullYear()
+        const currentYear = new Date().getFullYear()
+        const years = currentYear - createdYear
+        return years > 0 ? `${years}+` : 'New'
+    }
+
+    // Calculate average rating from testimonials
+    const getAverageRating = () => {
+        if (!testimonials || testimonials.length === 0) return null
+        const total = testimonials.reduce((sum, testimonial) => sum + (testimonial.rating || 0), 0)
+        return Math.round((total / testimonials.length) * 10) / 10 // Round to 1 decimal
+    }
+
+    // Get work style from profile or default based on organization data
+    const getWorkStyle = () => {
+        // This could be enhanced with actual work_style field in profile
+        // For now, we'll use location as an indicator
+        if (!profile.location) return 'Flexible'
+        if (profile.location.toLowerCase().includes('remote')) return 'Remote'
+        if (profile.location.toLowerCase().includes('global')) return 'Global'
+        return 'Hybrid'
+    }
+
+    const averageRating = getAverageRating()
+    const yearsActive = getYearsActive()
+    const workStyle = getWorkStyle()
 
     return (
         <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-blue-800 text-white overflow-hidden">
@@ -171,22 +202,29 @@ export const OrganizationHero: React.FC<OrganizationHeroProps> = ({
                             </div>
 
                             {/* Rating Display (if available) */}
-                            <div className="mt-6 pt-6 border-t border-white/20">
-                                <div className="flex items-center justify-center gap-2">
-                                    <div className="flex gap-1">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star
-                                                key={i}
-                                                className={`w-5 h-5 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-white/30'
-                                                    }`}
-                                            />
-                                        ))}
+                            {averageRating && (
+                                <div className="mt-6 pt-6 border-t border-white/20">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="flex gap-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star
+                                                    key={i}
+                                                    className={`w-5 h-5 ${i < Math.floor(averageRating) ? 'text-yellow-400 fill-current' : 'text-white/30'
+                                                        }`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="text-white/90 text-sm ml-2">
+                                            {averageRating} organization rating
+                                            {testimonials.length > 0 && (
+                                                <span className="text-white/70">
+                                                    {' '}({testimonials.length} review{testimonials.length !== 1 ? 's' : ''})
+                                                </span>
+                                            )}
+                                        </span>
                                     </div>
-                                    <span className="text-white/90 text-sm ml-2">
-                                        4.8 organization rating
-                                    </span>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -195,7 +233,7 @@ export const OrganizationHero: React.FC<OrganizationHeroProps> = ({
                 <div className="mt-8 lg:mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
                         <div className="text-2xl font-bold text-white mb-1">
-                            {new Date().getFullYear() - 2020}+
+                            {yearsActive}
                         </div>
                         <div className="text-sm text-white/80">Years Active</div>
                     </div>
@@ -209,7 +247,7 @@ export const OrganizationHero: React.FC<OrganizationHeroProps> = ({
 
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
                         <div className="text-2xl font-bold text-white mb-1">
-                            Remote
+                            {workStyle}
                         </div>
                         <div className="text-sm text-white/80">Work Style</div>
                     </div>

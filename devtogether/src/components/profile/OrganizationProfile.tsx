@@ -158,6 +158,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
             <OrganizationHero
                 profile={profileData.profile}
                 stats={profileData.stats}
+                testimonials={profileData.testimonials}
                 isOwnProfile={isOwnProfile}
             />
 
