@@ -45,6 +45,9 @@ import OrganizationLandingPage from './pages/OrganizationLandingPage'
 // Notifications
 import NotificationsPage from './pages/NotificationsPage'
 
+// Admin
+import AdminPage from './pages/AdminPage'
+
 function App() {
   return (
     <AuthProvider>
@@ -248,6 +251,16 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <NotificationsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin Route */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminPage />
                   </ProtectedRoute>
                 }
               />

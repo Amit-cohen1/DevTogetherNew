@@ -1,7 +1,7 @@
 import { supabase } from '../utils/supabase';
-import { Project, User, Application } from '../types/database';
+import { Project, User } from '../types/database';
 import { projectService } from './projects';
-import type { TeamMember as DatabaseTeamMember, ProjectWithTeamMembers } from '../types/database';
+import type { TeamMember as DatabaseTeamMember } from '../types/database';
 
 // Legacy interface for backward compatibility
 export interface TeamMember {
@@ -76,6 +76,11 @@ class WorkspaceService {
                     is_public: null,
                     share_token: null,
                     profile_views: null,
+                    is_admin: null,
+                    organization_verified: null,
+                    organization_verified_at: null,
+                    organization_verified_by: null,
+                    organization_rejection_reason: null,
                     created_at: '',
                     updated_at: ''
                 };

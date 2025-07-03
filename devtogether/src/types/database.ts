@@ -28,6 +28,11 @@ export interface Database {
                     is_public: boolean | null
                     share_token: string | null
                     profile_views: number | null
+                    is_admin: boolean | null
+                    organization_verified: boolean | null
+                    organization_verified_at: string | null
+                    organization_verified_by: string | null
+                    organization_rejection_reason: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -49,6 +54,11 @@ export interface Database {
                     is_public?: boolean | null
                     share_token?: string | null
                     profile_views?: number | null
+                    is_admin?: boolean | null
+                    organization_verified?: boolean | null
+                    organization_verified_at?: string | null
+                    organization_verified_by?: string | null
+                    organization_rejection_reason?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -70,6 +80,11 @@ export interface Database {
                     is_public?: boolean | null
                     share_token?: string | null
                     profile_views?: number | null
+                    is_admin?: boolean | null
+                    organization_verified?: boolean | null
+                    organization_verified_at?: string | null
+                    organization_verified_by?: string | null
+                    organization_rejection_reason?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -296,6 +311,44 @@ export interface Database {
                     activity_type?: 'joined' | 'left' | 'promoted' | 'demoted' | 'status_updated' | 'message_sent'
                     activity_data?: Json | null
                     created_at?: string
+                }
+            }
+            partner_applications: {
+                Row: {
+                    id: string
+                    organization_id: string
+                    company_size: string
+                    industry: string
+                    why_partner: string
+                    website: string
+                    status: 'pending' | 'approved' | 'rejected'
+                    created_at: string
+                    reviewed_at: string | null
+                    reviewed_by: string | null
+                }
+                Insert: {
+                    id?: string
+                    organization_id: string
+                    company_size: string
+                    industry: string
+                    why_partner: string
+                    website: string
+                    status?: 'pending' | 'approved' | 'rejected'
+                    created_at?: string
+                    reviewed_at?: string | null
+                    reviewed_by?: string | null
+                }
+                Update: {
+                    id?: string
+                    organization_id?: string
+                    company_size?: string
+                    industry?: string
+                    why_partner?: string
+                    website?: string
+                    status?: 'pending' | 'approved' | 'rejected'
+                    created_at?: string
+                    reviewed_at?: string | null
+                    reviewed_by?: string | null
                 }
             }
             profile_analytics: {
@@ -561,6 +614,7 @@ export interface ProjectWithTeamMembers extends Project {
 export type OrganizationImage = Tables<'organization_images'>
 export type OrganizationMetric = Tables<'organization_metrics'>
 export type DeveloperTestimonial = Tables<'developer_testimonials'>
+export type PartnerApplication = Tables<'partner_applications'>
 
 export type ImageCategory = OrganizationImage['category']
 export type MetricType = OrganizationMetric['metric_type']
