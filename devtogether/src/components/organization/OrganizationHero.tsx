@@ -117,8 +117,11 @@ export const OrganizationHero: React.FC<OrganizationHeroProps> = ({
                         {/* Mission Statement */}
                         <div className="space-y-4">
                             {profile.bio ? (
-                                <p className="text-lg lg:text-xl leading-relaxed text-white/95">
-                                    {profile.bio.length > 200 ? `${profile.bio.substring(0, 200)}...` : profile.bio}
+                                <p
+                                    className="text-lg lg:text-xl leading-relaxed text-white/95 break-words line-clamp-3 max-h-24 overflow-hidden"
+                                    style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}
+                                >
+                                    {profile.bio}
                                 </p>
                             ) : (
                                 <p className="text-lg lg:text-xl leading-relaxed text-white/95">
