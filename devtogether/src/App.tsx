@@ -47,6 +47,9 @@ import NotificationsPage from './pages/NotificationsPage'
 // Admin
 import AdminPage from './pages/AdminPage'
 
+// Organization Projects Page
+import OrganizationProjectsPage from './pages/dashboard/OrganizationProjectsPage'
+
 function App() {
   return (
     <AuthProvider>
@@ -244,12 +247,12 @@ function App() {
                 }
               />
 
-              {/* Notifications Route */}
+              {/* Organization Projects Management Page */}
               <Route
-                path="/notifications"
+                path="/dashboard/projects"
                 element={
-                  <ProtectedRoute>
-                    <NotificationsPage />
+                  <ProtectedRoute requiredRole="organization">
+                    <OrganizationProjectsPage />
                   </ProtectedRoute>
                 }
               />

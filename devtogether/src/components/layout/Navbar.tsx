@@ -85,7 +85,7 @@ export const Navbar: React.FC = () => {
         },
         {
             label: 'My Projects',
-            path: '/organization/projects',
+            path: '/dashboard/projects',
             icon: Building,
         },
         {
