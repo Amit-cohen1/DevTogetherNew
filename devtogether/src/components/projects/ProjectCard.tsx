@@ -75,9 +75,18 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
         }
     }
 
-    // Dynamic card classes for professional design
+    // Enhanced card classes for professional design
     const getCardClasses = () => {
-        return `group relative bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300 overflow-hidden w-full flex flex-col h-full`
+        const baseClasses = `group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-gray-300 dark:hover:border-gray-600 overflow-hidden w-full flex flex-col h-full backdrop-blur-sm`
+        
+        switch (variant) {
+            case 'featured':
+                return `${baseClasses} ring-2 ring-blue-100 dark:ring-blue-900/30 hover:ring-blue-200 dark:hover:ring-blue-800/50`
+            case 'large':
+                return `${baseClasses} hover:scale-[1.02] transform-gpu`
+            default:
+                return `${baseClasses} hover:-translate-y-1`
+        }
     }
 
     const getContentPadding = () => {
@@ -169,13 +178,13 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                 <div className="mb-4">
                     <Link
                         to={`/projects/${project.id}`}
-                        className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors block mb-2 leading-tight"
+                        className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block mb-2 leading-tight"
                     >
                         {project.title}
                     </Link>
                     <Link
                         to={`/profile/${project.organization_id}`}
-                        className="inline-flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                         <Building className="h-3.5 w-3.5 mr-1.5" />
                         {project.organization?.organization_name || 'Organization'}
@@ -183,7 +192,7 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                 </div>
 
                 {/* Description */}
-                <p className={`text-gray-700 text-sm leading-relaxed mb-4 ${getDescriptionLines()}`}>
+                <p className={`text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-4 ${getDescriptionLines()}`}>
                     {project.description}
                 </p>
 
@@ -213,9 +222,9 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
 
                 {/* Team Members Section - More Prominent */}
                 {project.team_members && project.team_members.length > 0 && (
-                    <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-100">
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-xl p-3 mb-4 border border-blue-200 dark:border-blue-800/30">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center text-sm text-blue-800 font-medium">
+                            <div className="flex items-center text-sm text-blue-800 dark:text-blue-300 font-medium">
                                 <Users className="h-4 w-4 mr-2" />
                                 Team Members
                             </div>
@@ -266,7 +275,7 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                                         </div>
                                     )}
                                 </div>
-                                <span className="text-xs text-blue-700 font-medium">
+                                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
                                     {project.team_members.length} member{project.team_members.length !== 1 ? 's' : ''}
                                 </span>
                             </div>
@@ -274,23 +283,23 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                     </div>
                 )}
 
-                {/* Technology Stack - Cleaner Layout */}
+                {/* Technology Stack - Enhanced Layout */}
                 <div className="mb-4">
                     <div className="flex items-center mb-2">
-                        <Code className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
-                        <span className="text-xs text-gray-500 font-medium">Technologies</span>
+                        <Code className="h-3.5 w-3.5 mr-1.5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Technologies</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                         {project.technology_stack.slice(0, variant === 'large' ? 6 : 4).map((tech, index) => (
                             <span
                                 key={index}
-                                className="inline-block px-2 py-1 rounded-md bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200 transition-colors"
+                                className="inline-block px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-500 transition-all duration-200 shadow-sm"
                             >
                                 {tech}
                             </span>
                         ))}
                         {project.technology_stack.length > (variant === 'large' ? 6 : 4) && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-medium cursor-pointer hover:bg-gray-200 transition-colors"
+                            <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/20 text-blue-700 dark:text-blue-300 text-xs font-medium cursor-pointer hover:from-blue-200 hover:to-blue-300 dark:hover:from-blue-800/40 dark:hover:to-blue-700/30 transition-all duration-200 shadow-sm"
                                 title={`Other technologies: ${project.technology_stack.slice(variant === 'large' ? 6 : 4).join(', ')}`}
                             >
                                 +{project.technology_stack.length - (variant === 'large' ? 6 : 4)} more
@@ -338,10 +347,10 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                 </div>
             </div>
 
-            {/* Professional Footer - Always at Bottom */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 mt-auto">
+            {/* Enhanced Footer - Always at Bottom */}
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-700/50 dark:to-gray-800/30 border-t border-gray-200 dark:border-gray-600 mt-auto backdrop-blur-sm">
                 <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                         Posted {formatDate(project.created_at)}
                     </div>
 
