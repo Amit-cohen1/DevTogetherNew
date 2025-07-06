@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute'
+import { AccessibilityProvider } from './contexts/AccessibilityContext'
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage'
@@ -50,228 +51,235 @@ import AdminPage from './pages/AdminPage'
 // Organization Projects Page
 import OrganizationProjectsPage from './pages/dashboard/OrganizationProjectsPage'
 
+import AccessibilityPage from './pages/AccessibilityPage'
+
 function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
-        <Router>
-          <div className="App">
-            <Routes>
-              {/* Public Home Page */}
-              <Route
-                path="/"
-                element={<HomePage />}
-              />
+        <AccessibilityProvider>
+          <Router>
+            <div className="App">
+              <Routes>
+                {/* Public Home Page */}
+                <Route
+                  path="/"
+                  element={<HomePage />}
+                />
 
-              {/* Public Landing Pages */}
-              <Route
-                path="/for-developers"
-                element={<DeveloperLandingPage />}
-              />
+                {/* Public Landing Pages */}
+                <Route
+                  path="/for-developers"
+                  element={<DeveloperLandingPage />}
+                />
 
-              <Route
-                path="/for-organizations"
-                element={<OrganizationLandingPage />}
-              />
+                <Route
+                  path="/for-organizations"
+                  element={<OrganizationLandingPage />}
+                />
 
-              {/* Authentication Routes */}
-              <Route
-                path="/auth/login"
-                element={
-                  <PublicRoute>
-                    <LoginPage />
-                  </PublicRoute>
-                }
-              />
+                {/* Authentication Routes */}
+                <Route
+                  path="/auth/login"
+                  element={
+                    <PublicRoute>
+                      <LoginPage />
+                    </PublicRoute>
+                  }
+                />
 
-              <Route
-                path="/auth/register"
-                element={
-                  <PublicRoute>
-                    <RegisterPage />
-                  </PublicRoute>
-                }
-              />
+                <Route
+                  path="/auth/register"
+                  element={
+                    <PublicRoute>
+                      <RegisterPage />
+                    </PublicRoute>
+                  }
+                />
 
-              <Route
-                path="/auth/forgot-password"
-                element={
-                  <PublicRoute>
-                    <ForgotPasswordPage />
-                  </PublicRoute>
-                }
-              />
+                <Route
+                  path="/auth/forgot-password"
+                  element={
+                    <PublicRoute>
+                      <ForgotPasswordPage />
+                    </PublicRoute>
+                  }
+                />
 
-              <Route
-                path="/auth/verify-email"
-                element={
-                  <PublicRoute>
-                    <VerifyEmailPage />
-                  </PublicRoute>
-                }
-              />
+                <Route
+                  path="/auth/verify-email"
+                  element={
+                    <PublicRoute>
+                      <VerifyEmailPage />
+                    </PublicRoute>
+                  }
+                />
 
-              <Route
-                path="/auth/callback"
-                element={<AuthCallbackPage />}
-              />
+                <Route
+                  path="/auth/callback"
+                  element={<AuthCallbackPage />}
+                />
 
-              <Route
-                path="/auth/select-role"
-                element={
-                  <ProtectedRoute>
-                    <RoleSelectionPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/auth/select-role"
+                  element={
+                    <ProtectedRoute>
+                      <RoleSelectionPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Onboarding Route */}
-              <Route
-                path="/onboarding"
-                element={
-                  <ProtectedRoute>
-                    <OnboardingPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Onboarding Route */}
+                <Route
+                  path="/onboarding"
+                  element={
+                    <ProtectedRoute>
+                      <OnboardingPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Dashboard Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Dashboard Routes */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Profile Routes */}
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Profile Routes */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/profile/:userId"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/profile/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Shared Profile Route (Public) */}
-              <Route
-                path="/profile/shared/:shareToken"
-                element={<SharedProfilePage />}
-              />
+                {/* Shared Profile Route (Public) */}
+                <Route
+                  path="/profile/shared/:shareToken"
+                  element={<SharedProfilePage />}
+                />
 
-              {/* Project Routes */}
-              <Route
-                path="/projects"
-                element={
-                  <ProtectedRoute>
-                    <ProjectsPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Project Routes */}
+                <Route
+                  path="/projects"
+                  element={
+                    <ProtectedRoute>
+                      <ProjectsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/projects/create"
-                element={
-                  <ProtectedRoute requiredRole="organization">
-                    <CreateProjectPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/projects/create"
+                  element={
+                    <ProtectedRoute requiredRole="organization">
+                      <CreateProjectPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/projects/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <ProjectDetailsPage />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/projects/:projectId"
+                  element={
+                    <ProtectedRoute>
+                      <ProjectDetailsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Workspace Route */}
-              <Route
-                path="/workspace/:projectId"
-                element={
-                  <ProtectedRoute>
-                    <ProjectWorkspace />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Workspace Route */}
+                <Route
+                  path="/workspace/:projectId"
+                  element={
+                    <ProtectedRoute>
+                      <ProjectWorkspace />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Applications Route */}
-              <Route
-                path="/applications"
-                element={
-                  <ProtectedRoute>
-                    <ApplicationsDashboard />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Applications Route */}
+                <Route
+                  path="/applications"
+                  element={
+                    <ProtectedRoute>
+                      <ApplicationsDashboard />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/my-applications"
-                element={
-                  <ProtectedRoute>
-                    <MyApplications />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/my-applications"
+                  element={
+                    <ProtectedRoute>
+                      <MyApplications />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Notifications Route */}
-              <Route
-                path="/notifications"
-                element={
-                  <ProtectedRoute>
-                    <NotificationsPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Notifications Route */}
+                <Route
+                  path="/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Organization Projects Route */}
-              <Route
-                path="/organization/projects"
-                element={
-                  <ProtectedRoute requiredRole="organization">
-                    <ProjectsPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Organization Projects Route */}
+                <Route
+                  path="/organization/projects"
+                  element={
+                    <ProtectedRoute requiredRole="organization">
+                      <ProjectsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Organization Projects Management Page */}
-              <Route
-                path="/dashboard/projects"
-                element={
-                  <ProtectedRoute requiredRole="organization">
-                    <OrganizationProjectsPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Organization Projects Management Page */}
+                <Route
+                  path="/dashboard/projects"
+                  element={
+                    <ProtectedRoute requiredRole="organization">
+                      <OrganizationProjectsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Admin Route */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Admin Route */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Catch all route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </Router>
+                {/* Accessibility Statement */}
+                <Route path="/accessibility" element={<AccessibilityPage />} />
+
+                {/* Catch all route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </Router>
+        </AccessibilityProvider>
       </NotificationProvider>
     </AuthProvider>
   )
