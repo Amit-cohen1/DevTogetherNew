@@ -13,7 +13,7 @@ export interface Database {
                 Row: {
                     id: string
                     email: string
-                    role: 'developer' | 'organization'
+                    role: 'developer' | 'organization' | 'admin'
                     first_name: string | null
                     last_name: string | null
                     organization_name: string | null
@@ -39,7 +39,7 @@ export interface Database {
                 Insert: {
                     id: string
                     email: string
-                    role: 'developer' | 'organization'
+                    role: 'developer' | 'organization' | 'admin'
                     first_name?: string | null
                     last_name?: string | null
                     organization_name?: string | null
@@ -65,7 +65,7 @@ export interface Database {
                 Update: {
                     id?: string
                     email?: string
-                    role?: 'developer' | 'organization'
+                    role?: 'developer' | 'organization' | 'admin'
                     first_name?: string | null
                     last_name?: string | null
                     organization_name?: string | null

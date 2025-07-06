@@ -47,6 +47,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     const [skills, setSkills] = useState<string[]>(profile.skills || [])
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const isDeveloperRole = profile.role === 'developer' || profile.role === 'admin'
+
     const {
         register,
         handleSubmit,
@@ -220,7 +222,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                        {profile.role === 'developer' ? (
+                                        {isDeveloperRole ? (
                                             <UserIcon className="w-8 h-8 text-gray-400" />
                                         ) : (
                                             <Building className="w-8 h-8 text-gray-400" />
@@ -258,7 +260,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     </div>
 
                     {/* Personal Information */}
-                    {profile.role === 'developer' ? (
+                    {isDeveloperRole ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="First Name"
@@ -288,7 +290,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             {...register('bio')}
                             rows={3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder={profile.role === 'developer'
+                            placeholder={isDeveloperRole
                                 ? "Tell us about yourself, your interests, and what you're looking for..."
                                 : "Describe your organization's mission and what you do..."
                             }
@@ -303,7 +305,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     />
 
                     {/* Skills (Developer only) */}
-                    {profile.role === 'developer' && (
+                    {isDeveloperRole && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Skills
@@ -366,7 +368,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             placeholder="https://linkedin.com/in/yourprofile"
                         />
 
-                        {profile.role === 'developer' && (
+                        {isDeveloperRole && (
                             <>
                                 <Input
                                     label="GitHub"

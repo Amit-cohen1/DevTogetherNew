@@ -56,7 +56,7 @@ export const OnboardingPage: React.FC = () => {
 
         // If user already has a complete profile, redirect to dashboard
         if (profile && profile.bio) {
-            const dashboardPath = profile.role === 'developer' ? '/dashboard' : '/organization/dashboard'
+            const dashboardPath = (profile.role === 'developer' || profile.role === 'admin') ? '/dashboard' : '/organization/dashboard'
             navigate(dashboardPath)
         }
     }, [loading, isAuthenticated, profile, navigate])
@@ -79,11 +79,11 @@ export const OnboardingPage: React.FC = () => {
         )
     }
 
-    const steps = profile.role === 'developer' ? DEVELOPER_STEPS : ORGANIZATION_STEPS
-    const title = profile.role === 'developer'
+    const steps = (profile.role === 'developer' || profile.role === 'admin') ? DEVELOPER_STEPS : ORGANIZATION_STEPS
+    const title = (profile.role === 'developer' || profile.role === 'admin')
         ? 'Welcome to DevTogether!'
         : 'Welcome to DevTogether!'
-    const subtitle = profile.role === 'developer'
+    const subtitle = (profile.role === 'developer' || profile.role === 'admin')
         ? 'Let\'s set up your developer profile'
         : 'Let\'s set up your organization profile'
 
@@ -100,7 +100,7 @@ export const OnboardingPage: React.FC = () => {
     }
 
     const handleComplete = () => {
-        const dashboardPath = profile.role === 'developer' ? '/dashboard' : '/organization/dashboard'
+        const dashboardPath = (profile.role === 'developer' || profile.role === 'admin') ? '/dashboard' : '/organization/dashboard'
         navigate(dashboardPath)
     }
 
@@ -116,7 +116,7 @@ export const OnboardingPage: React.FC = () => {
                     />
                 )
             case 'profile':
-                if (profile.role === 'developer') {
+                if (profile.role === 'developer' || profile.role === 'admin') {
                     return (
                         <DeveloperProfileStep
                             onNext={handleNext}

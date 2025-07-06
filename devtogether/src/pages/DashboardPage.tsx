@@ -24,8 +24,8 @@ const DashboardPage: React.FC = () => {
         );
     }
 
-    // Developer Dashboard
-    if (profile?.role === 'developer') {
+    // Developer (and Admin) Dashboard
+    if (profile?.role === 'developer' || profile?.role === 'admin') {
         return (
             <Layout>
                 <DeveloperDashboard />
