@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute'
 import { AccessibilityProvider } from './contexts/AccessibilityContext'
+import { ScrollToTop } from './components/layout/ScrollToTop'
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage'
@@ -41,6 +42,7 @@ import HomePage from './pages/HomePage'
 // Landing Pages  
 import DeveloperLandingPage from './pages/DeveloperLandingPage'
 import OrganizationLandingPage from './pages/OrganizationLandingPage'
+import OrganizationsPage from './pages/OrganizationsPage'
 
 // Notifications
 import NotificationsPage from './pages/NotificationsPage'
@@ -59,6 +61,7 @@ function App() {
       <NotificationProvider>
         <AccessibilityProvider>
           <Router>
+            <ScrollToTop />
             <div className="App">
               <Routes>
                 {/* Public Home Page */}
@@ -76,6 +79,12 @@ function App() {
                 <Route
                   path="/for-organizations"
                   element={<OrganizationLandingPage />}
+                />
+
+                {/* Public Organizations Listing */}
+                <Route
+                  path="/organizations"
+                  element={<OrganizationsPage />}
                 />
 
                 {/* Authentication Routes */}
@@ -265,7 +274,7 @@ function App() {
                 <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requiredRole={"admin" as any}>
                       <AdminPage />
                     </ProtectedRoute>
                   }

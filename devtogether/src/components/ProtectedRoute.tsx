@@ -16,7 +16,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requireAuth = true,
     redirectTo = '/auth/login'
 }) => {
-    const { isAuthenticated, profile, loading } = useAuth()
+    const { isAuthenticated, profile, loading, isAdmin } = useAuth()
     const location = useLocation()
 
     // Show loading state while auth is initializing
@@ -41,9 +41,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     // If specific role is required, check user role
     if (requiredRole && profile) {
-        const hasRequiredRole = Array.isArray(requiredRole)
-            ? requiredRole.includes(profile.role)
-            : profile.role === requiredRole
+        const requiredRolesArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
+        let hasRequiredRole = requiredRolesArray.includes(profile.role as any)
+
+        // 1. Admin inherits developer rights (Option A)
+        if (!hasRequiredRole && isAdmin && requiredRolesArray.includes('developer' as any)) {
+            hasRequiredRole = true
+        }
+
+        // 2. Legacy admin flag satisfies admin requirement even if role !== 'admin'
+        if (!hasRequiredRole && isAdmin && requiredRolesArray.includes('admin' as any)) {
+            hasRequiredRole = true
+        }
 
         if (!hasRequiredRole) {
             // Redirect to dashboard for all users (both roles use the same route)

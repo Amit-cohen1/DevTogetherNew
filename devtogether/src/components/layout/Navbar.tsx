@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 
 export const Navbar: React.FC = () => {
-    const { user, profile, signOut, isDeveloper, isOrganization } = useAuth()
+    const { user, profile, signOut, isDeveloper, isOrganization, isAdmin } = useAuth()
     const { unreadCount } = useNotifications()
     const navigate = useNavigate()
     const location = useLocation()
@@ -54,7 +54,7 @@ export const Navbar: React.FC = () => {
         navigate('/')
     }
 
-    const displayName = profile?.role === 'developer'
+    const displayName = profile && ['developer', 'admin'].includes(profile.role as unknown as string)
         ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
         : profile?.organization_name
 
@@ -120,12 +120,9 @@ export const Navbar: React.FC = () => {
                             <Link to="/projects" className="text-gray-700 hover:text-gray-900 font-medium">
                                 Projects
                             </Link>
-                            <button className="text-gray-700 hover:text-gray-900 font-medium">
+                            <Link to="/organizations" className="text-gray-700 hover:text-gray-900 font-medium">
                                 Organizations
-                            </button>
-                            <button className="text-gray-700 hover:text-gray-900 font-medium">
-                                About Us
-                            </button>
+                            </Link>
                         </div>
 
                         {/* Right side - Auth buttons */}
@@ -166,16 +163,12 @@ export const Navbar: React.FC = () => {
                             >
                                 Projects
                             </Link>
-                            <button
-                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 w-full text-left"
+                            <Link
+                                to="/organizations"
+                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                             >
                                 Organizations
-                            </button>
-                            <button
-                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 w-full text-left"
-                            >
-                                About Us
-                            </button>
+                            </Link>
                             <div className="pt-4 space-y-2">
                                 <Link
                                     to="/auth/login"
@@ -313,7 +306,7 @@ export const Navbar: React.FC = () => {
                                         />
                                     ) : (
                                         <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                            {profile.role === 'developer' ? (
+                                            {['developer','admin'].includes(profile.role as unknown as string) ? (
                                                 <User className="w-4 h-4 text-gray-400" />
                                             ) : (
                                                 <Building className="w-4 h-4 text-gray-400" />
@@ -325,9 +318,11 @@ export const Navbar: React.FC = () => {
                                     <p className="text-sm font-medium text-gray-900">
                                         {displayName || 'User'}
                                     </p>
-                                    <p className="text-xs text-gray-500 capitalize">
-                                        {profile.role}
-                                    </p>
+                                    { (profile.role as unknown as string) === 'admin' ? (
+                                        <span className="text-xs font-semibold text-yellow-600">Admin</span>
+                                    ) : (
+                                        <p className="text-xs text-gray-500 capitalize">{profile.role}</p>
+                                    )}
                                 </div>
                                 <ChevronDown className="w-4 h-4 text-gray-400" />
                             </button>
@@ -352,7 +347,7 @@ export const Navbar: React.FC = () => {
                                     </Link>
 
                                     {/* Admin link - only show for admin users */}
-                                    {profile.is_admin && (
+                                    {isAdmin && (
                                         <Link
                                             to="/admin"
                                             className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100"
