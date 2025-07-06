@@ -281,7 +281,7 @@ const HomePage: React.FC = () => {
     };
 
     return (
-        <Layout showFooter={false}>
+        <Layout>
             <div className="min-h-screen bg-white">
                 {/* Hero Section */}
                 <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white overflow-hidden">
@@ -289,23 +289,23 @@ const HomePage: React.FC = () => {
                     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
                         <div className="grid lg:grid-cols-2 gap-12 items-center">
                             <div>
-                                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                                    Real Projects.<br />
-                                    Real Impact.<br />
-                                    <span className="text-yellow-400">Real Experience.</span>
+                                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+                                    Code for Good.<br />
+                                    Grow Your Skills.<br />
+                                    <span className="text-yellow-400">Create Real-World Impact.</span>
                                 </h1>
-                                <p className="text-xl lg:text-2xl text-blue-100 mb-8 leading-relaxed">
-                                    Connect with mission-driven organizations, build your portfolio, and make a difference through code.
+                                <p className="text-xl lg:text-2xl text-blue-100 mb-8 leading-relaxed max-w-xl">
+                                    Team up with inspiring nonprofits, ship production-ready projects, and build a standout portfolio—all while changing the world.
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
                                     <Link to="/for-developers">
                                         <Button size="lg" variant="primary" className="!bg-white !text-blue-700 hover:!bg-gray-100 !border-0 font-semibold px-8 py-4">
-                                            I'm a Developer
+                                            Join as Developer
                                         </Button>
                                     </Link>
                                     <Link to="/for-organizations">
                                         <Button size="lg" variant="ghost" className="!border-2 !border-white !text-white hover:!bg-white hover:!text-blue-600 font-semibold px-8 py-4">
-                                            I'm an Organization
+                                            Start a Project
                                         </Button>
                                     </Link>
                                 </div>
@@ -353,91 +353,108 @@ const HomePage: React.FC = () => {
                 </section>
 
                 {/* Statistics Section */}
-                <section className="py-16 bg-gray-50">
+                <section className="py-24 bg-gray-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                            <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
-                                    {loading ? '...' : platformStats.activeProjects}
+                            {[
+                                {
+                                    label: 'Active Projects',
+                                    value: loading ? '…' : platformStats.activeProjects
+                                },
+                                {
+                                    label: 'Volunteer Developers',
+                                    value: loading ? '…' : platformStats.totalDevelopers
+                                },
+                                {
+                                    label: 'Nonprofit Partners',
+                                    value: loading ? '…' : platformStats.totalOrganizations
+                                },
+                                {
+                                    label: 'Project Success Rate',
+                                    value: loading ? '…' : platformStats.completionRate
+                                }
+                            ].map((stat) => (
+                                <div
+                                    key={stat.label}
+                                    className="bg-white rounded-2xl shadow-lg p-8 text-center flex flex-col items-center"
+                                >
+                                    <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
+                                        {stat.value}
+                                    </div>
+                                    <div className="text-gray-600 text-sm font-medium">
+                                        {stat.label}
+                                    </div>
                                 </div>
-                                <div className="text-gray-600">Active Projects</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
-                                    {loading ? '...' : platformStats.totalDevelopers}
-                                </div>
-                                <div className="text-gray-600">Developers</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
-                                    {loading ? '...' : platformStats.totalOrganizations}
-                                </div>
-                                <div className="text-gray-600">Organizations</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
-                                    {loading ? '...' : platformStats.completionRate}
-                                </div>
-                                <div className="text-gray-600">Completion Rate</div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </section>
 
                 {/* How It Works */}
-                <section className="py-20">
+                <section className="py-24 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">How DevTogether Works</h2>
+                        <div className="text-center mb-20">
+                            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Your Journey in 3 Steps</h2>
                             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                                 Connect, collaborate, and create meaningful impact in three simple steps
                             </p>
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-                            <div className="text-center">
-                                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Search className="w-10 h-10 text-blue-600" />
+                            {[
+                                {
+                                    icon: <Search className="w-10 h-10 text-blue-600" />,
+                                    title: '1. Discover Purpose-Driven Projects',
+                                    description:
+                                        'Explore curated nonprofit challenges that align with your passions and tech stack.'
+                                },
+                                {
+                                    icon: <Briefcase className="w-10 h-10 text-blue-600" />,
+                                    title: '2. Apply & Collaborate',
+                                    description:
+                                        'Join an agile remote team, pair with mentors, and co-build a real product.'
+                                },
+                                {
+                                    icon: <Star className="w-10 h-10 text-blue-600" />,
+                                    title: '3. Launch & Shine',
+                                    description:
+                                        'Ship your solution, earn endorsements, and showcase measurable impact on your portfolio.'
+                                }
+                            ].map((step, idx) => (
+                                <div
+                                    key={idx}
+                                    className="bg-gray-50 rounded-2xl shadow-md p-10 flex flex-col items-center text-center hover:shadow-lg transition-shadow"
+                                >
+                                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                                        {step.icon}
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                                        {step.title}
+                                    </h3>
+                                    <p className="text-gray-600 leading-relaxed mb-4">
+                                        {step.description}
+                                    </p>
+                                    {idx === 2 && (
+                                        <Link
+                                            to="/auth/register"
+                                            className="text-blue-600 font-medium flex items-center justify-center gap-1 hover:gap-2 transition-all"
+                                        >
+                                            See Developer Profiles <ArrowRight className="w-4 h-4" />
+                                        </Link>
+                                    )}
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-4">1. Discover Projects</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Browse meaningful projects from nonprofits and organizations that align with your skills and interests.
-                                </p>
-                            </div>
-
-                            <div className="text-center">
-                                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Briefcase className="w-10 h-10 text-blue-600" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-4">2. Apply & Collaborate</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Submit your application and join a team of developers working together to bring the project to life.
-                                </p>
-                            </div>
-
-                            <div className="text-center">
-                                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Star className="w-10 h-10 text-blue-600" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Build & Impact</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Earn badges, get endorsements, and showcase your work to future employers and collaborators.
-                                </p>
-                                <Link to="/auth/register" className="text-blue-600 font-medium flex items-center justify-center gap-1 hover:gap-2 transition-all">
-                                    See Developer Profiles <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </section>
 
                 {/* Featured Projects */}
-                <section className="py-20 bg-gray-50">
+                <section className="py-24 bg-gray-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center mb-12">
                             <div>
                                 <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Featured Projects</h2>
-                                <p className="text-xl text-gray-600">Real projects from organizations making a difference</p>
+                                <p className="text-xl text-gray-600">Hand-picked opportunities looking for talent this week</p>
                             </div>
                             <Link to="/projects">
                                 <Button variant="outline" className="flex items-center gap-2 !text-gray-700 !bg-white hover:!bg-gray-50 !border-gray-300">
@@ -519,14 +536,14 @@ const HomePage: React.FC = () => {
                 </section>
 
                 {/* Organizations We've Helped */}
-                <section className="py-20 bg-gray-50">
+                <section className="py-24 bg-gray-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
                                 Organizations We've Helped
                             </h2>
                             <p className="text-xl text-gray-600">
-                                We partner with nonprofits and socially-minded organizations to bring their tech projects to life
+                                Trusted nonprofits working with our developer community
                             </p>
                         </div>
 
@@ -568,7 +585,7 @@ const HomePage: React.FC = () => {
                                 </div>
                                 <div className="text-center mt-12">
                                     <Button variant="outline" className="!text-gray-700 !bg-white hover:!bg-gray-50 !border-gray-300">
-                                        Become a Partner Organization
+                                        Join Our Partner Network
                                     </Button>
                                 </div>
                             </>
@@ -592,10 +609,10 @@ const HomePage: React.FC = () => {
                 </section>
 
                 {/* Ready to Start CTA */}
-                <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                <section className="py-24 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-                            Ready to Start Your Journey?
+                            Ready to Code with Purpose?
                         </h2>
                         <p className="text-xl text-blue-100 mb-8">
                             Join our community of developers and organizations making a difference through technology
@@ -603,78 +620,17 @@ const HomePage: React.FC = () => {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link to="/for-developers">
                                 <Button size="lg" variant="primary" className="!bg-white !text-blue-700 hover:!bg-gray-100 !border-0 font-semibold px-8 py-4">
-                                    Join as a Developer
+                                    Become a Developer Volunteer
                                 </Button>
                             </Link>
                             <Link to="/for-organizations">
                                 <Button size="lg" variant="ghost" className="!border-2 !border-white !text-white hover:!bg-white hover:!text-blue-600 font-semibold px-8 py-4">
-                                    Post a Project
+                                    Submit My Project Idea
                                 </Button>
                             </Link>
                         </div>
                     </div>
                 </section>
-
-                {/* Footer */}
-                <footer className="bg-gray-900 text-white py-16">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid md:grid-cols-4 gap-8">
-                            <div>
-                                <div className="flex items-center space-x-3 mb-6">
-                                    <img
-                                        src="/images/devtogether-icon.svg"
-                                        alt="DevTogether"
-                                        className="w-8 h-8"
-                                    />
-                                    <span className="text-xl font-bold">DevTogether</span>
-                                </div>
-                                <p className="text-gray-400 mb-4">
-                                    Connecting early-career developers with mission-driven organizations to create impact through technology.
-                                </p>
-                                <div className="flex space-x-4">
-                                    <a href="#" className="text-gray-400 hover:text-white">
-                                        <Github className="w-5 h-5" />
-                                    </a>
-                                    <a href="#" className="text-gray-400 hover:text-white">
-                                        <Linkedin className="w-5 h-5" />
-                                    </a>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 className="font-semibold mb-4">For Developers</h3>
-                                <ul className="space-y-2 text-gray-400">
-                                    <li><Link to="/projects" className="hover:text-white">Browse Projects</Link></li>
-                                    <li><Link to="/auth/register" className="hover:text-white">Developer Resources</Link></li>
-                                    <li><Link to="/auth/register" className="hover:text-white">Success Stories</Link></li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h3 className="font-semibold mb-4">For Organizations</h3>
-                                <ul className="space-y-2 text-gray-400">
-                                    <li><Link to="/auth/register" className="hover:text-white">Post a Project</Link></li>
-                                    <li><Link to="/auth/register" className="hover:text-white">Pricing</Link></li>
-                                    <li><Link to="/auth/register" className="hover:text-white">Success Stories</Link></li>
-                                    <li><Link to="/auth/register" className="hover:text-white">Contact</Link></li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h3 className="font-semibold mb-4">Company</h3>
-                                <ul className="space-y-2 text-gray-400">
-                                    <li><Link to="/auth/register" className="hover:text-white">About Us</Link></li>
-                                    <li><Link to="/auth/register" className="hover:text-white">Blog</Link></li>
-                                    <li><Link to="/auth/register" className="hover:text-white">Contact</Link></li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-                            <p>&copy; 2024 DevTogether. All rights reserved.</p>
-                        </div>
-                    </div>
-                </footer>
             </div>
         </Layout>
     );
