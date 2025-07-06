@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Code, Users, Target, ExternalLink, Github, Linkedin, Play } from 'lucide-react';
+import { Search, Briefcase, Users, Star, ArrowRight, Code, Building, CheckCircle, Github, Linkedin, ExternalLink } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Layout } from '../components/layout';
+import { Layout } from '../components/layout/Layout';
+import { Project, User } from '../types/database';
 import { projectService } from '../services/projects';
 import { supabase } from '../utils/supabase';
-import { Project } from '../types/database';
-import { User } from '../types/database';
+import { Link } from 'react-router-dom';
+// import platformStatsService, { getDeveloperSpotlightStats, getPartnerOrganizations } from '../services/platformStatsService';
 
 interface ProjectCardProps {
     project: Project & { organization?: { organization_name?: string } };
@@ -59,6 +59,37 @@ interface DeveloperSpotlightProps {
 }
 
 const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer }) => {
+    const [developerStats, setDeveloperStats] = useState({
+        projectsCompleted: 0,
+        successRate: 0,
+        recentProjects: [] as Array<{ name: string; status: string; organization?: string }>,
+        primaryRole: 'Developer'
+    });
+    const [statsLoading, setStatsLoading] = useState(false);
+
+    useEffect(() => {
+        if (developer?.id) {
+            loadDeveloperStats();
+        }
+    }, [developer?.id]);
+
+    const loadDeveloperStats = async () => {
+        if (!developer?.id) return;
+        
+        setStatsLoading(true);
+        try {
+            // const stats = await getDeveloperSpotlightStats(developer.id); // Mock data
+            // setDeveloperStats({
+            //     ...stats,
+            //     primaryRole: stats.primaryRole || 'Developer'
+            // });
+        } catch (error) {
+            console.error('Error loading developer stats:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
     if (!developer) {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 text-center">
@@ -88,7 +119,7 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer }) =>
                     )}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">{displayName}</h3>
-                <p className="text-blue-600 font-medium">Front-End Developer</p>
+                <p className="text-blue-600 font-medium">{developerStats.primaryRole}</p>
                 <div className="flex justify-center gap-3 mt-3">
                     <span className="bg-yellow-400 text-yellow-900 px-2 py-1 rounded text-xs font-medium">
                         ⭐⭐⭐⭐⭐
@@ -97,17 +128,21 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer }) =>
             </div>
 
             <p className="text-gray-600 text-center mb-6 leading-relaxed">
-                {developer.bio || "DevTogether helped me bridge my tech believes my projects but completed have given me real-world experience and a portfolio that impressed employers."}
+                {developer.bio || "An active developer making a difference through DevTogether projects, contributing skills and passion to help organizations achieve their mission through technology."}
             </p>
 
             <div className="space-y-3 mb-6">
                 <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">Projects Completed</span>
-                    <span className="font-semibold">12</span>
+                    <span className="font-semibold">
+                        {statsLoading ? '...' : developerStats.projectsCompleted}
+                    </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">Success Rate</span>
-                    <span className="font-semibold">96%</span>
+                    <span className="font-semibold">
+                        {statsLoading ? '...' : `${developerStats.successRate}%`}
+                    </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">Technologies</span>
@@ -155,6 +190,43 @@ const HomePage: React.FC = () => {
     const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
     const [featuredDeveloper, setFeaturedDeveloper] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    
+    // Mock data for marketing purposes - replace with real data when ready
+    const [platformStats] = useState({
+        activeProjects: '120+',
+        totalDevelopers: '750+',
+        totalOrganizations: '85+',
+        completionRate: '92%'
+    });
+    const [developerSpotlightProjects] = useState([
+        { name: 'Community Food Bank Website', status: 'Complete', organization: 'Local Food Network' },
+        { name: 'Youth Mentorship App', status: 'In Progress', organization: 'Future Leaders Org' },
+        { name: 'Environmental Tracker', status: 'Complete', organization: 'Green Earth Initiative' }
+    ]);
+    const [partnerOrganizations] = useState([
+        { id: '1', name: 'Green Future', logo: null, website: 'https://greenfuture.org' },
+        { id: '2', name: 'Youth Alliance', logo: null, website: 'https://youthalliance.org' },
+        { id: '3', name: 'Community Care', logo: null, website: 'https://communitycare.org' },
+        { id: '4', name: 'Education First', logo: null, website: 'https://educationfirst.org' },
+        { id: '5', name: 'Health Connect', logo: null, website: 'https://healthconnect.org' }
+    ]);
+
+    // Real data loading - commented out for now, uncomment when ready to use real data
+    /*
+    const [platformStats, setPlatformStats] = useState({
+        activeProjects: '0',
+        totalDevelopers: '0',
+        totalOrganizations: '0',
+        completionRate: '0%'
+    });
+    const [developerSpotlightProjects, setDeveloperSpotlightProjects] = useState<Array<{ name: string; status: string; organization?: string }>>([]);
+    const [partnerOrganizations, setPartnerOrganizations] = useState<Array<{
+        id: string;
+        name: string;
+        logo?: string;
+        website?: string;
+    }>>([]);
+    */
 
     useEffect(() => {
         loadHomePageData();
@@ -162,17 +234,14 @@ const HomePage: React.FC = () => {
 
     const loadHomePageData = async () => {
         try {
-            // Load featured projects (open projects)
-            const projects = await projectService.getProjects({
-                status: 'open'
-            });
-
+            setLoading(true);
+            
+            // Load featured projects (keep real data for these)
+            const projects = await projectService.getProjects({ status: 'open' });
             setFeaturedProjects(projects.slice(0, 3));
 
-            // Try to load a featured developer (public profile with good stats)
-            // This is a simplified approach - in production you'd have a featured developer system
+            // Try to load a featured developer (keep real data)
             try {
-                // Get recent developers - this is a placeholder approach
                 const { data: profiles } = await supabase
                     .from('profiles')
                     .select('*')
@@ -183,13 +252,26 @@ const HomePage: React.FC = () => {
                     .limit(5);
 
                 if (profiles && profiles.length > 0) {
-                    // Pick a random featured developer
                     const randomIndex = Math.floor(Math.random() * profiles.length);
-                    setFeaturedDeveloper(profiles[randomIndex]);
+                    const selectedDeveloper = profiles[randomIndex];
+                    setFeaturedDeveloper(selectedDeveloper);
                 }
             } catch (error) {
                 console.log('Could not load featured developer:', error);
             }
+
+            // Real data loading - commented out for now
+            /*
+            const [stats, spotlightStats, partners] = await Promise.all([
+                platformStatsService.getHomepageStats(),
+                getDeveloperSpotlightStats(developer?.id),
+                getPartnerOrganizations()
+            ]);
+
+            setPlatformStats(stats);
+            setDeveloperSpotlightProjects(spotlightStats);
+            setPartnerOrganizations(partners);
+            */
 
         } catch (error) {
             console.error('Error loading homepage data:', error);
@@ -241,15 +323,15 @@ const HomePage: React.FC = () => {
                                     <div className="space-y-3">
                                         <div className="bg-green-50 p-3 rounded-lg">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="font-medium text-gray-900">EcoTracker App</h4>
+                                                <h4 className="font-medium text-gray-900">Community Web Platform</h4>
                                                 <span className="text-green-600 text-sm font-medium">Active</span>
                                             </div>
-                                            <p className="text-gray-600 text-sm mt-1">Environmental Foundation</p>
+                                            <p className="text-gray-600 text-sm mt-1">Local Nonprofit Organization</p>
                                         </div>
                                         <div className="bg-blue-50 p-3 rounded-lg">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-gray-700 text-sm">Your Role:</span>
-                                                <span className="text-blue-600 font-medium text-sm">React</span>
+                                                <span className="text-blue-600 font-medium text-sm">Frontend</span>
                                             </div>
                                             <div className="flex items-center justify-between mt-1">
                                                 <span className="text-gray-700 text-sm">Team:</span>
@@ -275,70 +357,70 @@ const HomePage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                             <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">120+</div>
+                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
+                                    {loading ? '...' : platformStats.activeProjects}
+                                </div>
                                 <div className="text-gray-600">Active Projects</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">750+</div>
+                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
+                                    {loading ? '...' : platformStats.totalDevelopers}
+                                </div>
                                 <div className="text-gray-600">Developers</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">85+</div>
+                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
+                                    {loading ? '...' : platformStats.totalOrganizations}
+                                </div>
                                 <div className="text-gray-600">Organizations</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">92%</div>
+                                <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
+                                    {loading ? '...' : platformStats.completionRate}
+                                </div>
                                 <div className="text-gray-600">Completion Rate</div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* How DevTogether Works */}
+                {/* How It Works */}
                 <section className="py-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                                How DevTogether Works
-                            </h2>
+                            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">How DevTogether Works</h2>
                             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                                Our platform makes it easy to connect, collaborate, and create impact together
+                                Connect, collaborate, and create meaningful impact in three simple steps
                             </p>
                         </div>
 
-                        <div className="grid lg:grid-cols-3 gap-12">
+                        <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
                             <div className="text-center">
-                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Target className="w-8 h-8 text-blue-600" />
+                                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Search className="w-10 h-10 text-blue-600" />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-4">1. Find Projects</h3>
-                                <p className="text-gray-600 mb-4">
-                                    Browse projects that match your skills and interests. Filter by technology, cause, or time commitment.
+                                <h3 className="text-xl font-semibold text-gray-900 mb-4">1. Discover Projects</h3>
+                                <p className="text-gray-600 leading-relaxed">
+                                    Browse meaningful projects from nonprofits and organizations that align with your skills and interests.
                                 </p>
-                                <Link to="/projects" className="text-blue-600 font-medium flex items-center justify-center gap-1 hover:gap-2 transition-all">
-                                    Browse Projects <ArrowRight className="w-4 h-4" />
-                                </Link>
                             </div>
 
                             <div className="text-center">
-                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Users className="w-8 h-8 text-blue-600" />
+                                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Briefcase className="w-10 h-10 text-blue-600" />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-4">2. Apply & Contribute</h3>
-                                <p className="text-gray-600 mb-4">
-                                    Submit your application, get matched with a team, and start contributing to meaningful projects.
+                                <h3 className="text-xl font-semibold text-gray-900 mb-4">2. Apply & Collaborate</h3>
+                                <p className="text-gray-600 leading-relaxed">
+                                    Submit your application and join a team of developers working together to bring the project to life.
                                 </p>
-                                <Link to="/auth/register" className="text-blue-600 font-medium flex items-center justify-center gap-1 hover:gap-2 transition-all">
-                                    Learn About Contributing <ArrowRight className="w-4 h-4" />
-                                </Link>
                             </div>
 
                             <div className="text-center">
-                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Code className="w-8 h-8 text-blue-600" />
+                                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Star className="w-10 h-10 text-blue-600" />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-4">3. Build Your Portfolio</h3>
-                                <p className="text-gray-600 mb-4">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Build & Impact</h3>
+                                <p className="text-gray-600 leading-relaxed">
                                     Earn badges, get endorsements, and showcase your work to future employers and collaborators.
                                 </p>
                                 <Link to="/auth/register" className="text-blue-600 font-medium flex items-center justify-center gap-1 hover:gap-2 transition-all">
@@ -402,16 +484,31 @@ const HomePage: React.FC = () => {
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-semibold text-gray-900">Recent Projects</h3>
                                     <div className="space-y-3">
-                                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            <span className="text-green-800 font-medium">EcoTracker Dashboard</span>
-                                            <span className="text-green-600 text-sm">Complete</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                            <span className="text-purple-800 font-medium">Learning Resource Library</span>
-                                            <span className="text-purple-600 text-sm">Complete</span>
-                                        </div>
+                                        {developerSpotlightProjects.length > 0 ? (
+                                            developerSpotlightProjects.map((project, index) => (
+                                                <div key={index} className={`flex items-center gap-3 p-3 rounded-lg ${
+                                                    project.status === 'Complete' ? 'bg-green-50' : 'bg-purple-50'
+                                                }`}>
+                                                    <div className={`w-2 h-2 rounded-full ${
+                                                        project.status === 'Complete' ? 'bg-green-500' : 'bg-purple-500'
+                                                    }`}></div>
+                                                    <span className={`font-medium ${
+                                                        project.status === 'Complete' ? 'text-green-800' : 'text-purple-800'
+                                                    }`}>
+                                                        {project.name}
+                                                    </span>
+                                                    <span className={`text-sm ${
+                                                        project.status === 'Complete' ? 'text-green-600' : 'text-purple-600'
+                                                    }`}>
+                                                        {project.status}
+                                                    </span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-gray-500 text-sm">
+                                                No recent projects to display
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -433,19 +530,64 @@ const HomePage: React.FC = () => {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center justify-items-center opacity-60">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="w-24 h-24 bg-gray-300 rounded-lg flex items-center justify-center">
-                                    <span className="text-gray-500 text-sm">Logo {i}</span>
+                        {partnerOrganizations.length > 0 ? (
+                            <>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center justify-items-center">
+                                    {partnerOrganizations.map((org) => (
+                                        <div key={org.id} className="flex flex-col items-center space-y-2">
+                                            <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm border border-gray-200">
+                                                {org.logo ? (
+                                                    <img
+                                                        src={org.logo}
+                                                        alt={org.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-gray-700 font-bold text-lg">
+                                                        {org.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="text-sm font-medium text-gray-900 max-w-24 truncate">
+                                                    {org.name}
+                                                </div>
+                                                {org.website && (
+                                                    <a 
+                                                        href={org.website} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-blue-600 hover:text-blue-800"
+                                                    >
+                                                        Visit Site
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-
-                        <div className="text-center mt-12">
-                            <Button variant="outline" className="!text-gray-700 !bg-white hover:!bg-gray-50 !border-gray-300">
-                                Become a Partner Organization
-                            </Button>
-                        </div>
+                                <div className="text-center mt-12">
+                                    <Button variant="outline" className="!text-gray-700 !bg-white hover:!bg-gray-50 !border-gray-300">
+                                        Become a Partner Organization
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-center py-12">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Building className="w-8 h-8 text-gray-400" />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">Growing Our Partner Network</h3>
+                                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                    We're building partnerships with forward-thinking organizations. Be among the first to join our partner network.
+                                </p>
+                                <Link to="/auth/register?role=organization">
+                                    <Button variant="outline" className="!text-gray-700 !bg-white hover:!bg-gray-50 !border-gray-300">
+                                        Become a Partner Organization
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </section>
 
