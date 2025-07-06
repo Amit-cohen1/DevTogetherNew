@@ -26,7 +26,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
                         You're all set!
                     </h2>
                     <p className="text-gray-600">
-                        {userRole === 'developer'
+                        {(userRole === 'developer' || userRole === 'admin')
                             ? 'Your developer profile is complete. Start exploring projects and connecting with organizations.'
                             : 'Your organization profile is complete. You can now start posting projects and finding talented developers.'
                         }
@@ -38,7 +38,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
                     size="lg"
                     className="w-full sm:w-auto"
                 >
-                    {userRole === 'developer' ? 'Explore Projects' : 'Go to Dashboard'}
+                    {(userRole === 'developer' || userRole === 'admin') ? 'Explore Projects' : 'Go to Dashboard'}
                 </Button>
             </div>
         )
@@ -47,7 +47,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
     return (
         <div className="text-center space-y-6">
             <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
-                {userRole === 'developer' ? (
+                {(userRole === 'developer' || userRole === 'admin') ? (
                     <Code className="w-8 h-8 text-primary-600" />
                 ) : (
                     <Building className="w-8 h-8 text-primary-600" />
@@ -59,7 +59,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
                     Welcome to DevTogether!
                 </h2>
                 <p className="text-gray-600">
-                    {userRole === 'developer'
+                    {(userRole === 'developer' || userRole === 'admin')
                         ? 'Connect with nonprofit organizations and gain real-world experience while making a positive impact.'
                         : 'Find talented developers to help bring your nonprofit\'s mission to life through technology.'
                     }

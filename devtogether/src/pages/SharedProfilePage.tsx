@@ -122,7 +122,7 @@ const SharedProfilePage: React.FC = () => {
 
                 {/* Profile Content */}
                 <div className="mt-8">
-                    {profile.role === 'developer' ? (
+                    {(profile.role === 'developer' || profile.role === 'admin') ? (
                         <DeveloperProfile profile={profile} isOwnProfile={false} />
                     ) : (
                         <OrganizationProfile profile={profile} isOwnProfile={false} />

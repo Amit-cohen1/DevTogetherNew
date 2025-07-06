@@ -111,7 +111,7 @@ const ProfilePage: React.FC = () => {
 
                 {/* Profile Content */}
                 <div className="mt-8">
-                    {profile.role === 'developer' ? (
+                    {(profile.role === 'developer' || profile.role === 'admin') ? (
                         <DeveloperProfile profile={profile} isOwnProfile={isOwnProfile} />
                     ) : (
                         <OrganizationProfile profile={profile} isOwnProfile={isOwnProfile} />
