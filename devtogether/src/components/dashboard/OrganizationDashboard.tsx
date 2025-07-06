@@ -5,52 +5,46 @@ import {
     organizationDashboardService,
     OrganizationStats,
     DashboardProject,
-    ApplicationSummary,
-    TeamAnalytics
+    ApplicationSummary
 } from '../../services/organizationDashboardService';
-import { applicationService } from '../../services/applications';
-import OrganizationStatsCard from './OrganizationStatsCard';
-import ProjectOverviewSection from './ProjectOverviewSection';
-import ApplicationsSummary from './ApplicationsSummary';
-import TeamAnalyticsSection from './TeamAnalyticsSection';
 import { Button } from '../ui/Button';
 import {
     Building2,
     Users,
-    Clock,
-    Target,
-    AlertCircle,
-    RefreshCw,
     Plus,
+    Eye,
+    CheckCircle,
+    Clock,
+    AlertTriangle,
+    ArrowRight,
     Settings,
-    ShieldAlert
+    TrendingUp,
+    MessageSquare
 } from 'lucide-react';
 
-interface OrganizationDashboardData {
+interface DashboardData {
     stats: OrganizationStats;
-    projects: DashboardProject[];
-    applications: ApplicationSummary[];
-    teamAnalytics: TeamAnalytics;
-    lastUpdated: string;
+    recentProjects: DashboardProject[];
+    pendingApplications: ApplicationSummary[];
 }
 
 const OrganizationDashboard: React.FC = () => {
     const { user, profile } = useAuth();
     const navigate = useNavigate();
 
-    const [dashboardData, setDashboardData] = useState<OrganizationDashboardData | null>(null);
+    const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [refreshing, setRefreshing] = useState(false);
 
-    const loadDashboardData = useCallback(async () => {
+    const loadData = useCallback(async () => {
         try {
-            setError(null);
-            const data = await organizationDashboardService.refreshOrganizationData(user!.id);
-            setDashboardData(data);
-        } catch (err) {
-            console.error('Error loading organization dashboard:', err);
-            setError('Failed to load dashboard data. Please try again.');
+            const dashboardData = await organizationDashboardService.refreshOrganizationData(user!.id);
+            setData({
+                stats: dashboardData.stats,
+                recentProjects: dashboardData.projects.slice(0, 3), // Only show 3 most recent
+                pendingApplications: dashboardData.applications.filter(app => app.status === 'pending').slice(0, 5)
+            });
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
         } finally {
             setLoading(false);
         }
@@ -58,56 +52,23 @@ const OrganizationDashboard: React.FC = () => {
 
     useEffect(() => {
         if (user && profile?.role === 'organization') {
-            loadDashboardData();
+            loadData();
         }
-    }, [user, profile, loadDashboardData]);
+    }, [user, profile, loadData]);
 
-    const handleRefresh = async () => {
-        setRefreshing(true);
-        await loadDashboardData();
-        setRefreshing(false);
-    };
-
-    const handleQuickApplicationReview = async (applicationId: string, action: 'accept' | 'reject') => {
-        try {
-            const status = action === 'accept' ? 'accepted' : 'rejected';
-            await applicationService.updateApplicationStatus(applicationId, status);
-            // Refresh applications data
-            await handleRefresh();
-        } catch (error) {
-            console.error('Error updating application:', error);
-        }
-    };
-
-    const getWelcomeMessage = () => {
-        const organizationName = profile?.organization_name || 'Organization';
-        const hour = new Date().getHours();
-
-        let greeting = 'Good morning';
-        if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
-        else if (hour >= 17) greeting = 'Good evening';
-
-        return `${greeting}, ${organizationName}!`;
-    };
+    const isVerified = profile?.organization_verified === true;
+    const organizationName = profile?.organization_name || 'Your Organization';
 
     if (loading) {
         return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="animate-pulse">
-                    {/* Header Skeleton */}
-                    <div className="mb-8">
-                        <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-
-                    {/* Stats Cards Skeleton */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {[...Array(4)].map((_, i) => (
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="animate-pulse space-y-8">
+                    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[...Array(3)].map((_, i) => (
                             <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
                         ))}
                     </div>
-
-                    {/* Content Skeleton */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div className="h-96 bg-gray-200 rounded-lg"></div>
                         <div className="h-96 bg-gray-200 rounded-lg"></div>
@@ -117,233 +78,265 @@ const OrganizationDashboard: React.FC = () => {
         );
     }
 
-    if (error) {
-        return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading Dashboard</h3>
-                    <p className="text-red-700 mb-4">{error}</p>
-                    <Button onClick={handleRefresh} icon={<RefreshCw className="w-4 h-4" />}>
-                        Try Again
-                    </Button>
-                </div>
-            </div>
-        );
-    }
+    if (!data) return null;
 
-    if (!dashboardData) {
-        return null;
-    }
-
-    const { stats, projects, applications, teamAnalytics } = dashboardData;
-
-    // Check organization verification status
-    const isVerified = profile?.organization_verified === true;
-    const isPending = profile?.organization_verified === false && !profile?.organization_rejection_reason;
+    const { stats, recentProjects, pendingApplications } = data;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Verification Status Banner */}
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                {/* Verification Alert - Professional & Direct */}
             {!isVerified && (
-                <div className={`rounded-lg p-4 mb-6 border ${
-                    isPending ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'
-                }`}>
-                    <div className="flex items-start">
-                        <div className={`flex-shrink-0 ${
-                            isPending ? 'text-yellow-400' : 'text-red-400'
-                        }`}>
-                            <ShieldAlert className="h-5 w-5" />
-                        </div>
-                        <div className="ml-3 flex-1">
-                            <h3 className={`text-sm font-medium ${
-                                isPending ? 'text-yellow-800' : 'text-red-800'
-                            }`}>
-                                {isPending ? 'Organization Verification Pending' : 'Organization Verification Required'}
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 mb-8 rounded-r-lg shadow-sm">
+                        <div className="flex items-center">
+                            <AlertTriangle className="h-6 w-6 text-yellow-500 dark:text-yellow-400 mr-4" />
+                            <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
+                                    Account Verification Required
                             </h3>
-                            <div className={`mt-2 text-sm ${
-                                isPending ? 'text-yellow-700' : 'text-red-700'
-                            }`}>
-                                <p>
-                                    {isPending 
-                                        ? 'Your organization is currently under review by our admin team. You\'ll be able to create projects once approved.'
-                                        : `Your organization verification was not approved. Reason: ${profile?.organization_rejection_reason}`
-                                    }
+                                <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+                                    Please complete your organization's verification to unlock all features, including project creation.
                                 </p>
                             </div>
-                            <div className="mt-3">
                                 <Button
                                     onClick={() => navigate('/profile')}
-                                    size="sm"
-                                    className={isPending ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700'}
+                                className="ml-6 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 dark:bg-yellow-500 dark:hover:bg-yellow-600 dark:text-white"
+                                variant="primary"
                                 >
-                                    {isPending ? 'View Profile' : 'Update Profile'}
+                                Verify Now
                                 </Button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        {getWelcomeMessage()}
+
+                {/* Welcome Header - Clean & Professional */}
+                <div className="mb-10">
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                        Dashboard
                     </h1>
-                    <p className="text-gray-600 mt-2">
-                        Here's what's happening with your organization today.
+                    <p className="text-xl text-gray-600 dark:text-gray-400">
+                        Welcome back, {organizationName}. Here's your organization's summary.
                     </p>
                 </div>
-                <div className="flex items-center space-x-3">
+
+                {/* Stats Section - Mature Data Visualization */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    {/* Active Projects Card */}
+                    <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active Projects</p>
+                                <span className="text-4xl font-bold text-gray-900 dark:text-white">{stats.activeProjects}</span>
+                            </div>
+                            <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                                <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                            </div>
+                        </div>
+                        <div className="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-blue-500 rounded-full"
+                                style={{ width: `${Math.min(100, (stats.activeProjects / 10) * 100)}%` }}
+                            ></div>
+                        </div>
+                    </div>
+
+                    {/* Pending Applications Card */}
+                    <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending Applications</p>
+                                <span className="text-4xl font-bold text-gray-900 dark:text-white">{stats.pendingApplications}</span>
+                            </div>
+                            <div className="h-12 w-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                                <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+                            </div>
+                        </div>
+                        {stats.pendingApplications > 0 && (
+                            <div className="mt-4 flex items-center text-sm text-green-600 dark:text-green-400">
+                                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                                <span>Action Required</span>
+                            </div>
+                        )}
+                         {stats.pendingApplications === 0 && (
+                            <div className="mt-4 flex items-center text-sm text-green-600 dark:text-green-400">
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                <span>All applications reviewed</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Success Rate Card */}
+                    <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Success Rate</p>
+                                <span className="text-4xl font-bold text-gray-900 dark:text-white">{stats.acceptanceRate.toFixed(0)}%</span>
+                            </div>
+                            <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+                                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                            </div>
+                        </div>
+                        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                            Based on all completed projects.
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content Area - Clean & Structured */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Recent Projects - Takes 2 columns */}
+                    <div className="lg:col-span-2 bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Projects</h2>
                     <Button
                         variant="outline"
-                        onClick={handleRefresh}
-                        loading={refreshing}
-                        icon={<RefreshCw className="w-4 h-4" />}
-                        disabled={refreshing}
-                    >
-                        Refresh
-                    </Button>
-                    {profile?.organization_verified ? (
-                        <Button
-                            onClick={() => navigate('/projects/create')}
-                            icon={<Plus className="w-4 h-4" />}
-                        >
-                            Create Project
-                        </Button>
-                    ) : (
-                        <div className="relative group">
-                            <Button
-                                disabled
-                                icon={<ShieldAlert className="w-4 h-4" />}
-                                className="opacity-50 cursor-not-allowed"
+                                onClick={() => navigate('/dashboard/projects')}
+                                className="dark:text-white"
+                                icon={<ArrowRight className="w-4 h-4" />}
                             >
-                                Verification Required
-                            </Button>
-                            <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
-                                <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45"></div>
-                                {profile?.organization_rejection_reason 
-                                    ? "Organization verification was rejected. Please update your profile to create projects." 
-                                    : "Organization verification pending. You'll be able to create projects once approved by our admin team."
-                                }
+                                View All
+                    </Button>
+                        </div>
+
+                        {recentProjects.length === 0 ? (
+                            <div className="text-center py-16 px-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Building2 className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Launch Your First Initiative</h3>
+                                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">Create a new project to connect with skilled developers and bring your ideas to life.</p>
+                                {isVerified && (
+                                    <Button onClick={() => navigate('/projects/create')} variant="primary">
+                                        <Plus className="w-5 h-5 mr-2" />
+                                        Create New Project
+                        </Button>
+                                )}
                             </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {recentProjects.map((project) => (
+                                    <div key={project.id} className="group flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors border border-gray-200 dark:border-gray-700">
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{project.title}</h3>
+                                            <div className="flex items-center space-x-4 mt-2">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                    project.status === 'open' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
+                                                    project.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                }`}>
+                                                    {project.status === 'in_progress' ? 'In Progress' : project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                                                </span>
+                                                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                                    <Users className="w-4 h-4 mr-1.5" />
+                                                    <span>{project.teamMemberCount} members</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${project.id}`)} icon={<Eye className="w-4 h-4" />} />
+                                            <Button variant="outline" size="sm" onClick={() => navigate(`/workspace/${project.id}`)} icon={<MessageSquare className="w-4 h-4" />} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Pending Applications - Takes 1 column */}
+                    <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Applications</h2>
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate('/applications')}
+                                className="dark:text-white"
+                                icon={<ArrowRight className="w-4 h-4" />}
+                            >
+                                Review All
+                            </Button>
+                        </div>
+
+                        {pendingApplications.length === 0 ? (
+                            <div className="text-center py-16 px-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Inbox Clear</h3>
+                                <p className="text-gray-600 dark:text-gray-400">No pending applications to review.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {pendingApplications.map((application) => (
+                                    <div key={application.id} className="group flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors border border-gray-200 dark:border-gray-700">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center font-semibold text-gray-600 dark:text-gray-300">
+                                                {((application.developer.first_name || 'A').charAt(0) + (application.developer.last_name || 'B').charAt(0))}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                                                    {`${application.developer.first_name || ''} ${application.developer.last_name || ''}`.trim() || 'Anonymous'}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{application.project.title}</p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => navigate('/applications')}
+                                            variant="secondary"
+                                            className="opacity-0 group-hover:opacity-100"
+                                        >
+                                            Review
+                                        </Button>
+                                    </div>
+                                ))}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <OrganizationStatsCard
-                    title="Total Projects"
-                    value={stats.totalProjects}
-                    icon={Building2}
-                    subtitle={`${stats.activeProjects} active, ${stats.completedProjects} completed`}
-                    color="blue"
-                />
-
-                <OrganizationStatsCard
-                    title="Total Applications"
-                    value={stats.totalApplications}
-                    icon={Users}
-                    subtitle={`${stats.pendingApplications} pending review`}
-                    color="green"
-                />
-
-                <OrganizationStatsCard
-                    title="Acceptance Rate"
-                    value={`${stats.acceptanceRate.toFixed(1)}%`}
-                    icon={Target}
-                    subtitle={`${stats.acceptedApplications} accepted`}
-                    color="purple"
-                />
-
-                <OrganizationStatsCard
-                    title="Avg Response Time"
-                    value={stats.averageResponseTime > 0 ? `${stats.averageResponseTime}h` : 'N/A'}
-                    icon={Clock}
-                    subtitle="Application review time"
-                    color="yellow"
-                />
+                {/* Quick Actions Footer - Empowering & Clean */}
+                <div className="mt-12 bg-gray-100 dark:bg-gray-800/50 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+                        <div 
+                            className={`group p-4 rounded-lg transition-all duration-300 ${!isVerified ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-800 cursor-pointer'}`}
+                            onClick={() => isVerified && navigate('/projects/create')}
+                        >
+                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <Plus className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Create Project</h3>
+                             {!isVerified && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Verification needed</p>
+                            )}
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {/* Projects Overview */}
-                <div className="lg:col-span-1">
-                    <ProjectOverviewSection
-                        projects={projects}
-                        loading={false}
-                    />
+                        <div className="group p-4 rounded-lg hover:bg-white dark:hover:bg-gray-800 cursor-pointer transition-all duration-300" onClick={() => navigate('/applications')}>
+                            <div className="relative w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                {stats.pendingApplications > 0 && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow">
+                                        {stats.pendingApplications}
+                                    </div>
+                                )}
+                                <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+                            </div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Review Applications</h3>
                 </div>
 
-                {/* Applications Summary */}
-                <div className="lg:col-span-1">
-                    <ApplicationsSummary
-                        applications={applications}
-                        loading={false}
-                        onQuickReview={handleQuickApplicationReview}
-                    />
+                        <div className="group p-4 rounded-lg hover:bg-white dark:hover:bg-gray-800 cursor-pointer transition-all duration-300" onClick={() => navigate('/dashboard/projects')}>
+                            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Manage Projects</h3>
             </div>
 
-            {/* Team Analytics */}
-            <div className="mb-8">
-                <TeamAnalyticsSection
-                    teamAnalytics={teamAnalytics}
-                    loading={false}
-                />
+                        <div className="group p-4 rounded-lg hover:bg-white dark:hover:bg-gray-800 cursor-pointer transition-all duration-300" onClick={() => navigate('/profile')}>
+                            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <Settings className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                            </div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Organization Settings</h3>
+                        </div>
             </div>
-
-            {/* Quick Actions Footer */}
-            <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={profile?.organization_verified ? () => navigate('/projects/create') : undefined}
-                        icon={profile?.organization_verified ? <Plus className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
-                        disabled={!profile?.organization_verified}
-                        title={profile?.organization_verified ? undefined : "Organization verification required to create projects"}
-                    >
-                        {profile?.organization_verified ? 'Create New Project' : 'Verification Required'}
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => navigate('/applications')}
-                        icon={<Users className="w-4 h-4" />}
-                    >
-                        Review Applications
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => navigate('/organization/projects')}
-                        icon={<Building2 className="w-4 h-4" />}
-                    >
-                        Manage Projects
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => navigate('/profile')}
-                        icon={<Settings className="w-4 h-4" />}
-                    >
-                        Organization Settings
-                    </Button>
                 </div>
-            </div>
-
-            {/* Data Freshness Indicator */}
-            <div className="mt-6 text-center">
-                <p className="text-sm text-gray-500">
-                    Last updated: {new Date(dashboardData.lastUpdated).toLocaleString()}
-                </p>
             </div>
         </div>
     );
