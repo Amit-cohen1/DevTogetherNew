@@ -559,3 +559,25 @@ Step 9.2 is now complete with comprehensive organization profile marketing featu
 Next step will implement comprehensive loading states and skeleton components to enhance the user experience during data loading.
 
 - **2025-07-06**: MARKETING PLACEHOLDER UPDATE - Implemented temporary marketing mock data across HomePage, DeveloperLandingPage, and OrganizationLandingPage. Attractive placeholder statistics (120+ projects, 750+ developers, 85+ organizations, 92–94% success) and sample testimonials now display by default. Real Supabase-driven data-fetching logic remains in the codebase but is commented out, enabling a one-line uncomment to switch back to live metrics when ready. This prevents "0%" or low figures from appearing while the platform is still growing and ensures professional first impressions.
+
+### Step 9.1.2: Homepage UI/UX Polish – Clear Section Separation (BLUEPRINT)
+- **Objective**: Improve visual clarity on the HomePage by clearly separating sections and enhancing container visibility for a more pleasant UX.
+- **Key Improvements**:
+  1. **Consistent Section Wrappers**: Wrap each major section (`Statistics`, `How It Works`, `Featured Projects`, `Organizations We've Helped`, `CTA`) in a `section` tag with a dedicated utility class (`section-wrapper`) or Tailwind utility combos.
+  2. **Alternating Backgrounds**: Apply alternating background colors (e.g., `bg-white`, `bg-gray-50`, `bg-gray-100`) to break monotony and visually group content.
+  3. **Enhanced Padding & Margins**: Add extra `py-20`/`py-24` vertical padding and increased `max-w` constraints for better whitespace.
+  4. **Card & Shadow Usage**: Convert dense content blocks to card-like containers with rounded corners (`rounded-2xl`) and subtle shadows (`shadow-lg`) to elevate them from the background.
+  5. **Divider Elements**: Insert stylized horizontal dividers (`<hr>` or Tailwind `border-t`) between subsections where helpful (e.g., before CTA).
+  6. **Accessibility & Dark-Mode**: Ensure color choices keep AAA/AA contrast in both light and dark modes and update `dark:` classes accordingly.
+- **Implementation Steps**:
+  1. Refactor `HomePage.tsx` section markup to introduce a reusable `Section` wrapper component (if useful) or apply consistent Tailwind classes directly.
+  2. Adjust background colors and paddings per section in JSX.
+  3. Wrap stat cards, "How It Works" steps, and partner logos in cards with shadows and consistent gutters.
+  4. Test across breakpoints to ensure responsive spacing stays balanced.
+  5. Verify contrast ratios and dark-mode variations.
+- **Success Criteria**:
+  - Each section is visually distinct with clear whitespace.
+  - Containers have adequate padding and separation on all screen sizes.
+  - No content appears crowded; improved readability and user flow.
+  - All styles remain responsive and dark-mode friendly.
+- **ETA**: ~2 hours
