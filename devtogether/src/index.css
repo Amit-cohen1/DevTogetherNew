@@ -57,3 +57,45 @@ code {
     -webkit-line-clamp: 4;
   }
 }
+
+/* Accessibility Variables */
+:root {
+  --dt-font-scale: 1;
+}
+
+html {
+  font-size: calc(16px * var(--dt-font-scale));
+}
+
+/* High contrast mode */
+html.dt-high-contrast {
+  filter: contrast(1.25) saturate(1.2);
+}
+
+/* Grayscale mode */
+html.dt-grayscale {
+  filter: grayscale(100%);
+}
+
+/* Reduce motion */
+html.dt-reduce-motion *,
+html.dt-reduce-motion *::before,
+html.dt-reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Dyslexia-friendly font (fallback if font not available) */
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 400;
+  src: local('OpenDyslexic'), url('https://fonts.gstatic.com/s/opendyslexic/v1/ODYS.ttf') format('truetype');
+}
+
+html.dt-dyslexia {
+  font-family: 'OpenDyslexic', system-ui, sans-serif;
+}
+
+/* Skip link visibility helper (already uses classes) */

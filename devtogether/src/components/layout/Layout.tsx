@@ -2,6 +2,7 @@ import React from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Navbar } from './Navbar'
 import { Footer } from './Footer'
+import { AccessibilityMenu } from '../accessibility/AccessibilityMenu'
 
 interface LayoutProps {
     children: React.ReactNode
@@ -22,12 +23,15 @@ export const Layout: React.FC<LayoutProps> = ({
             {showNavbar && <Navbar />}
 
             {/* Main Content */}
-            <main className={`flex-1 ${className}`}>
+            <main id="main-content" className={`flex-1 ${className}`}>
                 {children}
             </main>
 
             {/* Footer */}
             {showFooter && <Footer />}
+
+            {/* Global Accessibility Menu */}
+            <AccessibilityMenu />
         </div>
     )
 } 
