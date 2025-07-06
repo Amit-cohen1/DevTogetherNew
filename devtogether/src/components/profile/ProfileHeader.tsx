@@ -23,7 +23,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     isOwnProfile,
     onEditClick
 }) => {
-    const displayName = profile.role === 'developer'
+    const displayName = ['developer', 'admin'].includes((profile.role as unknown as string))
         ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
         : profile.organization_name
 
@@ -55,7 +55,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                                     />
                                 ) : (
                                     <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
-                                        {profile.role === 'developer' ? (
+                                        {['developer','admin'].includes(profile.role as unknown as string) ? (
                                             <UserIcon className="w-12 h-12 text-gray-400" />
                                         ) : (
                                             <Building className="w-12 h-12 text-gray-400" />
@@ -70,10 +70,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                                     px-3 py-1 text-xs font-medium rounded-full
                                     ${profile.role === 'developer'
                                         ? 'bg-blue-100 text-blue-800'
-                                        : 'bg-purple-100 text-purple-800'
+                                        : (profile.role as unknown as string) === 'admin'
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : 'bg-purple-100 text-purple-800'
                                     }
                                 `}>
-                                    {profile.role === 'developer' ? 'Developer' : 'Organization'}
+                                    {profile.role === 'developer' ? 'Developer' : (profile.role as unknown as string) === 'admin' ? 'Admin' : 'Organization'}
                                 </span>
                             </div>
                         </div>

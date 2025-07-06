@@ -1,36 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { adminService } from '../services/adminService'
 import { Layout } from '../components/layout/Layout'
 import AdminDashboard from '../components/admin/AdminDashboard'
 import { Navigate } from 'react-router-dom'
 import { Shield, AlertTriangle } from 'lucide-react'
 
 const AdminPage: React.FC = () => {
-  const { user, loading: authLoading } = useAuth()
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
-  const [checkingAdmin, setCheckingAdmin] = useState(true)
+  const { user, isAdmin, loading: authLoading } = useAuth()
 
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user?.id || authLoading) return
-
-      try {
-        const adminStatus = await adminService.isUserAdmin(user.id)
-        setIsAdmin(adminStatus)
-      } catch (error) {
-        console.error('Error checking admin status:', error)
-        setIsAdmin(false)
-      } finally {
-        setCheckingAdmin(false)
-      }
-    }
-
-    checkAdminStatus()
-  }, [user?.id, authLoading])
-
-  // Show loading while checking authentication and admin status
-  if (authLoading || checkingAdmin) {
+  // Show loading while auth context initializing
+  if (authLoading) {
     return (
       <Layout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -51,7 +30,7 @@ const AdminPage: React.FC = () => {
   }
 
   // Show access denied if not admin
-  if (isAdmin === false) {
+  if (!isAdmin) {
     return (
       <Layout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

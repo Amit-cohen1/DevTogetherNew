@@ -577,4 +577,216 @@ Step 9.2 is now complete with comprehensive organization profile marketing featu
 
 Next step will implement comprehensive loading states and skeleton components to enhance the user experience during data loading.
 
+### **Upcoming Step 9.4: Public Navigation & Organizations Listing Page (Blueprint)**
+
+**Objective**: Improve the public-facing experience by (1) updating the hero CTA for organizations, (2) removing the obsolete "About Us" link, and (3) providing a real Organizations listing page that showcases partner nonprofits stored in Supabase.
+
+#### **Tasks**
+1. **Navbar Cleanup (Public View)**
+   - Remove the "About Us" navigation item from the desktop and mobile menus in `Navbar.tsx` (non-authenticated state).
+   - Convert the placeholder "Organizations" button into a proper `Link` that navigates to `/organizations`.
+2. **Homepage Hero CTA Adjustment**
+   - In `HomePage.tsx`, change the **Start a Project** button label to **Join as Organization** (same route `/for-organizations`).
+3. **OrganizationsPage Component**
+   - Create `src/pages/OrganizationsPage.tsx`.
+   - Fetch public organization profiles:
+     ```ts
+     const { data } = await supabase
+       .from('profiles')
+       .select('id, organization_name, avatar_url, bio, website')
+       .eq('role', 'organization')
+       .eq('is_public', true);
+     ```
+   - Display organizations in a responsive grid of cards (logo/avatar, name, short bio, website link).
+   - Add graceful loading/skeleton states and an informative empty state ("No organizations yet – be the first!").
+4. **Routing**
+   - Add a new **public** route in `App.tsx`:
+     ```tsx
+     <Route path="/organizations" element={<OrganizationsPage />} />
+     ```
+5. **Types & Services (Optional Enhancement)**
+   - If useful, extend existing `profileService` with a `getOrganizations()` helper wrapping the Supabase query.
+6. **Accessibility & SEO**
+   - Ensure images include `alt` text and headings use semantic HTML for screen-reader compatibility.
+7. **Testing & Validation**
+   - Manual smoke test: verify navbar links, hero CTA label, organizations page renders real data or placeholder cards.
+   - Check responsive behavior on mobile widths.
+
+#### **Pseudocode Overview**
+```pseudo
+// Navbar.tsx (public state)
+remove AboutUsLink
+<Link to="/organizations">Organizations</Link>
+
+// HomePage.tsx (hero section)
+<Button>Join as Organization</Button>
+
+// OrganizationsPage.tsx
+const [orgs, setOrgs] = useState([])
+useEffect(fetchOrgs)
+return Layout {
+  <h1>Partner Organizations</h1>
+  if (loading) show skeleton
+  else if (orgs.length === 0) show empty state
+  else grid(orgCards)
+}
+```
+
+**Estimated Effort**: ~2–3 hours including testing
+
+---
+
 - **2025-07-06**: MARKETING PLACEHOLDER UPDATE - Implemented temporary marketing mock data across HomePage, DeveloperLandingPage, and OrganizationLandingPage. Attractive placeholder statistics (120+ projects, 750+ developers, 85+ organizations, 92–94% success) and sample testimonials now display by default. Real Supabase-driven data-fetching logic remains in the codebase but is commented out, enabling a one-line uncomment to switch back to live metrics when ready. This prevents "0%" or low figures from appearing while the platform is still growing and ensures professional first impressions.
+
+### Upcoming Step 9.5: Notification System Reliability & Role-Based Enhancements (Blueprint)
+
+**Objective**: Stabilize the existing notification system, guarantee 100 % delivery, and extend coverage so that every stakeholder (Admin, Organization, Developer) reliably receives the right in-app (and optional browser) notifications in real-time.
+
+#### Key Results
+- 🟢 Zero lost notifications across all critical flows
+- 🟢 <200 ms average notification delivery latency (95th percentile)
+- 🟢 Comprehensive notification matrix covering all required events per role
+- 🟢 Clear, type-safe API & DB schema to support new notification categories
+- 🟢 Production-grade monitoring & error-logging around notification creation
+
+#### Scope & Tasks
+1. **Schema Update & Migration**
+   - Add new **enum value** `moderation` to `notifications.type` (covers admin-level events).
+   - Create migration `20250706_add_moderation_notification_type.sql` updating CHECK constraint.
+   - Regenerate TS types (`mcp_supabase_generate_typescript_types`).
+
+2. **DB-Level Guarantees (Triggers)**
+   - **Organization Registration Trigger**: `AFTER INSERT` on `profiles` where `role='organization' AND organization_verified=false` → create *moderation* notification for **all admins**.
+   - **Project Creation Trigger**: `AFTER INSERT` on `projects` with `status='open'` → *moderation* notification to admins for approval.
+   - **Application Status Trigger** _(replace service-layer logic)_:
+     - `AFTER UPDATE` on `applications` when `OLD.status <> NEW.status` → developer/org notifications via INSERT into `notifications`.
+   - **Project Status Trigger**: `AFTER UPDATE` on `projects.status` → notify organization + all team members.
+   - **Chat Message Trigger** _(unseen messages)_:
+     - `AFTER INSERT` on `messages` → create *team* notification for every workspace member (minus sender) when they’re **offline** (presence not in channel / last activity >3 min).
+
+3. **Service Layer Cleanup & Fallbacks**
+   - Deprecate redundant notification Service calls replaced by triggers; keep as **idempotent fallback** wrapped in `try/catch`.
+   - Centralise **AdminNotificationService** for manual approvals (accept / reject orgs & projects) that:
+     - updates relevant tables
+     - auto-generates follow-up notifications to requestor.
+
+4. **Frontend Enhancements**
+   - Extend `Notification` interface to include new `moderation` type.
+   - Update icon map in `NotificationDropdown`, `NotificationsPage`.
+   - Add dedicated **Admin Dashboard badge** linking to pending approval queues (reuse unread count).
+   - Implement **“Unread in Workspace”** pill on chat tabs based on notification count.
+
+5. **Performance & Reliability**
+   - Batch `markAllAsRead` using RPC function to minimise round-trips.
+   - Replace periodic polling (unreadCount) with **Realtime `INSERT` / `UPDATE`** subscription to aggregate view `unread_notification_counts` (materialised view refreshed via trigger).
+   - Add `retry` + exponential back-off utility in service layer for transient network errors.
+
+6. **Monitoring & Observability**
+   - Create **notification_audit** table to log failures (`status`, `error`, `payload`).
+   - Add CloudWatch/Supabase Logflare dashboard panels for “notifications failed”.
+
+7. **Testing**
+   - Unit tests for DB triggers using pg-tap.
+   - Cypress E2E scenarios: organization registration, project approval, chat offline message, application accepted/rejected, project status change.
+
+#### Pseudocode Snippet – Organization Registration Trigger
+```sql
+CREATE OR REPLACE FUNCTION notify_admin_on_org_registration()
+RETURNS TRIGGER AS $$
+DECLARE
+    admin RECORD;
+BEGIN
+    FOR admin IN SELECT id FROM profiles WHERE is_admin = TRUE LOOP
+        INSERT INTO notifications(user_id, title, message, type, data)
+        VALUES (
+            admin.id,
+            '🆕 Organization Registration Pending',
+            NEW.organization_name || ' has requested to join the platform and awaits verification.',
+            'moderation',
+            jsonb_build_object('organizationId', NEW.id)
+        );
+    END LOOP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_notify_admin_on_org_registration
+AFTER INSERT ON profiles
+FOR EACH ROW WHEN (NEW.role = 'organization' AND (NEW.organization_verified IS FALSE OR NEW.organization_verified IS NULL))
+EXECUTE FUNCTION notify_admin_on_org_registration();
+```
+
+#### Estimated Effort
+Total ~2.5–3 days including SQL migrations, trigger logic, frontend adaptations, and full test coverage.
+
+---
+
+#### **Step 9.5 – Phase 1 (Audit-First Safe Preparations)**
+- **Objective** – lay the groundwork for the reliable DB-driven notification system without touching live logic.
+- **Status** – _pending_
+
+| ID | Task | Owner | Notes |
+|----|------|-------|-------|
+| 9.5-1 | Create `notification_audit` table + indexes | DB | Pure add; no runtime impact |
+| 9.5-2 | Introduce `notification_type_new` ENUM incl. `moderation`, `chat`, `status_change` | DB | Additive migration; keep old values |
+| 9.5-3 | Migrate `notifications.type` → new ENUM (copy column, swap) | DB | Wrapped in `BEGIN/COMMIT`, reversible |
+| 9.5-4 | Build `safe_create_notification()` helper (SECURITY DEFINER) | DB | Central audited insert |
+| 9.5-5 | Verification script #1 (schema, enum, helper test) | DevOps | Run immediately after migration |
+| 9.5-6 | Tighten INSERT RLS (create `can_insert_notification()` + new policy) | DB | Keep old policy until triggers ready |
+| 9.5-7 | Front-end smoke test (dropdown/page/badge) | FE | Ensure no regressions |
+
+Completion criteria: audit table populated, helper test notification visible in UI, zero errors in audit, existing JS notifications still work.
+
+#### **Step 9.4.1 – Admin Role Refactor (Blueprint)**
+- **Goal**: replace the boolean `is_admin` with a first-class `admin` role while preserving developer capabilities for admins.
+- **Model chosen**: Option A – single `role` column, where `role='admin'` inherits all developer rights. All developer checks will become `role IN ('developer','admin')`.
+- **Migration outline**
+  1. **Schema**
+     ```sql
+     -- add enum if needed
+     ALTER TYPE role_enum ADD VALUE IF NOT EXISTS 'admin';
+     -- (if role is text+CHECK): ALTER TABLE profiles DROP CONSTRAINT profiles_role_check;  -- recreate to include 'admin'
+     ```
+  2. **Data**
+     ```sql
+     UPDATE profiles SET role='admin' WHERE is_admin = true;
+     ```
+  3. **Backend / RLS**
+     - Replace `is_admin=true` conditions with `role='admin'`.
+     - Where developer permissions are required, use `role IN ('developer','admin')`.
+  4. **Frontend**
+     - Replace `user.is_admin` checks with `user.role === 'admin'`.
+  5. **Cleanup (post-validation)**
+     ```sql
+     ALTER TABLE profiles DROP COLUMN is_admin;
+     ```
+- **Tasks**
+  | ID | Task | Area |
+  |----|------|------|
+  | AR-1 | Add `admin` to enum / CHECK | DB |
+  | AR-2 | Promote existing admins in data | DB |
+  | AR-3 | Update RLS & backend queries | BE |
+  | AR-4 | Update React checks & nav | FE |
+  | AR-5 | Smoke test developer + admin flows | QA |
+  | AR-6 | Drop `is_admin` after verification | DB |
+
+- **Status** – _pending_
+
+---
+
+#### **Step 9.4.2 – Admin Front-End Finalisation (Blueprint)**
+- **Goal**: Ship a fully-functional admin UI (dashboard + moderation tools) using *existing* components so we can unblock the notification work.
+- **Scope** – no brand-new pages; only routing, role-check refactor, and minor UX polish.
+
+| ID | Task | Area | Notes |
+|----|------|------|-------|
+| AF-1 | Extend `useAuth` helper – add `isAdmin` computed as `role==='admin' \|\| is_admin==true` (transition phase) | FE | Keeps compatibility during DB migration |
+| AF-2 | Navbar – replace `profile.is_admin` checks with `profile.role==='admin'` and surface **Admin Dashboard** link in both desktop & mobile menus | FE | Already exists at L340+ of `Navbar.tsx` |
+| AF-3 | ProtectedRoute – add `requiredRole='admin'` to `/admin` route once role refactor lands | FE | Two-line change in `App.tsx` |
+| AF-4 | AdminPage – remove extra `isUserAdmin()` fetch (now redundant) and rely on `profile.role==='admin'` | FE | Simplifies load time |
+| AF-5 | Quick-win moderation tab for **Project Approvals** | FE | Reuse table pattern from `OrganizationManagement` – list projects where `status='pending_approval'` with Approve/Reject buttons |
+| AF-6 | Smoke tests & manual QA | QA | Verify admin login, approval flows, non-admin access blocks |
+
+**Estimated Effort**: 0.5–1 day.
+
+Completion criteria: Admin sees dashboard + organizations & partner tabs + project moderation tab; Navbar link works; non-admin users are blocked; no console errors.

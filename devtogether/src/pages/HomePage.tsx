@@ -299,13 +299,23 @@ const HomePage: React.FC = () => {
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
                                     <Link to="/for-developers">
-                                        <Button size="lg" variant="primary" className="!bg-white !text-blue-700 hover:!bg-gray-100 !border-0 font-semibold px-8 py-4">
+                                        <Button
+                                            size="lg"
+                                            variant="primary"
+                                            className="!bg-white !text-blue-700 !border-2 !border-blue-600 hover:!bg-gray-100 font-semibold px-8 py-4 flex items-center gap-2 transform transition-transform hover:scale-105 active:scale-95"
+                                        >
+                                            <Code className="w-5 h-5" />
                                             Join as Developer
                                         </Button>
                                     </Link>
                                     <Link to="/for-organizations">
-                                        <Button size="lg" variant="ghost" className="!border-2 !border-white !text-white hover:!bg-white hover:!text-blue-600 font-semibold px-8 py-4">
-                                            Start a Project
+                                        <Button
+                                            size="lg"
+                                            variant="primary"
+                                            className="!bg-white !text-blue-700 !border-2 !border-blue-600 hover:!bg-gray-100 font-semibold px-8 py-4 flex items-center gap-2 transform transition-transform hover:scale-105 active:scale-95"
+                                        >
+                                            <Building className="w-5 h-5" />
+                                            Join as Organization
                                         </Button>
                                     </Link>
                                 </div>
