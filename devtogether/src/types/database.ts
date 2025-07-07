@@ -150,7 +150,7 @@ export interface Database {
                     id: string
                     project_id: string
                     developer_id: string
-                    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+                    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'removed'
                     cover_letter: string | null
                     portfolio_links: string[] | null
                     status_manager: boolean | null
@@ -161,7 +161,7 @@ export interface Database {
                     id?: string
                     project_id: string
                     developer_id: string
-                    status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+                    status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'removed'
                     cover_letter?: string | null
                     portfolio_links?: string[] | null
                     status_manager?: boolean | null
@@ -172,7 +172,7 @@ export interface Database {
                     id?: string
                     project_id?: string
                     developer_id?: string
-                    status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+                    status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'removed'
                     cover_letter?: string | null
                     portfolio_links?: string[] | null
                     status_manager?: boolean | null
