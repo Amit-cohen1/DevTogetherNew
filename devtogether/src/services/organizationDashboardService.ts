@@ -27,7 +27,7 @@ export interface ApplicationSummary {
     id: string;
     developer_id: string;
     project_id: string;
-    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'removed';
     created_at: string;
     updated_at: string;
     developer: {

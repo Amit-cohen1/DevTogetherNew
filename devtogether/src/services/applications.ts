@@ -10,7 +10,7 @@ export interface ApplicationCreateData {
 }
 
 export interface ApplicationUpdateData {
-    status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+    status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'removed'
     cover_letter?: string
     portfolio_links?: string[]
 }

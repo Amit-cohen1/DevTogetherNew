@@ -50,7 +50,7 @@ export interface RecommendedProject extends Project {
 }
 
 interface ApplicationWithProject {
-    status: string;
+    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'removed';
     projects: {
         id: string;
         status: string;

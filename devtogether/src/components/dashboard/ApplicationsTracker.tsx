@@ -6,7 +6,7 @@ interface ApplicationWithProject {
     id: string;
     project_id: string;
     developer_id: string;
-    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'removed';
     cover_letter: string | null;
     portfolio_links: string[] | null;
     created_at: string;
