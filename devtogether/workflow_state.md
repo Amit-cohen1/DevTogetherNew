@@ -790,3 +790,40 @@ Completion criteria: audit table populated, helper test notification visible in 
 **Estimated Effort**: 0.5–1 day.
 
 Completion criteria: Admin sees dashboard + organizations & partner tabs + project moderation tab; Navbar link works; non-admin users are blocked; no console errors.
+
+### Step 9.5.1: Bug Fix – Enable Organization to Remove Team Members (Applications.status = 'removed')
+
+**Problem**: Attempting to remove a developer from a project team fails because `teamService.removeMember()` attempts to set `applications.status = 'removed'`, but the database `CHECK` constraint for the `applications.status` column does not include the value `removed`. This triggers a constraint‐violation error and blocks the action in the UI.
+
+**Solution Overview**: Extend the allowed status values for the `applications.status` column to include `removed`, update generated TypeScript types, and verify the end-to-end flow.
+
+#### Tasks
+1. **Database Migration**
+   - Create migration `20250707_add_removed_status_to_applications.sql`:
+     ```sql
+     -- Add \"removed\" to applications.status allowed values
+     ALTER TABLE public.applications
+     DROP CONSTRAINT IF EXISTS applications_status_check;
+
+     ALTER TABLE public.applications
+     ADD CONSTRAINT applications_status_check CHECK (status IN ('pending', 'accepted', 'rejected', 'withdrawn', 'removed'));
+     ```
+   - Deploy migration via Supabase SQL editor or CLI.
+
+2. **Regenerate Supabase Types**
+   - Run Supabase type generation to pull the updated enum into `src/types/database.ts`.
+   - Alternatively, manually add `'removed'` to `Application['status']` unions if auto-generation is deferred.
+
+3. **Frontend Type & Logic Update**
+   - Update `ApplicationStatus` union in `src/types/database.ts` to include `'removed'`.
+   - Ensure any status switch/colour maps handle the new value (none currently block functionality).
+
+4. **Manual Verification & QA**
+   - Scenario: Org owner removes a developer – expect status update → dev disappears from team list & loses workspace access.
+   - Scenario: Developer attempts to access workspace after removal – RLS should block access.
+   - Confirm no regression for existing status flows (withdraw/accept/reject).
+
+5. **Documentation**
+   - Add concise bug-fix doc `doc/team-member-removal-fix.md` describing cause, migration, and testing notes.
+
+**Estimated Effort**: <1 h (migration + types + smoke test)
