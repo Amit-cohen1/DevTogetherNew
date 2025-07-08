@@ -54,6 +54,29 @@ import AdminPage from './pages/AdminPage'
 import OrganizationProjectsPage from './pages/dashboard/OrganizationProjectsPage'
 
 import AccessibilityPage from './pages/AccessibilityPage'
+import PendingApprovalPage from './pages/PendingApprovalPage';
+import { useAuth } from './contexts/AuthContext';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+// Custom wrapper to redirect unverified orgs
+const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, profile } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (
+      user &&
+      profile &&
+      profile.role === 'organization' &&
+      profile.organization_verified === false &&
+      location.pathname !== '/pending-approval'
+    ) {
+      navigate('/pending-approval', { replace: true });
+    }
+  }, [user, profile, location.pathname, navigate]);
+  return <>{children}</>;
+};
 
 function App() {
   return (
@@ -152,8 +175,10 @@ function App() {
                 <Route
                   path="/dashboard"
                   element={
-                    <ProtectedRoute>
-                      <DashboardPage />
+                    <ProtectedRoute requiredRole="organization">
+                      <OrgApprovalGuard>
+                        <DashboardPage />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -197,7 +222,9 @@ function App() {
                   path="/projects/create"
                   element={
                     <ProtectedRoute requiredRole="organization">
-                      <CreateProjectPage />
+                      <OrgApprovalGuard>
+                        <CreateProjectPage />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -265,7 +292,9 @@ function App() {
                   path="/dashboard/projects"
                   element={
                     <ProtectedRoute requiredRole="organization">
-                      <OrganizationProjectsPage />
+                      <OrgApprovalGuard>
+                        <OrganizationProjectsPage />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />

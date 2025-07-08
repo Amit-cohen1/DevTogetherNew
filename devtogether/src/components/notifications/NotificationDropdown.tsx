@@ -298,7 +298,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
     return (
         <div
             ref={dropdownRef}
-            className="absolute right-0 top-full mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col"
+            className={`absolute left-1/2 top-12 transform -translate-x-1/2 w-full max-w-xs md:w-96 md:max-w-none bg-white rounded-xl shadow-xl z-50 border border-gray-200 ${isOpen ? '' : 'hidden'}`}
+            style={{ minWidth: '18rem' }}
         >
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
@@ -331,7 +332,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             </div>
 
             {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="overflow-y-auto max-h-96 flex-1 w-full">
                 {loading ? (
                     <div className="p-8 text-center">
                         <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
