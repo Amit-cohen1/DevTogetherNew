@@ -126,18 +126,17 @@ export const Navbar: React.FC = () => {
                         </div>
 
                         {/* Right side - Auth buttons */}
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2 md:space-x-4">
                             <Link to="/auth/login">
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" className="px-3 py-1.5 text-sm min-w-[80px] md:min-w-[100px]">
                                     Sign In
                                 </Button>
                             </Link>
                             <Link to="/auth/register">
-                                <Button size="sm">
+                                <Button size="sm" className="px-3 py-1.5 text-sm min-w-[80px] md:min-w-[100px]">
                                     Join Now
                                 </Button>
                             </Link>
-
                             {/* Mobile menu button */}
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -169,18 +168,16 @@ export const Navbar: React.FC = () => {
                             >
                                 Organizations
                             </Link>
-                            <div className="pt-4 space-y-2">
-                                <Link
-                                    to="/auth/login"
-                                    className="block w-full text-center px-3 py-2 border border-gray-300 rounded-md text-base font-medium text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                    Sign In
+                            <div className="pt-4 flex flex-col gap-2">
+                                <Link to="/auth/login">
+                                    <Button variant="outline" size="sm" className="w-full px-3 py-1.5 text-sm">
+                                        Sign In
+                                    </Button>
                                 </Link>
-                                <Link
-                                    to="/auth/register"
-                                    className="block w-full text-center px-3 py-2 border border-transparent rounded-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
-                                >
-                                    Join Now
+                                <Link to="/auth/register">
+                                    <Button size="sm" className="w-full px-3 py-1.5 text-sm">
+                                        Join Now
+                                    </Button>
                                 </Link>
                             </div>
                         </div>
@@ -337,15 +334,6 @@ export const Navbar: React.FC = () => {
                                             <span className="text-purple-600 font-medium">Admin Dashboard</span>
                                         </Link>
                                     )}
-
-                                    <Link
-                                        to="/settings"
-                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                                        onClick={() => setUserMenuOpen(false)}
-                                    >
-                                        <Settings className="w-4 h-4" />
-                                        Settings
-                                    </Link>
 
                                     <button
                                         onClick={handleSignOut}

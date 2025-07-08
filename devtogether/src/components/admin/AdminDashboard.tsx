@@ -167,170 +167,131 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Platform Stats */}
-          <div className="bg-white rounded-lg shadow p-6">
+      {/* Statistics Cards - Only in Overview */}
+      {activeTab === 'overview' && stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Total Developers */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Users className="h-8 w-8 text-blue-600" />
+                <Users className="h-5 w-5 text-blue-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Developers
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalDevelopers.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Total Developers</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.totalDevelopers.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Total Projects */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <FileText className="h-8 w-8 text-green-600" />
+                <FileText className="h-5 w-5 text-green-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Projects
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalProjects.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Total Projects</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.totalProjects.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Total Organizations */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Building className="h-8 w-8 text-purple-600" />
+                <Building className="h-5 w-5 text-purple-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Organizations
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalOrganizations.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Total Organizations</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.totalOrganizations.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Verified Organizations */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-yellow-500" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Verified Organizations
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.verifiedOrganizations.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Verified Organizations</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.verifiedOrganizations.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          {/* Organization Approval Stats */}
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Pending Organizations */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Clock className="h-8 w-8 text-yellow-600" />
+                <Clock className="h-5 w-5 text-yellow-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending Organizations
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pendingOrganizations.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Pending Organizations</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.pendingOrganizations.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Rejected Organizations */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <XCircle className="h-8 w-8 text-red-600" />
+                <XCircle className="h-5 w-5 text-red-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Rejected Organizations
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.rejectedOrganizations.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Rejected Organizations</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.rejectedOrganizations.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          {/* Partner Application Stats */}
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Partner Applications */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <UserCheck className="h-8 w-8 text-indigo-600" />
+                <UserCheck className="h-5 w-5 text-indigo-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Partner Applications
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalPartnerApplications.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Partner Applications</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.totalPartnerApplications.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Pending Partner Applications */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <TrendingUp className="h-8 w-8 text-orange-600" />
+                <TrendingUp className="h-5 w-5 text-orange-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending Partner Apps
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pendingPartnerApplications.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Pending Partner Apps</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.pendingPartnerApplications.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>
           </div>
-
-          {/* Project Approval Stats */}
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Pending Projects */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <FileText className="h-8 w-8 text-blue-600" />
+                <FileText className="h-5 w-5 text-blue-600" />
               </div>
-              <div className="ml-5 w-0 flex-1">
+              <div className="ml-3 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending Projects
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pendingProjects.toLocaleString()}
-                  </dd>
+                  <dt className="text-xs font-medium text-gray-500 truncate">Pending Projects</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats.pendingProjects.toLocaleString()}</dd>
                 </dl>
               </div>
             </div>

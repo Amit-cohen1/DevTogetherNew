@@ -101,66 +101,61 @@ const OrganizationDashboard: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Stats Section - Mature Data Visualization */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                {/* Stats Section - Compact, Responsive, Light-Only */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
                     {/* Active Projects Card */}
-                    <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active Projects</p>
-                                <span className="text-4xl font-bold text-gray-900 dark:text-white">{stats.activeProjects}</span>
+                    <div className="bg-white rounded-lg shadow border border-gray-200 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between min-h-[110px]">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Active Projects</p>
+                                <span className="text-2xl font-bold text-gray-900">{stats.activeProjects}</span>
                             </div>
-                            <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-                                <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                            <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-blue-600" />
                             </div>
                         </div>
-                        <div className="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                             <div 
                                 className="h-full bg-blue-500 rounded-full"
                                 style={{ width: `${Math.min(100, (stats.activeProjects / 10) * 100)}%` }}
                             ></div>
                         </div>
                     </div>
-
                     {/* Pending Applications Card */}
-                    <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending Applications</p>
-                                <span className="text-4xl font-bold text-gray-900 dark:text-white">{stats.pendingApplications}</span>
+                    <div className="bg-white rounded-lg shadow border border-gray-200 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between min-h-[110px]">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Applications</p>
+                                <span className="text-2xl font-bold text-gray-900">{stats.pendingApplications}</span>
                             </div>
-                            <div className="h-12 w-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
-                                <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+                            <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                <Users className="h-5 w-5 text-green-600" />
                             </div>
                         </div>
-                        {stats.pendingApplications > 0 && (
-                            <div className="mt-4 flex items-center text-sm text-green-600 dark:text-green-400">
+                        {stats.pendingApplications > 0 ? (
+                            <div className="mt-2 flex items-center text-xs text-green-600">
                                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                                 <span>Action Required</span>
                             </div>
-                        )}
-                         {stats.pendingApplications === 0 && (
-                            <div className="mt-4 flex items-center text-sm text-green-600 dark:text-green-400">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                <span>All applications reviewed</span>
+                        ) : (
+                            <div className="mt-2 flex items-center text-xs text-green-600">
+                                <CheckCircle className="w-3 h-3 mr-2" />
+                                <span>All reviewed</span>
                             </div>
                         )}
                     </div>
-
                     {/* Success Rate Card */}
-                    <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Success Rate</p>
-                                <span className="text-4xl font-bold text-gray-900 dark:text-white">{stats.acceptanceRate.toFixed(0)}%</span>
+                    <div className="bg-white rounded-lg shadow border border-gray-200 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between min-h-[110px]">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</p>
+                                <span className="text-2xl font-bold text-gray-900">{stats.acceptanceRate.toFixed(0)}%</span>
                             </div>
-                            <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
-                                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                            <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <TrendingUp className="h-5 w-5 text-purple-600" />
                             </div>
                         </div>
-                        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                            Based on all completed projects.
-                        </div>
+                        <div className="mt-2 text-xs text-gray-500">Based on all completed projects.</div>
                     </div>
                 </div>
 
