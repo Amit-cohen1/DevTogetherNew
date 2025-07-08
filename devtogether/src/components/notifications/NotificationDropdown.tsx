@@ -10,7 +10,11 @@ import {
     Trophy,
     AlertCircle,
     MoreHorizontal,
-    Trash2
+    Trash2,
+    Shield,
+    MessageCircle,
+    Activity,
+    Settings
 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { Button } from '../ui/Button';
@@ -39,7 +43,13 @@ const NotificationItem: React.FC<{
             case 'achievement':
                 return <Trophy className="w-5 h-5 text-yellow-600" />;
             case 'system':
-                return <AlertCircle className="w-5 h-5 text-gray-600" />;
+                return <Settings className="w-5 h-5 text-gray-600" />;
+            case 'moderation':
+                return <Shield className="w-5 h-5 text-red-600" />;
+            case 'chat':
+                return <MessageCircle className="w-5 h-5 text-indigo-600" />;
+            case 'status_change':
+                return <Activity className="w-5 h-5 text-orange-600" />;
             default:
                 return <Bell className="w-5 h-5 text-gray-600" />;
         }
@@ -66,6 +76,21 @@ const NotificationItem: React.FC<{
                 return '/dashboard';
             case 'achievement':
                 return '/profile';
+            case 'moderation':
+                // Admin notifications - redirect to admin dashboard
+                return '/admin';
+            case 'chat':
+                if (data.projectId) {
+                    return `/workspace/${data.projectId}`;
+                }
+                return '/dashboard';
+            case 'status_change':
+                if (data.projectId) {
+                    return `/projects/${data.projectId}`;
+                }
+                return '/dashboard';
+            case 'system':
+                return '/dashboard';
             default:
                 return '/dashboard';
         }
@@ -94,9 +119,75 @@ const NotificationItem: React.FC<{
         }
     };
 
+    const getNotificationBorderColor = (type: string) => {
+        switch (type) {
+            case 'moderation':
+                return 'border-l-red-500';
+            case 'application':
+                return 'border-l-blue-500';
+            case 'project':
+                return 'border-l-green-500';
+            case 'team':
+                return 'border-l-purple-500';
+            case 'achievement':
+                return 'border-l-yellow-500';
+            case 'chat':
+                return 'border-l-indigo-500';
+            case 'status_change':
+                return 'border-l-orange-500';
+            default:
+                return 'border-l-gray-500';
+        }
+    };
+
+    const getNotificationBgColor = (type: string, isUnread: boolean) => {
+        if (!isUnread) return '';
+        
+        switch (type) {
+            case 'moderation':
+                return 'bg-red-50';
+            case 'application':
+                return 'bg-blue-50';
+            case 'project':
+                return 'bg-green-50';
+            case 'team':
+                return 'bg-purple-50';
+            case 'achievement':
+                return 'bg-yellow-50';
+            case 'chat':
+                return 'bg-indigo-50';
+            case 'status_change':
+                return 'bg-orange-50';
+            default:
+                return 'bg-gray-50';
+        }
+    };
+
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'moderation':
+                return 'Admin';
+            case 'application':
+                return 'Application';
+            case 'project':
+                return 'Project';
+            case 'team':
+                return 'Team';
+            case 'achievement':
+                return 'Achievement';
+            case 'chat':
+                return 'Message';
+            case 'status_change':
+                return 'Status';
+            case 'system':
+                return 'System';
+            default:
+                return 'Notification';
+        }
+    };
+
     return (
-        <div className={`relative group p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50' : ''
-            }`}>
+        <div className={`relative group border-l-4 ${getNotificationBorderColor(notification.type)} p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${getNotificationBgColor(notification.type, !notification.read)}`}>
             <Link to={getNotificationLink(notification)} onClick={handleClick} className="block">
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
@@ -105,15 +196,30 @@ const NotificationItem: React.FC<{
                     <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
-                                <h4 className={`text-sm font-medium text-gray-900 ${!notification.read ? 'font-semibold' : ''
-                                    }`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                        {getTypeLabel(notification.type)}
+                                    </span>
+                                    {!notification.read && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600 text-white">
+                                            New
+                                        </span>
+                                    )}
+                                </div>
+                                <h4 className={`text-sm font-medium text-gray-900 ${!notification.read ? 'font-semibold' : ''}`}>
                                     {notification.title}
                                 </h4>
                                 <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                                     {notification.message}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-2">
-                                    {formatDate(notification.created_at)}
+                                <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                    <span>{formatDate(notification.created_at)}</span>
+                                    {notification.data?.projectId && (
+                                        <>
+                                            <span>•</span>
+                                            <span>Project notification</span>
+                                        </>
+                                    )}
                                 </p>
                             </div>
                             {!notification.read && (

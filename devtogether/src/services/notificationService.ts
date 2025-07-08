@@ -5,7 +5,7 @@ export interface Notification {
     user_id: string;
     title: string;
     message: string;
-    type: 'application' | 'project' | 'team' | 'system' | 'achievement';
+    type: 'application' | 'project' | 'team' | 'system' | 'achievement' | 'moderation' | 'chat' | 'status_change';
     data?: Record<string, any>;
     read: boolean;
     created_at: string;
@@ -15,7 +15,7 @@ export interface NotificationCreateData {
     user_id: string;
     title: string;
     message: string;
-    type: 'application' | 'project' | 'team' | 'system' | 'achievement';
+    type: 'application' | 'project' | 'team' | 'system' | 'achievement' | 'moderation' | 'chat' | 'status_change';
     data?: Record<string, any>;
 }
 
@@ -393,6 +393,100 @@ class NotificationService {
             type: 'system',
             data: data || {}
         });
+    }
+
+    // Enhanced notification helper methods for new types
+
+    async notifyModerationRequest(
+        adminId: string,
+        requestType: 'organization' | 'project',
+        itemName: string,
+        itemId: string,
+        requesterName?: string
+    ): Promise<void> {
+        const title = requestType === 'organization' 
+            ? `🏢 Organization Pending Approval`
+            : `📋 Project Pending Review`;
+        
+        const message = requestType === 'organization'
+            ? `Organization "${itemName}" ${requesterName ? `by ${requesterName}` : ''} is waiting for approval.`
+            : `Project "${itemName}" ${requesterName ? `by ${requesterName}` : ''} needs review before publication.`;
+
+        await this.createNotification({
+            user_id: adminId,
+            title,
+            message,
+            type: 'moderation',
+            data: {
+                requestType,
+                itemId,
+                itemName,
+                requesterName,
+                actionUrl: requestType === 'organization' ? '/admin' : '/admin'
+            }
+        });
+    }
+
+    async notifyChatMessage(
+        userId: string,
+        senderName: string,
+        projectTitle: string,
+        projectId: string,
+        messagePreview: string
+    ): Promise<void> {
+        await this.createNotification({
+            user_id: userId,
+            title: `💬 New message in ${projectTitle}`,
+            message: `${senderName}: ${messagePreview}`,
+            type: 'chat',
+            data: {
+                projectId,
+                projectTitle,
+                senderName,
+                actionUrl: `/workspace/${projectId}`
+            }
+        });
+    }
+
+    async notifyStatusChange(
+        userId: string,
+        entityType: 'project' | 'application' | 'team',
+        entityName: string,
+        oldStatus: string,
+        newStatus: string,
+        entityId: string
+    ): Promise<void> {
+        const title = `📊 ${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Status Updated`;
+        const message = `${entityName} status changed from "${oldStatus}" to "${newStatus}".`;
+
+        await this.createNotification({
+            user_id: userId,
+            title,
+            message,
+            type: 'status_change',
+            data: {
+                entityType,
+                entityId,
+                entityName,
+                oldStatus,
+                newStatus,
+                actionUrl: entityType === 'project' ? `/projects/${entityId}` : '/dashboard'
+            }
+        });
+    }
+
+    async notifyMultipleUsers(
+        userIds: string[],
+        notificationData: Omit<NotificationCreateData, 'user_id'>
+    ): Promise<void> {
+        const promises = userIds.map(userId => 
+            this.createNotification({
+                ...notificationData,
+                user_id: userId
+            })
+        );
+        
+        await Promise.all(promises);
     }
 }
 
