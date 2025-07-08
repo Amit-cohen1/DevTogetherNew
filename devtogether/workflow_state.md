@@ -662,7 +662,7 @@ return Layout {
      - `AFTER UPDATE` on `applications` when `OLD.status <> NEW.status` → developer/org notifications via INSERT into `notifications`.
    - **Project Status Trigger**: `AFTER UPDATE` on `projects.status` → notify organization + all team members.
    - **Chat Message Trigger** _(unseen messages)_:
-     - `AFTER INSERT` on `messages` → create *team* notification for every workspace member (minus sender) when they’re **offline** (presence not in channel / last activity >3 min).
+     - `AFTER INSERT` on `messages` → create *team* notification for every workspace member (minus sender) when they're **offline** (presence not in channel / last activity >3 min).
 
 3. **Service Layer Cleanup & Fallbacks**
    - Deprecate redundant notification Service calls replaced by triggers; keep as **idempotent fallback** wrapped in `try/catch`.
@@ -674,7 +674,7 @@ return Layout {
    - Extend `Notification` interface to include new `moderation` type.
    - Update icon map in `NotificationDropdown`, `NotificationsPage`.
    - Add dedicated **Admin Dashboard badge** linking to pending approval queues (reuse unread count).
-   - Implement **“Unread in Workspace”** pill on chat tabs based on notification count.
+   - Implement **"Unread in Workspace"** pill on chat tabs based on notification count.
 
 5. **Performance & Reliability**
    - Batch `markAllAsRead` using RPC function to minimise round-trips.
@@ -683,7 +683,7 @@ return Layout {
 
 6. **Monitoring & Observability**
    - Create **notification_audit** table to log failures (`status`, `error`, `payload`).
-   - Add CloudWatch/Supabase Logflare dashboard panels for “notifications failed”.
+   - Add CloudWatch/Supabase Logflare dashboard panels for "notifications failed".
 
 7. **Testing**
    - Unit tests for DB triggers using pg-tap.
@@ -1224,5 +1224,36 @@ The enhanced notification system provides a solid foundation for:
 - ✅ **Complete Documentation** for maintenance and future development
 
 **The notification system is now production-ready, scalable, and provides the reliability foundation DevTogether needs for continued growth.**
+
+---
+
+### Step 9.6: Pending Organization Approval Flow (Blueprint)
+
+**Objective:**
+Ensure organizations that register but are not yet approved by an admin are routed to a clear, friendly holding page, and are blocked from accessing main org features until approval.
+
+**Workflow & Rules:**
+- When an organization registers, their `organization_verified` field is `false` (pending).
+- Until `organization_verified` is `true`, org users:
+  - Cannot access dashboard, project creation, or any org-only features.
+  - Are always redirected to `/pending-approval` after login.
+- The `/pending-approval` page:
+  - Shows a friendly message: "Your organization is pending approval. Our team will review your registration soon. You'll receive an email and in-app notification once approved."
+  - Provides a contact email (from the footer) for support.
+  - Optionally shows a spinner/status indicator.
+- Once approved, orgs are redirected to their dashboard as normal.
+
+**Implementation Steps:**
+1. Create `PendingApprovalPage.tsx` with clear messaging and contact info.
+2. Add a route for `/pending-approval` in `App.tsx`.
+3. In the main auth/routing logic, check after login:
+   - If user is org and `organization_verified === false`, redirect to `/pending-approval`.
+   - Block access to all org-only routes until approved.
+4. Test: Register a new org, verify they see the pending page, and are redirected to dashboard after admin approval.
+
+**Completion Criteria:**
+- Unapproved orgs never see dashboard or project features.
+- Pending page is clear, friendly, and provides support contact.
+- Flow is fully tested and documented.
 
 ---
