@@ -61,11 +61,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 // Custom wrapper to redirect unverified orgs
 const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   useEffect(() => {
     if (
+      !loading &&
       user &&
       profile &&
       profile.role === 'organization' &&
@@ -74,7 +75,18 @@ const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children })
     ) {
       navigate('/pending-approval', { replace: true });
     }
-  }, [user, profile, location.pathname, navigate]);
+  }, [user, profile, loading, location.pathname, navigate]);
+  if (loading || !profile) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
+  if (profile.role === 'organization' && profile.organization_verified === false) {
+    // Block rendering if not yet redirected
+    return null;
+  }
   return <>{children}</>;
 };
 
