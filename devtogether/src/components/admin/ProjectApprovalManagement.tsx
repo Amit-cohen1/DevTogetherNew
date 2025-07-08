@@ -122,7 +122,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
         <div className="p-6">
           <div className="space-y-6">
             <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-3">תיאור הפרויקט</h4>
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">Project Description</h4>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-gray-700 whitespace-pre-wrap">{project.description}</p>
               </div>

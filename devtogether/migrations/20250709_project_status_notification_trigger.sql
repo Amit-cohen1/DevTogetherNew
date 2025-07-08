@@ -9,16 +9,16 @@ BEGIN
       PERFORM safe_create_notification(
         NEW.organization_id,
         'status_change',
-        'הפרויקט אושר!',
-        NEW.title || ' אושר ועתה פומבי באתר.',
+        'Project Approved!',
+        'Your project "' || NEW.title || '" has been approved and is now public.',
         jsonb_build_object('projectId', NEW.id)
       );
     ELSIF NEW.status = 'cancelled' THEN
       PERFORM safe_create_notification(
         NEW.organization_id,
         'status_change',
-        'הפרויקט נדחה',
-        NEW.title || ' נדחה. סיבה: ' || COALESCE(NEW.rejection_reason, ''),
+        'Project Rejected',
+        'Your project "' || NEW.title || '" was rejected. Reason: ' || COALESCE(NEW.rejection_reason, ''),
         jsonb_build_object('projectId', NEW.id)
       );
     END IF;
