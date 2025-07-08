@@ -45,6 +45,12 @@ const STATUS_CONFIG = {
         icon: XCircle,
         color: 'bg-gray-100 text-gray-800 border-gray-200',
         iconColor: 'text-gray-600'
+    },
+    pending: {
+        label: 'Pending Approval',
+        icon: Clock,
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        iconColor: 'text-yellow-600'
     }
 }
 

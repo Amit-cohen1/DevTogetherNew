@@ -34,7 +34,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   const filterAndSearchOrganizations = useCallback(() => {
-    let filtered = organizations
+    let filtered = organizations.filter(org => org.onboarding_complete === true);
 
     // Apply status filter
     if (filterStatus === 'pending') {
@@ -268,24 +268,28 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
         ) : (
           <div className="divide-y divide-gray-200">
             {filteredOrganizations.map((org) => (
-              <div key={org.id} className="p-6 hover:bg-gray-50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
+              <div key={org.id} className="p-6 hover:bg-gray-50 max-w-full overflow-x-auto">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-medium text-gray-900 truncate max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
                           {org.organization_name || 'Unnamed Organization'}
                         </h3>
-                        <p className="text-sm text-gray-600">{org.email}</p>
+                        <p className="text-sm text-gray-600 break-all break-words max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl truncate">
+                          {org.email}
+                        </p>
                       </div>
-                      {getStatusDisplay(org)}
+                      <div className="flex-shrink-0 mt-2 sm:mt-0">{getStatusDisplay(org)}</div>
                     </div>
 
                     {org.bio && (
-                      <p className="text-gray-700 mt-2 text-sm break-all break-words overflow-hidden line-clamp-3">{org.bio}</p>
+                      <p className="text-gray-700 mt-2 text-sm break-words overflow-hidden line-clamp-3 max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+                        {org.bio}
+                      </p>
                     )}
 
-                    <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
                         {new Date(org.created_at).toLocaleDateString()}
@@ -293,7 +297,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                       {org.location && (
                         <div className="flex items-center">
                           <MapPin className="w-4 h-4 mr-1" />
-                          {org.location}
+                          <span className="truncate max-w-[120px]">{org.location}</span>
                         </div>
                       )}
                       {org.website && (
@@ -301,7 +305,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                           href={org.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center text-blue-600 hover:text-blue-800"
+                          className="flex items-center text-blue-600 hover:text-blue-800 truncate max-w-[120px]"
                         >
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Website
@@ -311,7 +315,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
                     {org.organization_rejection_reason && (
                       <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800">
+                        <p className="text-sm text-red-800 break-words">
                           <strong>Rejection Reason:</strong> {org.organization_rejection_reason}
                         </p>
                       </div>
@@ -326,11 +330,12 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     )}
                   </div>
 
-                  <div className="ml-6 flex flex-col space-y-2">
+                  <div className="flex flex-row sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-6 w-full sm:w-auto">
                     <Button
                       onClick={() => setSelectedOrganization(org)}
                       variant="secondary"
                       size="sm"
+                      className="w-full sm:w-auto"
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       View Details
@@ -341,7 +346,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                         <Button
                           onClick={() => handleApprove(org.id)}
                           disabled={actionLoading === org.id}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                           size="sm"
                         >
                           <CheckCircle className="w-4 h-4 mr-1" />
@@ -353,7 +358,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                             setShowRejectModal(true)
                           }}
                           variant="secondary"
-                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto"
                           size="sm"
                         >
                           <XCircle className="w-4 h-4 mr-1" />

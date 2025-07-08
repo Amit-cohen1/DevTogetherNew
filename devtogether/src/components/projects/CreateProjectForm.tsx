@@ -85,7 +85,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
                 estimated_duration: data.estimated_duration || null,
                 is_remote: data.is_remote,
                 location: data.is_remote ? null : data.location || null,
-                status: 'open'
+                status: 'pending'
             }
 
             const project = await projectService.createProject(projectData)

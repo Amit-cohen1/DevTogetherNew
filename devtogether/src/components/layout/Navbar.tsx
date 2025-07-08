@@ -241,33 +241,13 @@ export const Navbar: React.FC = () => {
                     {/* Right side - Notifications and User Menu */}
                     <div className="flex items-center space-x-4">
                         {/* Create Project Button for Organizations */}
-                        {isOrganization && (
-                            profile.organization_verified ? (
-                                <Link to="/projects/create">
-                                    <Button size="sm" className="flex items-center gap-2">
-                                        <Plus className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Create Project</span>
-                                    </Button>
-                                </Link>
-                            ) : (
-                                <div className="relative group">
-                                    <Button 
-                                        size="sm" 
-                                        className="flex items-center gap-2 opacity-50 cursor-not-allowed" 
-                                        disabled
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Create Project</span>
-                                    </Button>
-                                    <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
-                                        <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45"></div>
-                                        {profile.organization_rejection_reason 
-                                            ? "Organization verification was rejected. Please update your profile." 
-                                            : "Organization verification pending. You'll be able to create projects once approved."
-                                        }
-                                    </div>
-                                </div>
-                            )
+                        {isOrganization && profile.organization_verified && (
+                            <Link to="/projects/create">
+                                <Button size="sm" className="flex items-center gap-2">
+                                    <Plus className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Create Project</span>
+                                </Button>
+                            </Link>
                         )}
 
                         {/* Notifications */}

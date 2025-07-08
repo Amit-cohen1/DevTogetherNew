@@ -12,6 +12,7 @@ export interface PendingOrganization {
   organization_verified_at?: string
   organization_verified_by?: string
   organization_rejection_reason?: string
+  onboarding_complete?: boolean
 }
 
 export interface PartnerApplication {

@@ -1257,3 +1257,25 @@ Ensure organizations that register but are not yet approved by an admin are rout
 - Flow is fully tested and documented.
 
 ---
+
+## 2024-07-08: Notification System & Org Approval Flow — Pending Approval Redirect Fix
+
+### Problem
+Unapproved organizations were always redirected to the home page (/) instead of the new /pending-approval page, even after login. This broke the intended waiting flow for orgs pending admin approval.
+
+### Root Cause
+- The /pending-approval route was missing from App.tsx, so any redirect to it hit the catch-all and sent users to /.
+- Some legacy UI blocks in org-only pages (dashboard, create project, navbar) showed pending/rejected messages instead of relying on a single redirect source of truth.
+
+### Solution
+1. Added a dedicated route for /pending-approval, wrapped only with ProtectedRoute (not OrgApprovalGuard), before the catch-all route.
+2. Cleaned up all legacy 'pending approval' and 'rejected' UI blocks from CreateProjectPage, OrganizationDashboard, and Navbar. Now, only verified orgs can see org-only features; unverified orgs are always redirected.
+3. Ensured OrgApprovalGuard is the single source of truth for redirecting unapproved orgs.
+4. Verified: Unapproved orgs are always redirected to /pending-approval and cannot access any org-only features.
+
+### Result
+- The waiting flow for unapproved orgs is robust and user-friendly.
+- No more accidental redirects to home.
+- Code is clean, maintainable, and follows the single-responsibility principle for access control.
+
+---

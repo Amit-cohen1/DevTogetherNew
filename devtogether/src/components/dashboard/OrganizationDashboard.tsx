@@ -59,6 +59,12 @@ const OrganizationDashboard: React.FC = () => {
     const isVerified = profile?.organization_verified === true;
     const organizationName = profile?.organization_name || 'Your Organization';
 
+    // If not verified, redirect to pending approval
+    if (!isVerified) {
+        navigate('/pending-approval');
+        return null;
+    }
+
     if (loading) {
         return (
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -85,30 +91,6 @@ const OrganizationDashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {/* Verification Alert - Professional & Direct */}
-            {!isVerified && (
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 mb-8 rounded-r-lg shadow-sm">
-                        <div className="flex items-center">
-                            <AlertTriangle className="h-6 w-6 text-yellow-500 dark:text-yellow-400 mr-4" />
-                            <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
-                                    Account Verification Required
-                            </h3>
-                                <p className="text-yellow-700 dark:text-yellow-300 mt-1">
-                                    Please complete your organization's verification to unlock all features, including project creation.
-                                </p>
-                            </div>
-                                <Button
-                                    onClick={() => navigate('/profile')}
-                                className="ml-6 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 dark:bg-yellow-500 dark:hover:bg-yellow-600 dark:text-white"
-                                variant="primary"
-                                >
-                                Verify Now
-                                </Button>
-                    </div>
-                </div>
-            )}
-
                 {/* Welcome Header - Clean & Professional */}
                 <div className="mb-10">
                     <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
