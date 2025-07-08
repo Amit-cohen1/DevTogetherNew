@@ -2,6 +2,7 @@ import { supabase } from '../utils/supabase';
 import { User } from '../types/database';
 import { projectService } from './projects';
 import type { TeamMember as DatabaseTeamMember } from '../types/database';
+import { toastService } from './toastService';
 
 export interface TeamMember {
     id: string;
@@ -164,8 +165,10 @@ class TeamService {
             await this.logActivity(projectId, userId, 'member_left',
                 `Left the project team`);
 
+            toastService.project.left();
         } catch (error) {
             console.error('Error leaving project:', error);
+            toastService.error('Failed to leave the project.');
             throw error;
         }
     }

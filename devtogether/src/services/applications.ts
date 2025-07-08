@@ -1,6 +1,7 @@
 import { supabase } from '../utils/supabase'
 import { Application } from '../types/database'
 import { notificationService } from './notificationService'
+import { toastService } from './toastService';
 
 export interface ApplicationCreateData {
     project_id: string
@@ -71,6 +72,8 @@ class ApplicationService {
             if (error) throw error
             if (!data) throw new Error('Failed to create application')
 
+            toastService.success('Application submitted successfully.');
+
             // Send notification to organization about new application
             try {
                 if (data.project && data.project.organization) {
@@ -94,6 +97,7 @@ class ApplicationService {
             return data
         } catch (error) {
             console.error('Error submitting application:', error)
+            toastService.error('Failed to submit application.');
             throw error
         }
     }
@@ -381,6 +385,14 @@ class ApplicationService {
             if (updateError) throw updateError
             if (!updatedApp) throw new Error('Failed to update application')
 
+            if (status === 'accepted') {
+                toastService.success('Application accepted.');
+            } else if (status === 'rejected') {
+                toastService.info('Application rejected.');
+            } else {
+                toastService.success('Application status updated.');
+            }
+
             // Get project and organization details for notification
             const { data: project, error: projectError } = await supabase
                 .from('projects')
@@ -430,6 +442,7 @@ class ApplicationService {
             return updatedApp
         } catch (error) {
             console.error('Error updating application status:', error)
+            toastService.error('Failed to update application status.');
             throw error
         }
     }
@@ -452,9 +465,11 @@ class ApplicationService {
             if (error) throw error
             if (!data) throw new Error('Failed to withdraw application')
 
+            toastService.success('Application withdrawn successfully.');
             return data
         } catch (error) {
             console.error('Error withdrawing application:', error)
+            toastService.error('Failed to withdraw application.');
             throw error
         }
     }

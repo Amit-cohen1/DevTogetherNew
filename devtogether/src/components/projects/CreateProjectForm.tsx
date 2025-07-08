@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { projectService, CreateProjectData } from '../../services/projects'
+import { toastService } from '../../services/toastService';
 import {
     TECHNOLOGY_STACK_OPTIONS,
     DIFFICULTY_LEVELS,
@@ -90,12 +91,15 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
 
             const project = await projectService.createProject(projectData)
 
+            toastService.project.created();
+
             if (onSuccess) {
                 onSuccess(project.id)
             } else {
                 navigate(`/projects/${project.id}`)
             }
         } catch (error) {
+            toastService.error(error instanceof Error ? error.message : 'Failed to create project');
             setSubmitError(error instanceof Error ? error.message : 'Failed to create project')
         } finally {
             setIsSubmitting(false)
