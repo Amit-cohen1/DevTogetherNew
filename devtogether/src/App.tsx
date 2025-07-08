@@ -175,7 +175,7 @@ function App() {
                 <Route
                   path="/dashboard"
                   element={
-                    <ProtectedRoute requiredRole="organization">
+                    <ProtectedRoute>
                       <OrgApprovalGuard>
                         <DashboardPage />
                       </OrgApprovalGuard>
