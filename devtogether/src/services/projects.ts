@@ -1,6 +1,7 @@
 import { supabase } from '../utils/supabase'
 import { Project, Database } from '../types/database'
 import type { TeamMember, ProjectWithTeamMembers } from '../types/database'
+import { toastService } from './toastService';
 
 export type CreateProjectData = Database['public']['Tables']['projects']['Insert']
 export type UpdateProjectData = Database['public']['Tables']['projects']['Update']
@@ -321,9 +322,11 @@ export const projectService = {
 
         if (error) {
             console.error('Error updating project:', error)
+            toastService.error('Failed to update project.');
             throw new Error(error.message)
         }
 
+        toastService.project.updated();
         return data
     },
 
@@ -336,8 +339,10 @@ export const projectService = {
 
         if (error) {
             console.error('Error deleting project:', error)
+            toastService.error('Failed to delete project.');
             throw new Error(error.message)
         }
+        toastService.project.deleted();
     },
 
     // Get projects for organization dashboard

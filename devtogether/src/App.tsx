@@ -5,6 +5,7 @@ import { NotificationProvider } from './contexts/NotificationContext'
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute'
 import { AccessibilityProvider } from './contexts/AccessibilityContext'
 import { ScrollToTop } from './components/layout/ScrollToTop'
+import ToastProvider from './components/providers/ToastProvider';
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage'
@@ -336,6 +337,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
+            <ToastProvider />
           </Router>
         </AccessibilityProvider>
       </NotificationProvider>

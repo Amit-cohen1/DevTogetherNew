@@ -14,6 +14,7 @@ import {
     Check
 } from 'lucide-react'
 import { supabase } from '../../utils/supabase'
+import { toastService } from '../../services/toastService';
 
 interface EditProfileModalProps {
     profile: User
@@ -102,6 +103,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
             if (uploadError) {
                 console.error('Upload error:', uploadError)
+                toastService.profile.error();
                 throw new Error(`Upload failed: ${uploadError.message}`)
             }
 
@@ -116,11 +118,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             })
 
             if (!success || updateError) {
+                toastService.profile.error();
                 throw new Error(updateError || 'Failed to update profile')
             }
 
             // Update local profile data
             onSave({ ...profile, avatar_url: publicUrl })
+            toastService.profile.imageUploaded();
 
         } catch (err) {
             console.error('Avatar upload error:', err)

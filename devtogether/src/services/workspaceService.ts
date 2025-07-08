@@ -2,6 +2,7 @@ import { supabase } from '../utils/supabase';
 import { Project, User } from '../types/database';
 import { projectService } from './projects';
 import type { TeamMember as DatabaseTeamMember } from '../types/database';
+import { toastService } from './toastService';
 
 // Legacy interface for backward compatibility
 export interface TeamMember {
@@ -129,15 +130,18 @@ class WorkspaceService {
 
             if (error) {
                 console.error('Error updating project status:', error);
+                toastService.error('Failed to update project status.');
                 return false;
             }
 
+            toastService.success('Project status updated successfully.');
             // TODO: In future phases, we'll store detailed status updates in a separate table
             // For now, we just update the basic project status
 
             return true;
         } catch (error) {
             console.error('Error updating project status:', error);
+            toastService.error('Failed to update project status.');
             return false;
         }
     }

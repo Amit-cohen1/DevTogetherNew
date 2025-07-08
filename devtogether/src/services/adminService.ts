@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabase'
+import { toastService } from './toastService';
 
 export interface PendingOrganization {
   id: string
@@ -147,8 +148,10 @@ class AdminService {
       })
 
       if (error) throw error
+      toastService.success('Organization approved.');
     } catch (error) {
       console.error('Error approving organization:', error)
+      toastService.error('Failed to approve organization.');
       throw error
     }
   }
@@ -163,8 +166,10 @@ class AdminService {
       })
 
       if (error) throw error
+      toastService.info('Organization rejected.');
     } catch (error) {
       console.error('Error rejecting organization:', error)
+      toastService.error('Failed to reject organization.');
       throw error
     }
   }
@@ -205,8 +210,10 @@ class AdminService {
         .eq('id', applicationId)
 
       if (error) throw error
+      toastService.success('Partner application approved.');
     } catch (error) {
       console.error('Error approving partner application:', error)
+      toastService.error('Failed to approve partner application.');
       throw error
     }
   }
@@ -224,8 +231,10 @@ class AdminService {
         .eq('id', applicationId)
 
       if (error) throw error
+      toastService.info('Partner application rejected.');
     } catch (error) {
       console.error('Error rejecting partner application:', error)
+      toastService.error('Failed to reject partner application.');
       throw error
     }
   }

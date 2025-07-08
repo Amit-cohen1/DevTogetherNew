@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { Session } from '@supabase/supabase-js'
 import { AuthService, type AuthUser, type SignUpData, type SignInData, type PasswordResetData, type OAuthProvider } from '../services/auth'
 import type { User } from '../types/database'
+import { toastService } from '../services/toastService';
 
 interface AuthContextType {
     // Auth state
@@ -136,12 +137,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const { user, error } = await AuthService.signIn(data)
 
             if (error) {
+                toastService.auth.loginError();
                 return { success: false, error: error.message }
             }
 
+            toastService.auth.loginSuccess();
             // Note: User will be automatically handled by auth state change listener
             return { success: true, error: null }
         } catch (error) {
+            toastService.auth.loginError();
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -173,6 +177,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const { error } = await AuthService.signOut()
 
             if (error) {
+                toastService.error('Failed to sign out')
                 return { success: false, error: error.message }
             }
 
@@ -181,8 +186,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setProfile(null)
             setSession(null)
 
+            toastService.auth.logoutSuccess();
             return { success: true, error: null }
         } catch (error) {
+            toastService.error('Failed to sign out')
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -230,18 +237,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const updateProfile = async (updates: Partial<User>): Promise<{ success: boolean; error: string | null }> => {
         try {
             if (!user) {
+                toastService.profile.error();
                 return { success: false, error: 'User not authenticated' }
             }
 
             const { profile: updatedProfile, error } = await AuthService.updateUserProfile(user.id, updates)
 
             if (error) {
+                toastService.profile.error();
                 return { success: false, error: error.message }
             }
 
             setProfile(updatedProfile)
+            toastService.profile.updated();
             return { success: true, error: null }
         } catch (error) {
+            toastService.profile.error();
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error occurred'
