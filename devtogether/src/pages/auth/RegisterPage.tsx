@@ -58,9 +58,13 @@ export const RegisterPage: React.FC = () => {
             const { success, error } = await signUp(signUpData)
 
             if (success) {
-                navigate('/auth/verify-email', {
-                    state: { email: data.email }
-                })
+                if (data.role === 'organization') {
+                    navigate('/pending-approval')
+                } else {
+                    navigate('/auth/verify-email', {
+                        state: { email: data.email }
+                    })
+                }
             } else {
                 setAuthError(error || 'Registration failed. Please try again.')
             }

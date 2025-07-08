@@ -39,6 +39,12 @@ export const AuthCallbackPage: React.FC = () => {
                         return
                     }
 
+                    // If organization and not verified, redirect to pending approval
+                    if (profile.role === 'organization' && profile.organization_verified === false) {
+                        navigate('/pending-approval', { replace: true })
+                        return
+                    }
+
                     // Existing user with complete profile - redirect to dashboard
                     const redirectTo = profile.role === 'developer'
                         ? '/dashboard'

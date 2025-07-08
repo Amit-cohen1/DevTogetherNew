@@ -50,12 +50,16 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
     // Professional status color mapping
     const getStatusColor = (status: string) => {
         switch (status) {
+            case 'pending':
+                return 'bg-yellow-50 text-yellow-800 border-yellow-300'
             case 'open':
                 return 'bg-emerald-50 text-emerald-700 border-emerald-200'
             case 'in_progress':
                 return 'bg-blue-50 text-blue-700 border-blue-200'
             case 'completed':
                 return 'bg-gray-50 text-gray-700 border-gray-200'
+            case 'cancelled':
+                return 'bg-gray-100 text-gray-400 border-gray-200'
             default:
                 return 'bg-gray-50 text-gray-700 border-gray-200'
         }
@@ -154,8 +158,19 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                     <div className="flex items-center gap-2">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(project.status)}`}>
                             <CheckCircle className="h-3 w-3 mr-1" />
-                            {project.status === 'open' ? 'Open' : project.status.replace('_', ' ')}
+                            {project.status === 'open' && 'Open'}
+                            {project.status === 'pending' && 'Pending Approval'}
+                            {project.status === 'in_progress' && 'In Progress'}
+                            {project.status === 'completed' && 'Completed'}
+                            {project.status === 'cancelled' && 'Cancelled'}
                         </span>
+                        {/* Show rejection reason if cancelled */}
+                        {project.status === 'cancelled' && project.rejection_reason && (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs">
+                            <b>Project was rejected.</b><br />
+                            Reason: {project.rejection_reason}
+                          </div>
+                        )}
                         {hasWorkspaceAccess && (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                                 <Award className="h-3 w-3 mr-1" />

@@ -64,18 +64,7 @@ const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children })
   const { user, profile, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (
-      !loading &&
-      user &&
-      profile &&
-      profile.role === 'organization' &&
-      profile.organization_verified === false &&
-      location.pathname !== '/pending-approval'
-    ) {
-      navigate('/pending-approval', { replace: true });
-    }
-  }, [user, profile, loading, location.pathname, navigate]);
+  // No need for useEffect redirect; handle via render
   if (loading || !profile) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -83,9 +72,8 @@ const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children })
       </div>
     );
   }
-  if (profile.role === 'organization' && profile.organization_verified === false) {
-    // Block rendering if not yet redirected
-    return null;
+  if (profile.role === 'organization' && profile.organization_verified === false && location.pathname !== '/pending-approval') {
+    return <Navigate to="/pending-approval" replace />;
   }
   return <>{children}</>;
 };
@@ -254,8 +242,10 @@ function App() {
                 <Route
                   path="/workspace/:projectId"
                   element={
-                    <ProtectedRoute>
-                      <ProjectWorkspace />
+                    <ProtectedRoute requiredRole="organization">
+                      <OrgApprovalGuard>
+                        <ProjectWorkspace />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -264,8 +254,10 @@ function App() {
                 <Route
                   path="/applications"
                   element={
-                    <ProtectedRoute>
-                      <ApplicationsDashboard />
+                    <ProtectedRoute requiredRole="organization">
+                      <OrgApprovalGuard>
+                        <ApplicationsDashboard />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -273,8 +265,10 @@ function App() {
                 <Route
                   path="/my-applications"
                   element={
-                    <ProtectedRoute>
-                      <MyApplications />
+                    <ProtectedRoute requiredRole="organization">
+                      <OrgApprovalGuard>
+                        <MyApplications />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -283,8 +277,10 @@ function App() {
                 <Route
                   path="/notifications"
                   element={
-                    <ProtectedRoute>
-                      <NotificationsPage />
+                    <ProtectedRoute requiredRole="organization">
+                      <OrgApprovalGuard>
+                        <NotificationsPage />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -294,7 +290,9 @@ function App() {
                   path="/organization/projects"
                   element={
                     <ProtectedRoute requiredRole="organization">
-                      <ProjectsPage />
+                      <OrgApprovalGuard>
+                        <ProjectsPage />
+                      </OrgApprovalGuard>
                     </ProtectedRoute>
                   }
                 />
@@ -307,6 +305,16 @@ function App() {
                       <OrgApprovalGuard>
                         <OrganizationProjectsPage />
                       </OrgApprovalGuard>
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Pending Approval Route */}
+                <Route
+                  path="/pending-approval"
+                  element={
+                    <ProtectedRoute>
+                      <PendingApprovalPage />
                     </ProtectedRoute>
                   }
                 />

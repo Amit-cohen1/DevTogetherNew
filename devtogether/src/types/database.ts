@@ -33,6 +33,7 @@ export interface Database {
                     organization_verified_at: string | null
                     organization_verified_by: string | null
                     organization_rejection_reason: string | null
+                    onboarding_complete: boolean | null
                     created_at: string
                     updated_at: string
                 }
@@ -59,6 +60,7 @@ export interface Database {
                     organization_verified_at?: string | null
                     organization_verified_by?: string | null
                     organization_rejection_reason?: string | null
+                    onboarding_complete?: boolean | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -85,6 +87,7 @@ export interface Database {
                     organization_verified_at?: string | null
                     organization_verified_by?: string | null
                     organization_rejection_reason?: string | null
+                    onboarding_complete?: boolean | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -98,13 +101,14 @@ export interface Database {
                     requirements: string
                     technology_stack: string[]
                     difficulty_level: 'beginner' | 'intermediate' | 'advanced'
-                    status: 'open' | 'in_progress' | 'completed' | 'cancelled'
+                    status: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled'
                     application_type: 'individual' | 'team' | 'both'
                     max_team_size: number | null
                     deadline: string | null
                     estimated_duration: string | null
                     is_remote: boolean
                     location: string | null
+                    rejection_reason: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -116,13 +120,14 @@ export interface Database {
                     requirements: string
                     technology_stack: string[]
                     difficulty_level: 'beginner' | 'intermediate' | 'advanced'
-                    status?: 'open' | 'in_progress' | 'completed' | 'cancelled'
+                    status?: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled'
                     application_type: 'individual' | 'team' | 'both'
                     max_team_size?: number | null
                     deadline?: string | null
                     estimated_duration?: string | null
                     is_remote?: boolean
                     location?: string | null
+                    rejection_reason?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -134,13 +139,14 @@ export interface Database {
                     requirements?: string
                     technology_stack?: string[]
                     difficulty_level?: 'beginner' | 'intermediate' | 'advanced'
-                    status?: 'open' | 'in_progress' | 'completed' | 'cancelled'
+                    status?: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled'
                     application_type?: 'individual' | 'team' | 'both'
                     max_team_size?: number | null
                     deadline?: string | null
                     estimated_duration?: string | null
                     is_remote?: boolean
                     location?: string | null
+                    rejection_reason?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -608,6 +614,7 @@ export interface ProjectWithTeamMembers extends Project {
             avatar_url: string | null
         } | null
     }>
+    rejection_reason: string | null
 }
 
 // New enhanced organization profile types

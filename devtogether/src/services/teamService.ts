@@ -81,6 +81,7 @@ class TeamService {
                     organization_verified_at: null,
                     organization_verified_by: null,
                     organization_rejection_reason: null,
+                    onboarding_complete: null,
                     created_at: '',
                     updated_at: ''
                 };

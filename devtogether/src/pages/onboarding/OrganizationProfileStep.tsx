@@ -6,11 +6,10 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 
 interface OrganizationProfileFormData {
-    first_name: string
-    last_name: string
-    bio: string
-    location: string
-    website: string
+    organization_name: string;
+    bio: string;
+    location: string;
+    website: string;
 }
 
 interface OrganizationProfileStepProps {
@@ -31,8 +30,7 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
         formState: { errors }
     } = useForm<OrganizationProfileFormData>({
         defaultValues: {
-            first_name: profile?.first_name || '',
-            last_name: profile?.last_name || '',
+            organization_name: profile?.organization_name || '',
             bio: profile?.bio || '',
             location: profile?.location || '',
             website: profile?.website || ''
@@ -43,11 +41,11 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
         try {
             setIsSubmitting(true)
             const profileUpdates = {
-                first_name: data.first_name,
-                last_name: data.last_name,
+                organization_name: data.organization_name,
                 bio: data.bio,
                 location: data.location || null,
-                website: data.website || null
+                website: data.website || null,
+                onboarding_complete: true
             }
             const { success, error } = await updateProfile(profileUpdates)
             if (success) {
@@ -74,19 +72,13 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Name Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                        label="First Name"
-                        error={errors.first_name?.message}
-                        {...register('first_name', { required: 'First name is required' })}
-                    />
-                    <Input
-                        label="Last Name"
-                        error={errors.last_name?.message}
-                        {...register('last_name', { required: 'Last name is required' })}
-                    />
-                </div>
+                {/* Organization Name Field */}
+                <Input
+                    label="Organization Name"
+                    required
+                    error={errors.organization_name?.message}
+                    {...register('organization_name', { required: 'Organization name is required' })}
+                />
 
                 {/* Mission/Bio */}
                 <div>
