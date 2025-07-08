@@ -4,6 +4,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../ui/Button'
 import OrganizationManagement from './OrganizationManagement'
 import PartnerApplicationManagement from './PartnerApplicationManagement'
+import NotificationMonitoring from './NotificationMonitoring'
+import NotificationTesting from './NotificationTesting'
+import ProjectApprovalManagement from './ProjectApprovalManagement'
 import { 
   Users, 
   Building, 
@@ -12,7 +15,10 @@ import {
   XCircle, 
   TrendingUp,
   FileText,
-  UserCheck
+  UserCheck,
+  Activity,
+  TestTube,
+  FileText as FileTextIcon
 } from 'lucide-react'
 
 interface AdminDashboardProps {}
@@ -22,7 +28,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'partners'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'partners' | 'projects' | 'monitoring' | 'testing'>('overview')
 
   useEffect(() => {
     loadAdminStats()
@@ -126,6 +132,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               }`}
             >
               Partner Applications
+            </button>
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'projects'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Project Approvals
+            </button>
+            <button
+              onClick={() => setActiveTab('monitoring')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'monitoring'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              System Monitoring
+            </button>
+            <button
+              onClick={() => setActiveTab('testing')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'testing'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              System Testing
             </button>
           </nav>
         </div>
@@ -280,6 +316,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </div>
             </div>
           </div>
+
+          {/* Project Approval Stats */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <FileText className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Pending Projects
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.pendingProjects.toLocaleString()}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -306,6 +361,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <UserCheck className="w-4 h-4 mr-2" />
                 Review Partner Applications ({stats?.pendingPartnerApplications || 0} pending)
               </Button>
+              <Button
+                onClick={() => setActiveTab('projects')}
+                className="w-full justify-start"
+                variant="secondary"
+              >
+                <FileTextIcon className="w-4 h-4 mr-2" />
+                Approve Projects ({stats?.pendingProjects || 0} pending)
+              </Button>
+              <Button
+                onClick={() => setActiveTab('monitoring')}
+                className="w-full justify-start"
+                variant="secondary"
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                System Monitoring & Health
+              </Button>
+              <Button
+                onClick={() => setActiveTab('testing')}
+                className="w-full justify-start"
+                variant="secondary"
+              >
+                <TestTube className="w-4 h-4 mr-2" />
+                System Testing & Validation
+              </Button>
             </div>
           </div>
 
@@ -325,7 +404,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Pending Reviews</span>
                 <span className="font-medium text-yellow-600">
-                  {(stats?.pendingOrganizations || 0) + (stats?.pendingPartnerApplications || 0)}
+                  {(stats?.pendingOrganizations || 0) + (stats?.pendingPartnerApplications || 0) + (stats?.pendingProjects || 0)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -342,6 +421,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
       {/* Partner Application Management Tab */}
       {activeTab === 'partners' && <PartnerApplicationManagement />}
+
+      {/* Project Approval Management Tab */}
+      {activeTab === 'projects' && <ProjectApprovalManagement />}
+
+      {/* Notification System Monitoring Tab */}
+      {activeTab === 'monitoring' && <NotificationMonitoring />}
+
+      {/* Notification System Testing Tab */}
+      {activeTab === 'testing' && <NotificationTesting />}
     </div>
   )
 }

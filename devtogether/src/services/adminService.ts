@@ -40,6 +40,7 @@ export interface AdminStats {
   totalPartnerApplications: number
   pendingPartnerApplications: number
   totalProjects: number
+  pendingProjects: number
   totalDevelopers: number
 }
 
@@ -50,7 +51,7 @@ class AdminService {
       // Get organization stats
       const { data: orgStats } = await supabase
         .from('profiles')
-        .select('organization_verified')
+        .select('organization_verified, organization_rejection_reason')
         .eq('role', 'organization')
 
       // Get partner application stats
@@ -62,6 +63,12 @@ class AdminService {
       const { count: totalProjects } = await supabase
         .from('projects')
         .select('*', { count: 'exact' })
+
+      // Get pending projects
+      const { count: pendingProjects } = await supabase
+        .from('projects')
+        .select('*', { count: 'exact' })
+        .eq('status', 'pending')
 
       // Get total developers
       const { count: totalDevelopers } = await supabase
@@ -85,6 +92,7 @@ class AdminService {
         totalPartnerApplications,
         pendingPartnerApplications,
         totalProjects: totalProjects || 0,
+        pendingProjects: pendingProjects || 0,
         totalDevelopers: totalDevelopers || 0
       }
     } catch (error) {
@@ -132,15 +140,10 @@ class AdminService {
   // Approve organization
   async approveOrganization(organizationId: string, adminId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          organization_verified: true,
-          organization_verified_at: new Date().toISOString(),
-          organization_verified_by: adminId,
-          organization_rejection_reason: null
-        })
-        .eq('id', organizationId)
+      const { error } = await supabase.rpc('approve_organization', {
+        p_organization_id: organizationId,
+        p_admin_id: adminId,
+      })
 
       if (error) throw error
     } catch (error) {
@@ -152,15 +155,11 @@ class AdminService {
   // Reject organization
   async rejectOrganization(organizationId: string, adminId: string, reason: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          organization_verified: false,
-          organization_verified_at: null,
-          organization_verified_by: adminId,
-          organization_rejection_reason: reason
-        })
-        .eq('id', organizationId)
+      const { error } = await supabase.rpc('reject_organization', {
+        p_organization_id: organizationId,
+        p_admin_id: adminId,
+        p_reason: reason,
+      })
 
       if (error) throw error
     } catch (error) {

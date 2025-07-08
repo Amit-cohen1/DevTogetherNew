@@ -282,7 +282,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     </div>
 
                     {org.bio && (
-                      <p className="text-gray-700 mt-2 text-sm">{org.bio}</p>
+                      <p className="text-gray-700 mt-2 text-sm break-all break-words overflow-hidden line-clamp-3">{org.bio}</p>
                     )}
 
                     <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
