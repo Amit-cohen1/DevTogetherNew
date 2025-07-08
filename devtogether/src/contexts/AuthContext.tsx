@@ -121,7 +121,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
 
             // Note: User will be automatically handled by auth state change listener
-            console.log('User signed up successfully:', user?.id)
             return { success: true, error: null }
         } catch (error) {
             return {
@@ -141,7 +140,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
 
             // Note: User will be automatically handled by auth state change listener
-            console.log('User signed in successfully:', user?.id)
             return { success: true, error: null }
         } catch (error) {
             return {

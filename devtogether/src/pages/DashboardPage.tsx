@@ -43,6 +43,22 @@ const DashboardPage: React.FC = () => {
     }
 
     // Fallback if no role is set
+    if (!profile && !loading) {
+        return (
+            <Layout>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                        <h2 className="text-2xl font-bold text-red-900 mb-2">Profile not loaded</h2>
+                        <p className="text-red-700 mb-4">
+                            There was a problem loading your profile. Please try again or contact support.
+                        </p>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
+    // Fallback if no role is set
     return (
         <Layout>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
