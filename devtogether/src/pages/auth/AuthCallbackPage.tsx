@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import type { Profile } from '../../types/database';
 
 export const AuthCallbackPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true)
@@ -40,7 +41,8 @@ export const AuthCallbackPage: React.FC = () => {
                     }
 
                     // If organization and not verified, redirect to pending approval
-                    if (profile.role === 'organization' && profile.organization_verified === false) {
+                    const orgProfile = profile as Profile | null;
+                    if (orgProfile?.role === 'organization' && orgProfile.organization_status === 'pending') {
                         navigate('/pending-approval', { replace: true })
                         return
                     }

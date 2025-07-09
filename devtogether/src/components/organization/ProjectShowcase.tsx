@@ -51,6 +51,12 @@ const STATUS_CONFIG = {
         icon: Clock,
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
         iconColor: 'text-yellow-600'
+    },
+    rejected: {
+        label: 'Rejected',
+        icon: XCircle,
+        color: 'bg-red-100 text-red-800 border-red-200',
+        iconColor: 'text-red-600'
     }
 }
 

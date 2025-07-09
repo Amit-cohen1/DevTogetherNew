@@ -60,6 +60,8 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                 return 'bg-gray-50 text-gray-700 border-gray-200'
             case 'cancelled':
                 return 'bg-gray-100 text-gray-400 border-gray-200'
+            case 'rejected':
+                return 'bg-red-50 text-red-700 border-red-200'
             default:
                 return 'bg-gray-50 text-gray-700 border-gray-200'
         }
@@ -163,6 +165,7 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                             {project.status === 'in_progress' && 'In Progress'}
                             {project.status === 'completed' && 'Completed'}
                             {project.status === 'cancelled' && 'Cancelled'}
+                            {project.status === 'rejected' && 'Rejected'}
                         </span>
                         {/* Show rejection reason if cancelled */}
                         {project.status === 'cancelled' && project.rejection_reason && (
@@ -345,6 +348,19 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                                 Deadline: {formatDate(project.deadline)}
                                 {isDeadlineSoon(project.deadline) && <span className="ml-1 text-orange-500">(Soon)</span>}
                             </span>
+                        </div>
+                    )}
+
+                    {project.status === 'rejected' && (project as any).can_resubmit && user?.id === project.organization_id && (
+                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+                            <p><b>Project was rejected.</b> You can resubmit it.</p>
+                            <Link
+                                to={`/projects/${project.id}/edit`}
+                                className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors mt-2"
+                            >
+                                <Settings className="h-3.5 w-3.5 mr-1.5" />
+                                Resubmit Project
+                            </Link>
                         </div>
                     )}
 

@@ -56,9 +56,12 @@ import OrganizationProjectsPage from './pages/dashboard/OrganizationProjectsPage
 
 import AccessibilityPage from './pages/AccessibilityPage'
 import PendingApprovalPage from './pages/PendingApprovalPage';
+import RejectedOrganizationPage from './pages/RejectedOrganizationPage';
+import BlockedOrganizationPage from './pages/BlockedOrganizationPage';
 import { useAuth } from './contexts/AuthContext';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import type { Profile } from './types/database';
 
 // Custom wrapper to redirect unverified orgs
 const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -73,7 +76,8 @@ const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children })
       </div>
     );
   }
-  if (profile.role === 'organization' && profile.organization_verified === false && location.pathname !== '/pending-approval') {
+  const orgProfile = profile as Profile | null;
+  if (orgProfile?.role === 'organization' && orgProfile.organization_status === 'pending' && location.pathname !== '/pending-approval') {
     return <Navigate to="/pending-approval" replace />;
   }
   return <>{children}</>;
@@ -316,6 +320,26 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <PendingApprovalPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Rejected Organization Route */}
+                <Route
+                  path="/rejected-organization"
+                  element={
+                    <ProtectedRoute>
+                      <RejectedOrganizationPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Blocked Organization Route */}
+                <Route
+                  path="/blocked-organization"
+                  element={
+                    <ProtectedRoute>
+                      <BlockedOrganizationPage />
                     </ProtectedRoute>
                   }
                 />

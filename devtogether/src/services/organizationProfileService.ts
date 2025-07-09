@@ -7,9 +7,101 @@ import {
     OrganizationProfileData,
     ProjectWithTeamMembers,
     ImageCategory,
-    MetricType
+    MetricType,
+    Profile,
+    OrganizationStatus
 } from '../types/database'
 import { projectService } from './projects'
+
+export async function getOrganizationProfile(orgId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', orgId)
+    .single();
+  if (error) return null;
+  return data as Profile;
+}
+
+export async function approveOrganization(orgId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      organization_status: 'approved',
+      organization_rejection_reason: null,
+      can_resubmit: true,
+      organization_verified: true, // for backward compatibility
+      organization_verified_at: new Date().toISOString(),
+    })
+    .eq('id', orgId);
+  return !error;
+}
+
+export async function rejectOrganization(orgId: string, reason: string, canResubmit = true): Promise<boolean> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      organization_status: 'rejected',
+      organization_rejection_reason: reason,
+      can_resubmit: canResubmit,
+      organization_verified: false,
+    })
+    .eq('id', orgId);
+  return !error;
+}
+
+export async function blockOrganization(orgId: string, reason?: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      organization_status: 'blocked',
+      organization_rejection_reason: reason || 'Blocked by admin',
+      can_resubmit: false,
+      organization_verified: false,
+    })
+    .eq('id', orgId);
+  return !error;
+}
+
+export async function resubmitOrganization(orgId: string, updatedData: Partial<Profile>): Promise<boolean> {
+  // Only allow if current status is 'rejected' and can_resubmit is true
+  const { data, error: fetchError } = await supabase
+    .from('profiles')
+    .select('organization_status, can_resubmit')
+    .eq('id', orgId)
+    .single();
+  if (fetchError || !data || data.organization_status !== 'rejected' || !data.can_resubmit) return false;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      ...updatedData,
+      organization_status: 'pending',
+      organization_rejection_reason: null,
+    })
+    .eq('id', orgId);
+  return !error;
+}
+
+// Utility: check if org is approved
+export function isOrganizationApproved(profile: Profile): boolean {
+  return profile.organization_status === 'approved';
+}
+
+// Utility: check if org is blocked
+export function isOrganizationBlocked(profile: Profile): boolean {
+  return profile.organization_status === 'blocked';
+}
+
+// Utility: check if org is rejected
+export function isOrganizationRejected(profile: Profile): boolean {
+  return profile.organization_status === 'rejected';
+}
+
+// Utility: check if org is pending
+export function isOrganizationPending(profile: Profile): boolean {
+  return profile.organization_status === 'pending';
+}
 
 class OrganizationProfileService {
     // Get complete organization profile data
