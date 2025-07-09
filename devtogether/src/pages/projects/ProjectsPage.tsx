@@ -17,7 +17,6 @@ import {
     Users,
     Code,
     Target,
-    Loader2,
     AlertCircle,
     Lightbulb,
     TrendingUp,
@@ -199,16 +198,22 @@ export default function ProjectsPage() {
 
     // Handle custom filter changes for cause areas and time commitment
     const handleCustomFilterChange = (filterType: string, value: string, checked: boolean) => {
-        const newFilters = { ...filters }
-
-        // Store custom filters in a generic way (for future database schema updates)
-        if (!newFilters.technology_stack) newFilters.technology_stack = []
+        const newFilters = { ...filters } as any
 
         if (checked) {
-            // For now, we'll add these as tags in technology_stack for search
-            newFilters.technology_stack = [...newFilters.technology_stack, `${filterType}:${value}`]
+            // Add to filter array for custom filters
+            if (filterType === 'cause_area') {
+                newFilters.cause_area = [...(newFilters.cause_area || []), value]
+            } else if (filterType === 'time_commitment') {
+                newFilters.time_commitment = [...(newFilters.time_commitment || []), value]
+            }
         } else {
-            newFilters.technology_stack = newFilters.technology_stack.filter(item => item !== `${filterType}:${value}`)
+            // Remove from filter array for custom filters
+            if (filterType === 'cause_area') {
+                newFilters.cause_area = (newFilters.cause_area || []).filter((item: string) => item !== value)
+            } else if (filterType === 'time_commitment') {
+                newFilters.time_commitment = (newFilters.time_commitment || []).filter((item: string) => item !== value)
+            }
         }
 
         setFilters(newFilters)
@@ -219,29 +224,30 @@ export default function ProjectsPage() {
 
     // Check if custom filter is active
     const isCustomFilterActive = (filterType: string, value: string) => {
-        return filters.technology_stack?.includes(`${filterType}:${value}`) || false
+        return (filters as any)[filterType]?.includes(value) || false
     }
 
-    // Handle clear all filters
+    // Handle clear filters
     const handleClearFilters = () => {
         // Smart default status filtering based on user role
         let defaultStatusFilters: string[]
         if (user && user.role === 'developer') {
-            // Developers should see projects they can apply to AND projects they're working on
             defaultStatusFilters = ['open', 'in_progress']
         } else {
-            // Organizations/visitors see only open projects by default
             defaultStatusFilters = ['open']
         }
 
-        const clearedFilters = { status: defaultStatusFilters }
+        const clearedFilters: SearchFilters = {
+            status: defaultStatusFilters
+        }
+
         setFilters(clearedFilters)
         setCurrentPage(1)
         updateURL(query, clearedFilters, 1)
         performSearch(query, clearedFilters, 1, sortBy, sortOrder)
     }
 
-    // Toggle filter section
+    // Toggle filter section visibility
     const toggleFilterSection = (section: keyof typeof expandedFilterSections) => {
         setExpandedFilterSections(prev => ({
             ...prev,
@@ -249,32 +255,25 @@ export default function ProjectsPage() {
         }))
     }
 
-    // Handle pagination
+    // Handle page changes
     const handlePageChange = (page: number) => {
         setCurrentPage(page)
         updateURL(query, filters, page)
         performSearch(query, filters, page, sortBy, sortOrder)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
-    // Handle skills-based matching
+    // Handle skills matching
     const handleSkillsMatch = () => {
         if (!userSkills.trim()) return
 
-        // Create a search query from skills
-        const skillsQuery = userSkills.trim()
-        setQuery(skillsQuery)
-        setShowSkillsForm(false)
+        // Convert skills to array and search
+        const skillsArray = userSkills.split(',').map(skill => skill.trim()).filter(Boolean)
+        const searchQuery = skillsArray.join(' ')
 
-        // Update filters to match skills
-        const matchFilters = {
-            ...filters,
-            technology_stack: userSkills.split(',').map(s => s.trim()).filter(Boolean)
-        }
-
-        setFilters(matchFilters)
-        updateURL(skillsQuery, matchFilters, 1)
-        performSearch(skillsQuery, matchFilters, 1, 'relevance', 'desc')
+        setQuery(searchQuery)
+        setCurrentPage(1)
+        updateURL(searchQuery, filters, 1)
+        performSearch(searchQuery, filters, 1, sortBy, sortOrder)
     }
 
     // Get active filter count
@@ -307,9 +306,9 @@ export default function ProjectsPage() {
 
     return (
         <Layout>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <div className="min-h-screen bg-gray-50">
                 {/* Professional Blue Hero Section */}
-                <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 dark:from-blue-700 dark:via-blue-800 dark:to-blue-900">
+                <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                         <div className="text-center mb-10">
                             <h1 className="text-4xl font-bold text-white mb-4 sm:text-5xl lg:text-6xl">
@@ -336,7 +335,7 @@ export default function ProjectsPage() {
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                                     <Button
                                         type="submit"
-                                        className="px-8 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                                        className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
                                     >
                                         Search
                                     </Button>
@@ -351,16 +350,16 @@ export default function ProjectsPage() {
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Enhanced Filters Sidebar */}
                         <div className="lg:w-80 flex-shrink-0">
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 sticky top-24 backdrop-blur-sm">
+                            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sticky top-24 backdrop-blur-sm">
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                        <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                        <Filter className="h-5 w-5 text-gray-600" />
                                         Filters
                                     </h2>
                                     {getActiveFilterCount() > 0 && (
                                         <button
                                             onClick={handleClearFilters}
-                                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
+                                            className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
                                         >
                                             Clear all
                                         </button>
@@ -369,29 +368,29 @@ export default function ProjectsPage() {
 
                                 <div className="space-y-6">
                                     {/* Technologies */}
-                                    <div className="border-b border-gray-100 dark:border-gray-700 pb-6">
+                                    <div className="border-b border-gray-100 pb-6">
                                         <button
                                             onClick={() => toggleFilterSection('technologies')}
-                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 transition-colors group"
                                         >
-                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Technologies</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900">Technologies</h3>
                                             {expandedFilterSections.technologies ? (
-                                                <ChevronUp className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronUp className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             ) : (
-                                                <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             )}
                                         </button>
                                         {expandedFilterSections.technologies && (
                                             <div className="mt-4 space-y-3 max-h-48 overflow-y-auto">
                                                 {TECHNOLOGY_STACK_OPTIONS.slice(0, 8).map((tech) => (
-                                                    <label key={tech} className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 transition-colors cursor-pointer group">
+                                                    <label key={tech} className="flex items-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer group">
                                                         <input
                                                             type="checkbox"
                                                             checked={filters.technology_stack?.includes(tech) || false}
                                                             onChange={(e) => handleFilterChange('technology_stack', tech, e.target.checked)}
-                                                            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                         />
-                                                        <span className="ml-3 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">{tech}</span>
+                                                        <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">{tech}</span>
                                                     </label>
                                                 ))}
                                             </div>
@@ -399,29 +398,29 @@ export default function ProjectsPage() {
                                     </div>
 
                                     {/* Experience Level */}
-                                    <div className="border-b border-gray-100 dark:border-gray-700 pb-6">
+                                    <div className="border-b border-gray-100 pb-6">
                                         <button
                                             onClick={() => toggleFilterSection('experience')}
-                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 transition-colors group"
                                         >
-                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Experience Level</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900">Experience Level</h3>
                                             {expandedFilterSections.experience ? (
-                                                <ChevronUp className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronUp className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             ) : (
-                                                <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             )}
                                         </button>
                                         {expandedFilterSections.experience && (
                                             <div className="mt-4 space-y-3">
                                                 {DIFFICULTY_LEVELS.map((level) => (
-                                                    <label key={level.value} className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 transition-colors cursor-pointer group">
+                                                    <label key={level.value} className="flex items-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer group">
                                                         <input
                                                             type="checkbox"
                                                             checked={filters.difficulty_level?.includes(level.value) || false}
                                                             onChange={(e) => handleFilterChange('difficulty_level', level.value, e.target.checked)}
-                                                            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                         />
-                                                        <span className="ml-3 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">{level.label}</span>
+                                                        <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">{level.label}</span>
                                                     </label>
                                                 ))}
                                             </div>
@@ -429,29 +428,29 @@ export default function ProjectsPage() {
                                     </div>
 
                                     {/* Cause Areas */}
-                                    <div className="border-b border-gray-100 dark:border-gray-700 pb-6">
+                                    <div className="border-b border-gray-100 pb-6">
                                         <button
                                             onClick={() => toggleFilterSection('causeAreas')}
-                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 transition-colors group"
                                         >
-                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Cause Areas</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900">Cause Areas</h3>
                                             {expandedFilterSections.causeAreas ? (
-                                                <ChevronUp className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronUp className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             ) : (
-                                                <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             )}
                                         </button>
                                         {expandedFilterSections.causeAreas && (
                                             <div className="mt-4 space-y-3">
                                                 {causeAreas.map((cause) => (
-                                                    <label key={cause.value} className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 transition-colors cursor-pointer group">
+                                                    <label key={cause.value} className="flex items-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer group">
                                                         <input
                                                             type="checkbox"
                                                             checked={isCustomFilterActive('cause_area', cause.value)}
                                                             onChange={(e) => handleCustomFilterChange('cause_area', cause.value, e.target.checked)}
-                                                            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                         />
-                                                        <span className="ml-3 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">{cause.label}</span>
+                                                        <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">{cause.label}</span>
                                                     </label>
                                                 ))}
                                             </div>
@@ -459,29 +458,29 @@ export default function ProjectsPage() {
                                     </div>
 
                                     {/* Time Commitment */}
-                                    <div className="border-b border-gray-100 dark:border-gray-700 pb-6">
+                                    <div className="border-b border-gray-100 pb-6">
                                         <button
                                             onClick={() => toggleFilterSection('timeCommitment')}
-                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 transition-colors group"
                                         >
-                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Time Commitment</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900">Time Commitment</h3>
                                             {expandedFilterSections.timeCommitment ? (
-                                                <ChevronUp className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronUp className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             ) : (
-                                                <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             )}
                                         </button>
                                         {expandedFilterSections.timeCommitment && (
                                             <div className="mt-4 space-y-3">
                                                 {timeCommitments.map((time) => (
-                                                    <label key={time.value} className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 transition-colors cursor-pointer group">
+                                                    <label key={time.value} className="flex items-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer group">
                                                         <input
                                                             type="checkbox"
                                                             checked={isCustomFilterActive('time_commitment', time.value)}
                                                             onChange={(e) => handleCustomFilterChange('time_commitment', time.value, e.target.checked)}
-                                                            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                         />
-                                                        <span className="ml-3 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">{time.label}</span>
+                                                        <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">{time.label}</span>
                                                     </label>
                                                 ))}
                                             </div>
@@ -492,43 +491,43 @@ export default function ProjectsPage() {
                                     <div>
                                         <button
                                             onClick={() => toggleFilterSection('status')}
-                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                                            className="flex items-center justify-between w-full text-left hover:text-blue-600 transition-colors group"
                                         >
-                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Project Status</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900">Project Status</h3>
                                             {expandedFilterSections.status ? (
-                                                <ChevronUp className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronUp className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             ) : (
-                                                <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                                                <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
                                             )}
                                         </button>
                                         {expandedFilterSections.status && (
                                             <div className="mt-4 space-y-3">
-                                                <label className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 transition-colors cursor-pointer group">
+                                                <label className="flex items-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer group">
                                                     <input
                                                         type="checkbox"
                                                         checked={filters.status?.includes('open') || false}
                                                         onChange={(e) => handleFilterChange('status', 'open', e.target.checked)}
-                                                        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                     />
-                                                    <span className="ml-3 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Open for Applications</span>
+                                                    <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">Open for Applications</span>
                                                 </label>
-                                                <label className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 transition-colors cursor-pointer group">
+                                                <label className="flex items-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer group">
                                                     <input
                                                         type="checkbox"
                                                         checked={filters.status?.includes('in_progress') || false}
                                                         onChange={(e) => handleFilterChange('status', 'in_progress', e.target.checked)}
-                                                        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                     />
-                                                    <span className="ml-3 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Starting</span>
+                                                    <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">Starting</span>
                                                 </label>
-                                                <label className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 transition-colors cursor-pointer group">
+                                                <label className="flex items-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer group">
                                                     <input
                                                         type="checkbox"
                                                         checked={filters.status?.includes('completed') || false}
                                                         onChange={(e) => handleFilterChange('status', 'completed', e.target.checked)}
-                                                        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                     />
-                                                    <span className="ml-3 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Completed Projects</span>
+                                                    <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">Completed Projects</span>
                                                 </label>
                                             </div>
                                         )}
@@ -539,19 +538,9 @@ export default function ProjectsPage() {
 
                         {/* Professional Content Area */}
                         <div className="flex-1 min-w-0">
-                            {/* Enhanced Results Header */}
+                            {/* Simple Sort Dropdown - No Counter */}
                             {results && (
-                                <div className="mb-8 flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 backdrop-blur-sm">
-                                    <div className="flex items-center gap-4">
-                                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                            {results.total_count} Projects Found
-                                        </h2>
-                                        {results.search_time && (
-                                            <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                                                {results.search_time}ms
-                                            </span>
-                                        )}
-                                    </div>
+                                <div className="mb-8 flex items-center justify-end bg-white rounded-2xl shadow-lg border border-gray-200 p-6 backdrop-blur-sm">
                                     <select
                                         value={`${sortBy}-${sortOrder}`}
                                         onChange={(e) => {
@@ -560,7 +549,7 @@ export default function ProjectsPage() {
                                             setSortOrder(newSortOrder as 'asc' | 'desc')
                                             performSearch(query, filters, 1, newSortBy as AdvancedSearchParams['sort_by'], newSortOrder as 'asc' | 'desc')
                                         }}
-                                        className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                     >
                                         <option value="created_at-desc">Newest First</option>
                                         <option value="created_at-asc">Oldest First</option>
@@ -573,15 +562,15 @@ export default function ProjectsPage() {
 
                             {/* Elegant Error State */}
                             {error && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
+                                <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
                                     <div className="flex items-center">
-                                        <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 mr-3" />
-                                        <div className="text-red-700 dark:text-red-300 text-sm font-medium">
+                                        <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+                                        <div className="text-red-700 text-sm font-medium">
                                             Error: {error}
                                         </div>
                                         <button
                                             onClick={() => performSearch(query, filters, currentPage, sortBy, sortOrder)}
-                                            className="ml-4 text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 text-sm font-medium transition-colors"
+                                            className="ml-4 text-red-700 hover:text-red-900 text-sm font-medium transition-colors"
                                         >
                                             Try Again
                                         </button>
@@ -589,15 +578,7 @@ export default function ProjectsPage() {
                                 </div>
                             )}
 
-                            {/* Professional Loading State */}
-                            {loading && (
-                                <div className="flex items-center justify-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
-                                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
-                                    <span className="ml-3 text-gray-600 dark:text-gray-400 font-medium">Searching projects...</span>
-                                </div>
-                            )}
-
-                            {/* Enhanced Project Grid */}
+                            {/* Enhanced Project Grid - No Loading State */}
                             {results && !loading && (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                                     {results.projects.map((project, index) => {
@@ -624,12 +605,12 @@ export default function ProjectsPage() {
 
                             {/* Enhanced Empty State */}
                             {results && !loading && results.projects.length === 0 && (
-                                <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
-                                    <Search className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-6" />
-                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                                <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-200 backdrop-blur-sm">
+                                    <Search className="h-16 w-16 text-gray-400 mx-auto mb-6" />
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
                                         No projects found
                                     </h3>
-                                    <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
                                         Try adjusting your search terms or filters to discover more projects that match your interests.
                                     </p>
                                     <Button 
@@ -649,7 +630,7 @@ export default function ProjectsPage() {
                                         <button
                                             onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 1}
-                                            className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                                            className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 font-medium transition-colors"
                                         >
                                             Previous
                                         </button>
@@ -662,7 +643,7 @@ export default function ProjectsPage() {
                                                     onClick={() => handlePageChange(page)}
                                                     className={`px-4 py-2.5 border rounded-lg text-sm font-medium transition-colors ${currentPage === page
                                                         ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                                        : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                                        : 'border-gray-300 hover:bg-gray-50 bg-white text-gray-700'
                                                         }`}
                                                 >
                                                     {page}
@@ -673,7 +654,7 @@ export default function ProjectsPage() {
                                         <button
                                             onClick={() => handlePageChange(currentPage + 1)}
                                             disabled={currentPage >= Math.ceil(results.total_count / 20)}
-                                            className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                                            className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 font-medium transition-colors"
                                         >
                                             Next
                                         </button>
@@ -684,27 +665,27 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Sophisticated Skills Matching Section */}
-                    <div className="mt-24 bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-900/10 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 lg:p-12 backdrop-blur-sm">
+                    <div className="mt-24 bg-gradient-to-br from-white to-blue-50/30 rounded-3xl shadow-xl border border-gray-200 p-8 lg:p-12 backdrop-blur-sm">
                         <div className="max-w-5xl mx-auto">
                             <div className="text-center mb-12">
-                                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-                                    <Lightbulb className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                                <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-6">
+                                    <Lightbulb className="h-7 w-7 text-blue-600" />
                                 </div>
-                                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Find Projects That Match Your Skills</h2>
-                                <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Find Projects That Match Your Skills</h2>
+                                <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
                                     Discover opportunities that align with your experience and drive meaningful impact in the nonprofit sector
                                 </p>
                             </div>
 
                             <div className="grid lg:grid-cols-2 gap-12">
                                 <div className="space-y-6">
-                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Tell us about yourself</h3>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-6">Tell us about yourself</h3>
                                     <div className="space-y-6">
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
                                                 Experience Level
                                             </label>
-                                            <select className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-base">
+                                            <select className="w-full border border-gray-300 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-base">
                                                 <option value="">Select your experience level</option>
                                                 <option value="beginner">Beginner (0-1 years)</option>
                                                 <option value="intermediate">Intermediate (2-4 years)</option>
@@ -712,7 +693,7 @@ export default function ProjectsPage() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
                                                 Your Skills & Technologies
                                             </label>
                                             <input
@@ -720,14 +701,14 @@ export default function ProjectsPage() {
                                                 value={userSkills}
                                                 onChange={(e) => setUserSkills(e.target.value)}
                                                 placeholder="e.g., React, Python, UI/UX Design, Data Analysis"
-                                                className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-base"
+                                                className="w-full border border-gray-300 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 bg-white text-gray-900 text-base"
                                             />
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Separate skills with commas for better matching</p>
+                                            <p className="text-sm text-gray-500 mt-2">Separate skills with commas for better matching</p>
                                         </div>
                                         <Button
                                             onClick={handleSkillsMatch}
                                             disabled={!userSkills.trim()}
-                                            className="w-full px-6 py-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 text-base"
+                                            className="w-full px-6 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 text-base"
                                         >
                                             Find Matching Projects
                                         </Button>
@@ -735,33 +716,33 @@ export default function ProjectsPage() {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Why skill matching helps</h3>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-6">Why skill matching helps</h3>
                                     <div className="space-y-6">
                                         <div className="flex items-start gap-4 group">
-                                            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                                                <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 group-hover:bg-blue-100 transition-colors">
+                                                <Target className="h-5 w-5 text-blue-600" />
                                             </div>
                                             <div>
-                                                <h4 className="font-semibold text-gray-900 dark:text-white text-base mb-2">Relevant Opportunities</h4>
-                                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Find projects where your skills are needed and valued by nonprofit organizations</p>
+                                                <h4 className="font-semibold text-gray-900 text-base mb-2">Relevant Opportunities</h4>
+                                                <p className="text-gray-600 leading-relaxed">Find projects where your skills are needed and valued by nonprofit organizations</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-4 group">
-                                            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 group-hover:bg-green-100 dark:group-hover:bg-green-900/30 transition-colors">
-                                                <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 group-hover:bg-green-100 transition-colors">
+                                                <TrendingUp className="h-5 w-5 text-green-600" />
                                             </div>
                                             <div>
-                                                <h4 className="font-semibold text-gray-900 dark:text-white text-base mb-2">Skill Development</h4>
-                                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Discover opportunities to grow and learn new technologies while building your portfolio</p>
+                                                <h4 className="font-semibold text-gray-900 text-base mb-2">Skill Development</h4>
+                                                <p className="text-gray-600 leading-relaxed">Discover opportunities to grow and learn new technologies while building your portfolio</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-4 group">
-                                            <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
-                                                <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                            <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 group-hover:bg-purple-100 transition-colors">
+                                                <Heart className="h-5 w-5 text-purple-600" />
                                             </div>
                                             <div>
-                                                <h4 className="font-semibold text-gray-900 dark:text-white text-base mb-2">Better Matches</h4>
-                                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Higher chance of application success with relevant skills and meaningful impact</p>
+                                                <h4 className="font-semibold text-gray-900 text-base mb-2">Better Matches</h4>
+                                                <p className="text-gray-600 leading-relaxed">Higher chance of application success with relevant skills and meaningful impact</p>
                                             </div>
                                         </div>
                                     </div>

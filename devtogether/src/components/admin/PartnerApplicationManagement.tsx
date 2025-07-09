@@ -201,14 +201,14 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Partner Application Management</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Partner Application Management</h2>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Review and manage partnership applications from organizations
           </p>
         </div>
-        <Button onClick={loadPartnerApplications} variant="secondary">
+        <Button onClick={loadPartnerApplications} variant="secondary" className="w-full sm:w-auto">
           Refresh
         </Button>
       </div>
@@ -222,15 +222,15 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
             placeholder="Search applications..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
           />
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
           <Filter className="w-4 h-4 text-gray-400" />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-auto text-sm sm:text-base"
           >
             <option value="all">All ({filterCounts.all})</option>
             <option value="pending">Pending ({filterCounts.pending})</option>
@@ -241,22 +241,22 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-600">{filterCounts.all}</div>
-          <div className="text-sm text-blue-600">Total Applications</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-blue-600">{filterCounts.all}</div>
+          <div className="text-xs sm:text-sm text-blue-600">Total Applications</div>
         </div>
-        <div className="bg-yellow-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-yellow-600">{filterCounts.pending}</div>
-          <div className="text-sm text-yellow-600">Pending Review</div>
+        <div className="bg-yellow-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-yellow-600">{filterCounts.pending}</div>
+          <div className="text-xs sm:text-sm text-yellow-600">Pending Review</div>
         </div>
-        <div className="bg-green-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-600">{filterCounts.approved}</div>
-          <div className="text-sm text-green-600">Approved</div>
+        <div className="bg-green-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-green-600">{filterCounts.approved}</div>
+          <div className="text-xs sm:text-sm text-green-600">Approved</div>
         </div>
-        <div className="bg-red-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-red-600">{filterCounts.rejected}</div>
-          <div className="text-sm text-red-600">Rejected</div>
+        <div className="bg-red-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-red-600">{filterCounts.rejected}</div>
+          <div className="text-xs sm:text-sm text-red-600">Rejected</div>
         </div>
       </div>
 
@@ -265,8 +265,8 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
         {filteredApplications.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-            <p className="text-gray-600">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No applications found</h3>
+            <p className="text-gray-600 text-sm sm:text-base">
               {searchTerm || filterStatus !== 'all' 
                 ? 'Try adjusting your search or filters'
                 : 'No partner applications to display'
@@ -276,32 +276,32 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
         ) : (
           <div className="divide-y divide-gray-200">
             {filteredApplications.map((app) => (
-              <div key={app.id} className="p-6 hover:bg-gray-50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
+              <div key={app.id} className="p-4 sm:p-6 hover:bg-gray-50">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900 truncate max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl">
                           {app.organization?.organization_name || 'Unnamed Organization'}
                         </h3>
-                        <p className="text-sm text-gray-600 flex items-center mt-1">
-                          <Mail className="w-4 h-4 mr-1" />
+                        <p className="text-xs sm:text-sm text-gray-600 flex items-center mt-1 break-all">
+                          <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
                           {app.organization?.email}
                         </p>
                       </div>
-                      {getStatusDisplay(app.status)}
+                      <div className="flex-shrink-0 mt-2 sm:mt-0">{getStatusDisplay(app.status)}</div>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Users className="w-4 h-4 mr-2" />
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:gap-4">
+                      <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                        <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
                         <span className="font-medium">Company Size:</span>
-                        <span className="ml-1">{getCompanySizeDisplay(app.company_size)}</span>
+                        <span className="ml-1 truncate">{getCompanySizeDisplay(app.company_size)}</span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Building className="w-4 h-4 mr-2" />
+                      <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                        <Building className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
                         <span className="font-medium">Industry:</span>
-                        <span className="ml-1">{app.industry}</span>
+                        <span className="ml-1 truncate">{app.industry}</span>
                       </div>
                     </div>
 
@@ -311,41 +311,42 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                           href={app.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                          className="inline-flex items-center text-xs sm:text-sm text-blue-600 hover:text-blue-800 truncate max-w-xs sm:max-w-md"
                         >
-                          <ExternalLink className="w-4 h-4 mr-1" />
+                          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
                           {app.website}
                         </a>
                       </div>
                     )}
 
                     <div className="mt-3">
-                      <p className="text-sm text-gray-700">
+                      <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">
                         <span className="font-medium">Why Partner:</span> {app.why_partner}
                       </p>
                     </div>
 
-                    <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 text-xs sm:text-sm text-gray-500">
                       <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                         Applied: {new Date(app.created_at).toLocaleDateString()}
                       </div>
                       {app.reviewed_at && (
                         <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           Reviewed: {new Date(app.reviewed_at).toLocaleDateString()}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="ml-6 flex flex-col space-y-2">
+                  <div className="flex flex-row sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-6 w-full sm:w-auto">
                     <Button
                       onClick={() => setSelectedApplication(app)}
                       variant="secondary"
                       size="sm"
+                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
-                      <Eye className="w-4 h-4 mr-1" />
+                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                       View Details
                     </Button>
 
@@ -354,20 +355,20 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                         <Button
                           onClick={() => handleApprove(app.id)}
                           disabled={actionLoading === app.id}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-xs sm:text-sm"
                           size="sm"
                         >
-                          <CheckCircle className="w-4 h-4 mr-1" />
+                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           {actionLoading === app.id ? 'Approving...' : 'Approve'}
                         </Button>
                         <Button
                           onClick={() => handleReject(app.id)}
                           disabled={actionLoading === app.id}
                           variant="secondary"
-                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto text-xs sm:text-sm"
                           size="sm"
                         >
-                          <XCircle className="w-4 h-4 mr-1" />
+                          <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           {actionLoading === app.id ? 'Rejecting...' : 'Reject'}
                         </Button>
                       </>
@@ -382,23 +383,24 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
 
       {/* Application Details Modal */}
       {selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="p-4 sm:p-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                     Partner Application Details
                   </h3>
-                  <p className="text-gray-600 mt-1">
+                  <p className="text-gray-600 mt-1 text-sm sm:text-base">
                     {selectedApplication.organization?.organization_name || 'Unnamed Organization'}
                   </p>
-                  {getStatusDisplay(selectedApplication.status)}
+                  <div className="mt-2">{getStatusDisplay(selectedApplication.status)}</div>
                 </div>
                 <Button
                   onClick={() => setSelectedApplication(null)}
                   variant="secondary"
                   size="sm"
+                  className="text-lg leading-none p-1 h-8 w-8"
                 >
                   ×
                 </Button>
@@ -406,20 +408,20 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
 
               <div className="space-y-6">
                 {/* Organization Information */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">Organization Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-3">Organization Information</h4>
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Organization Name
                       </label>
-                      <p className="text-gray-900">{selectedApplication.organization?.organization_name || 'N/A'}</p>
+                      <p className="text-gray-900 text-sm sm:text-base">{selectedApplication.organization?.organization_name || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Email
                       </label>
-                      <p className="text-gray-900">{selectedApplication.organization?.email}</p>
+                      <p className="text-gray-900 text-sm sm:text-base break-all">{selectedApplication.organization?.email}</p>
                     </div>
                   </div>
                   {selectedApplication.organization?.bio && (
@@ -427,26 +429,26 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Organization Description
                       </label>
-                      <p className="text-gray-900">{selectedApplication.organization.bio}</p>
+                      <p className="text-gray-900 text-sm sm:text-base">{selectedApplication.organization.bio}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Partnership Details */}
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">Partnership Details</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-3">Partnership Details</h4>
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Company Size
                       </label>
-                      <p className="text-gray-900">{getCompanySizeDisplay(selectedApplication.company_size)}</p>
+                      <p className="text-gray-900 text-sm sm:text-base">{getCompanySizeDisplay(selectedApplication.company_size)}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Industry
                       </label>
-                      <p className="text-gray-900">{selectedApplication.industry}</p>
+                      <p className="text-gray-900 text-sm sm:text-base">{selectedApplication.industry}</p>
                     </div>
                   </div>
                   {selectedApplication.website && (
@@ -458,7 +460,7 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                         href={selectedApplication.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-600 hover:text-blue-800 text-sm sm:text-base break-all"
                       >
                         {selectedApplication.website}
                       </a>
@@ -471,25 +473,25 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Why do you want to partner with DevTogether?
                   </label>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-900 whitespace-pre-wrap">{selectedApplication.why_partner}</p>
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                    <p className="text-gray-900 whitespace-pre-wrap text-sm sm:text-base">{selectedApplication.why_partner}</p>
                   </div>
                 </div>
 
                 {/* Application Timeline */}
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">Application Timeline</h4>
+                  <h4 className="text-base sm:text-lg font-medium text-gray-900 mb-3">Application Timeline</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Application Submitted</span>
-                      <span className="font-medium">
+                      <span className="text-gray-600 text-sm">Application Submitted</span>
+                      <span className="font-medium text-sm">
                         {new Date(selectedApplication.created_at).toLocaleDateString()}
                       </span>
                     </div>
                     {selectedApplication.reviewed_at && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Review Completed</span>
-                        <span className="font-medium">
+                        <span className="text-gray-600 text-sm">Review Completed</span>
+                        <span className="font-medium text-sm">
                           {new Date(selectedApplication.reviewed_at).toLocaleDateString()}
                         </span>
                       </div>
@@ -498,13 +500,13 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end space-x-3">
+              <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                 {selectedApplication.status === 'pending' && (
                   <>
                     <Button
                       onClick={() => handleApprove(selectedApplication.id)}
                       disabled={actionLoading === selectedApplication.id}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       {actionLoading === selectedApplication.id ? 'Approving...' : 'Approve Application'}
@@ -513,7 +515,7 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                       onClick={() => handleReject(selectedApplication.id)}
                       disabled={actionLoading === selectedApplication.id}
                       variant="secondary"
-                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto"
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       {actionLoading === selectedApplication.id ? 'Rejecting...' : 'Reject Application'}
