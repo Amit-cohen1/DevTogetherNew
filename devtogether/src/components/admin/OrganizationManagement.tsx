@@ -193,14 +193,14 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Organization Management</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Organization Management</h2>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Review and manage organization verification requests
           </p>
         </div>
-        <Button onClick={loadOrganizations} variant="secondary">
+        <Button onClick={loadOrganizations} variant="secondary" className="w-full sm:w-auto">
           Refresh
         </Button>
       </div>
@@ -214,15 +214,15 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
             placeholder="Search organizations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
           />
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
           <Filter className="w-4 h-4 text-gray-400" />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-auto text-sm sm:text-base"
           >
             <option value="all">All ({filterCounts.all})</option>
             <option value="pending">Pending ({filterCounts.pending})</option>
@@ -233,22 +233,22 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-600">{filterCounts.all}</div>
-          <div className="text-sm text-blue-600">Total Organizations</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-blue-600">{filterCounts.all}</div>
+          <div className="text-xs sm:text-sm text-blue-600">Total Organizations</div>
         </div>
-        <div className="bg-yellow-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-yellow-600">{filterCounts.pending}</div>
-          <div className="text-sm text-yellow-600">Pending Review</div>
+        <div className="bg-yellow-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-yellow-600">{filterCounts.pending}</div>
+          <div className="text-xs sm:text-sm text-yellow-600">Pending Review</div>
         </div>
-        <div className="bg-green-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-600">{filterCounts.verified}</div>
-          <div className="text-sm text-green-600">Verified</div>
+        <div className="bg-green-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-green-600">{filterCounts.verified}</div>
+          <div className="text-xs sm:text-sm text-green-600">Verified</div>
         </div>
-        <div className="bg-red-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-red-600">{filterCounts.rejected}</div>
-          <div className="text-sm text-red-600">Rejected</div>
+        <div className="bg-red-50 rounded-lg p-3 sm:p-4">
+          <div className="text-lg sm:text-2xl font-bold text-red-600">{filterCounts.rejected}</div>
+          <div className="text-xs sm:text-sm text-red-600">Rejected</div>
         </div>
       </div>
 
@@ -257,8 +257,8 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
         {filteredOrganizations.length === 0 ? (
           <div className="text-center py-12">
             <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No organizations found</h3>
-            <p className="text-gray-600">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No organizations found</h3>
+            <p className="text-gray-600 text-sm sm:text-base">
               {searchTerm || filterStatus !== 'all' 
                 ? 'Try adjusting your search or filters'
                 : 'No organizations to display'
@@ -268,15 +268,15 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
         ) : (
           <div className="divide-y divide-gray-200">
             {filteredOrganizations.map((org) => (
-              <div key={org.id} className="p-6 hover:bg-gray-50 max-w-full overflow-x-auto">
+              <div key={org.id} className="p-4 sm:p-6 hover:bg-gray-50 max-w-full overflow-x-auto">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="text-lg font-medium text-gray-900 truncate max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900 truncate max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
                           {org.organization_name || 'Unnamed Organization'}
                         </h3>
-                        <p className="text-sm text-gray-600 break-all break-words max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl truncate">
+                        <p className="text-xs sm:text-sm text-gray-600 break-all break-words max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl truncate">
                           {org.email}
                         </p>
                       </div>
@@ -284,20 +284,20 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     </div>
 
                     {org.bio && (
-                      <p className="text-gray-700 mt-2 text-sm break-words overflow-hidden line-clamp-3 max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+                      <p className="text-gray-700 mt-2 text-xs sm:text-sm break-words overflow-hidden line-clamp-3 max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
                         {org.bio}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 text-xs sm:text-sm text-gray-500">
                       <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                         {new Date(org.created_at).toLocaleDateString()}
                       </div>
                       {org.location && (
                         <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          <span className="truncate max-w-[120px]">{org.location}</span>
+                          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                          <span className="truncate max-w-[100px] sm:max-w-[120px]">{org.location}</span>
                         </div>
                       )}
                       {org.website && (
@@ -305,9 +305,9 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                           href={org.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center text-blue-600 hover:text-blue-800 truncate max-w-[120px]"
+                          className="flex items-center text-blue-600 hover:text-blue-800 truncate max-w-[100px] sm:max-w-[120px]"
                         >
-                          <ExternalLink className="w-4 h-4 mr-1" />
+                          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           Website
                         </a>
                       )}
@@ -315,7 +315,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
                     {org.organization_rejection_reason && (
                       <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800 break-words">
+                        <p className="text-xs sm:text-sm text-red-800 break-words">
                           <strong>Rejection Reason:</strong> {org.organization_rejection_reason}
                         </p>
                       </div>
@@ -323,7 +323,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
                     {org.organization_verified_at && (
                       <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-sm text-green-800">
+                        <p className="text-xs sm:text-sm text-green-800">
                           <strong>Verified:</strong> {new Date(org.organization_verified_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -335,9 +335,9 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                       onClick={() => setSelectedOrganization(org)}
                       variant="secondary"
                       size="sm"
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
-                      <Eye className="w-4 h-4 mr-1" />
+                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                       View Details
                     </Button>
 
@@ -346,10 +346,10 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                         <Button
                           onClick={() => handleApprove(org.id)}
                           disabled={actionLoading === org.id}
-                          className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                          className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-xs sm:text-sm"
                           size="sm"
                         >
-                          <CheckCircle className="w-4 h-4 mr-1" />
+                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           {actionLoading === org.id ? 'Approving...' : 'Approve'}
                         </Button>
                         <Button
@@ -358,10 +358,10 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                             setShowRejectModal(true)
                           }}
                           variant="secondary"
-                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto"
+                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto text-xs sm:text-sm"
                           size="sm"
                         >
-                          <XCircle className="w-4 h-4 mr-1" />
+                          <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           Reject
                         </Button>
                       </>
@@ -376,20 +376,21 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
       {/* Organization Details Modal */}
       {selectedOrganization && !showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
+            <div className="p-4 sm:p-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                     {selectedOrganization.organization_name || 'Unnamed Organization'}
                   </h3>
-                  {getStatusDisplay(selectedOrganization)}
+                  <div className="mt-2">{getStatusDisplay(selectedOrganization)}</div>
                 </div>
                 <Button
                   onClick={() => setSelectedOrganization(null)}
                   variant="secondary"
                   size="sm"
+                  className="text-lg leading-none p-1 h-8 w-8"
                 >
                   ×
                 </Button>
@@ -400,7 +401,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email
                   </label>
-                  <p className="text-gray-900">{selectedOrganization.email}</p>
+                  <p className="text-gray-900 text-sm sm:text-base break-all">{selectedOrganization.email}</p>
                 </div>
 
                 {selectedOrganization.bio && (
@@ -408,7 +409,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Description
                     </label>
-                    <p className="text-gray-900">{selectedOrganization.bio}</p>
+                    <p className="text-gray-900 text-sm sm:text-base">{selectedOrganization.bio}</p>
                   </div>
                 )}
 
@@ -417,7 +418,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Location
                     </label>
-                    <p className="text-gray-900">{selectedOrganization.location}</p>
+                    <p className="text-gray-900 text-sm sm:text-base">{selectedOrganization.location}</p>
                   </div>
                 )}
 
@@ -430,7 +431,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                       href={selectedOrganization.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-blue-600 hover:text-blue-800 text-sm sm:text-base break-all"
                     >
                       {selectedOrganization.website}
                     </a>
@@ -441,7 +442,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Registration Date
                   </label>
-                  <p className="text-gray-900">
+                  <p className="text-gray-900 text-sm sm:text-base">
                     {new Date(selectedOrganization.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -451,18 +452,18 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Rejection Reason
                     </label>
-                    <p className="text-red-600">{selectedOrganization.organization_rejection_reason}</p>
+                    <p className="text-red-600 text-sm sm:text-base">{selectedOrganization.organization_rejection_reason}</p>
                   </div>
                 )}
               </div>
 
-              <div className="mt-6 flex justify-end space-x-3">
+              <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                 {!selectedOrganization.organization_verified && !selectedOrganization.organization_rejection_reason && (
                   <>
                     <Button
                       onClick={() => handleApprove(selectedOrganization.id)}
                       disabled={actionLoading === selectedOrganization.id}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       {actionLoading === selectedOrganization.id ? 'Approving...' : 'Approve Organization'}
@@ -470,7 +471,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     <Button
                       onClick={() => setShowRejectModal(true)}
                       variant="secondary"
-                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto"
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Reject Organization
@@ -485,13 +486,13 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
       {/* Reject Modal */}
       {showRejectModal && selectedOrganization && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-2 sm:mx-0">
+            <div className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">
                 Reject Organization
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-4 text-sm sm:text-base">
                 Please provide a reason for rejecting <strong>{selectedOrganization.organization_name}</strong>:
               </p>
               <textarea
@@ -499,22 +500,23 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Enter rejection reason..."
                 rows={3}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
               />
-              <div className="mt-6 flex justify-end space-x-3">
+              <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <Button
                   onClick={() => {
                     setShowRejectModal(false)
                     setRejectReason('')
                   }}
                   variant="secondary"
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleReject}
                   disabled={!rejectReason.trim() || actionLoading === selectedOrganization.id}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
                 >
                   {actionLoading === selectedOrganization.id ? 'Rejecting...' : 'Reject Organization'}
                 </Button>

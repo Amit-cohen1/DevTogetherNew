@@ -243,7 +243,7 @@ function App() {
                 <Route
                   path="/workspace/:projectId"
                   element={
-                    <ProtectedRoute requiredRole="organization">
+                    <ProtectedRoute>
                       <OrgApprovalGuard>
                         <ProjectWorkspace />
                       </OrgApprovalGuard>
