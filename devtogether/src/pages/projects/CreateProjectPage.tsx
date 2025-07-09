@@ -5,6 +5,7 @@ import { CreateProjectForm } from '../../components/projects/CreateProjectForm'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/Button'
 import { ArrowLeft, Plus, AlertTriangle, Clock, Mail } from 'lucide-react'
+import type { Profile } from '../../types/database';
 
 export default function CreateProjectPage() {
     const navigate = useNavigate()
@@ -19,7 +20,8 @@ export default function CreateProjectPage() {
     }
 
     // Check if organization is verified
-    const isVerified = profile?.organization_verified === true;
+    const orgProfile = profile as Profile | null;
+    const isVerified = orgProfile?.organization_status === 'approved';
 
     // If not an organization, redirect (this should be handled by routing but adding as safety)
     if (!isOrganization) {

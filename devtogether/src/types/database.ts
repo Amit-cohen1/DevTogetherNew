@@ -101,7 +101,7 @@ export interface Database {
                     requirements: string
                     technology_stack: string[]
                     difficulty_level: 'beginner' | 'intermediate' | 'advanced'
-                    status: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled'
+                    status: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'rejected'
                     application_type: 'individual' | 'team' | 'both'
                     max_team_size: number | null
                     deadline: string | null
@@ -120,7 +120,7 @@ export interface Database {
                     requirements: string
                     technology_stack: string[]
                     difficulty_level: 'beginner' | 'intermediate' | 'advanced'
-                    status?: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled'
+                    status?: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'rejected'
                     application_type: 'individual' | 'team' | 'both'
                     max_team_size?: number | null
                     deadline?: string | null
@@ -139,7 +139,7 @@ export interface Database {
                     requirements?: string
                     technology_stack?: string[]
                     difficulty_level?: 'beginner' | 'intermediate' | 'advanced'
-                    status?: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled'
+                    status?: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'rejected'
                     application_type?: 'individual' | 'team' | 'both'
                     max_team_size?: number | null
                     deadline?: string | null
@@ -513,10 +513,48 @@ export type Message = Tables<'messages'>
 export type ProfileAnalytics = Tables<'profile_analytics'>
 
 export type UserRole = User['role']
-export type ProjectStatus = Project['status']
+export type ProjectStatus = 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
 export type DifficultyLevel = Project['difficulty_level']
 export type ApplicationType = Project['application_type']
 export type ApplicationStatus = Application['status']
+
+// Add OrganizationStatus type
+export type OrganizationStatus = 'pending' | 'approved' | 'rejected' | 'blocked';
+
+// Extend Profile type
+export interface Profile {
+    id: string
+    email: string
+    role: 'developer' | 'organization' | 'admin'
+    first_name: string | null
+    last_name: string | null
+    organization_name: string | null
+    bio: string | null
+    skills: string[] | null
+    location: string | null
+    website: string | null
+    linkedin: string | null
+    github: string | null
+    portfolio: string | null
+    avatar_url: string | null
+    is_public: boolean | null
+    share_token: string | null
+    profile_views: number | null
+    is_admin: boolean | null
+    /**
+     * @deprecated Use organization_status instead
+     */
+    organization_verified: boolean | null
+    organization_verified_at: string | null
+    organization_verified_by: string | null
+    organization_rejection_reason: string | null
+    onboarding_complete: boolean | null
+    created_at: string
+    updated_at: string
+    // New moderation fields
+    organization_status?: OrganizationStatus // 'pending', 'approved', 'rejected', 'blocked'
+    can_resubmit?: boolean
+}
 
 // Search related types
 export interface SearchHistory {

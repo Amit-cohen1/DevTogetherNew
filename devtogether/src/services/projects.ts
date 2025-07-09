@@ -1,5 +1,5 @@
 import { supabase } from '../utils/supabase'
-import { Project, Database } from '../types/database'
+import { Project, Database, ProjectStatus } from '../types/database'
 import type { TeamMember, ProjectWithTeamMembers } from '../types/database'
 import { toastService } from './toastService';
 
@@ -38,6 +38,7 @@ export const projectService = {
         organization:profiles!projects_organization_id_fkey(*)
       `)
             .order('created_at', { ascending: false })
+            .neq('status', 'rejected') // Exclude rejected projects for public/developer views
 
         // Apply filters
         if (filters?.status) {
@@ -107,6 +108,7 @@ export const projectService = {
         )
       `)
             .order('created_at', { ascending: false })
+            .neq('status', 'rejected') // Exclude rejected projects for public/developer views
 
         // Apply filters
         if (filters?.status) {
@@ -373,5 +375,45 @@ export const projectService = {
     // Get all projects for an organization with team and org info (for management page)
     async getOrganizationProjectsWithTeamMembers(organizationId: string): Promise<ProjectWithTeamMembers[]> {
         return this.getProjectsWithTeamMembers({ organization_id: organizationId })
+    },
+
+    async approveProject(projectId: string, adminId: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('projects')
+            .update({
+                status: 'open',
+                rejection_reason: null,
+                can_resubmit: true,
+                approved_by: adminId,
+                approved_at: new Date().toISOString(),
+            })
+            .eq('id', projectId);
+        return !error;
+    },
+
+    async rejectProject(projectId: string, adminId: string, reason: string, canResubmit = true): Promise<boolean> {
+        const { error } = await supabase
+            .from('projects')
+            .update({
+                status: 'rejected',
+                rejection_reason: reason,
+                can_resubmit: canResubmit,
+                approved_by: adminId,
+                approved_at: new Date().toISOString(),
+            })
+            .eq('id', projectId);
+        return !error;
+    },
+
+    async resubmitProject(projectId: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('projects')
+            .update({
+                status: 'pending',
+                rejection_reason: null,
+                can_resubmit: true,
+            })
+            .eq('id', projectId);
+        return !error;
     }
 } 

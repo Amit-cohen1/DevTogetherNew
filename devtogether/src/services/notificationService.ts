@@ -488,6 +488,16 @@ class NotificationService {
         
         await Promise.all(promises);
     }
+
+    async notifyProjectRejected(orgId: string, projectId: string, reason: string) {
+      await this.createNotification({
+        user_id: orgId,
+        type: 'moderation',
+        title: 'Project Rejected',
+        message: `Your project was rejected by an admin. Reason: ${reason}`,
+        data: { projectId, reason },
+      });
+    }
 }
 
 export const notificationService = new NotificationService(); 

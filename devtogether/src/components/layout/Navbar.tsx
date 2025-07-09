@@ -19,6 +19,7 @@ import {
     Plus,
     Shield
 } from 'lucide-react'
+import type { Profile } from '../../types/database';
 
 export const Navbar: React.FC = () => {
     const { user, profile, signOut, isDeveloper, isOrganization, isAdmin } = useAuth()
@@ -96,6 +97,10 @@ export const Navbar: React.FC = () => {
     ]
 
     const navItems = isDeveloper ? developerNavItems : organizationNavItems
+
+    // Hide org-only features for rejected/blocked orgs
+    const orgProfile = profile as Profile | null;
+    const isOrgRejectedOrBlocked = orgProfile?.role === 'organization' && (orgProfile.organization_status === 'rejected' || orgProfile.organization_status === 'blocked');
 
     // Public navbar for non-authenticated users
     if (!user || !profile) {
@@ -231,7 +236,7 @@ export const Navbar: React.FC = () => {
                     {/* Right side - Actions and Menus */}
                     <div className="flex items-center space-x-2">
                         {/* Create Project Button for Organizations */}
-                        {isOrganization && profile.organization_verified && (
+                        {isOrganization && orgProfile?.organization_status === 'approved' && (
                             <Link to="/projects/create" className="hidden sm:block">
                                 <Button size="sm" className="flex items-center gap-2 px-4 py-2 h-10">
                                     <Plus className="w-4 h-4" />
@@ -241,7 +246,7 @@ export const Navbar: React.FC = () => {
                         )}
 
                         {/* Mobile Create Project Button - Icon only */}
-                        {isOrganization && profile.organization_verified && (
+                        {isOrganization && orgProfile?.organization_status === 'approved' && (
                             <Link to="/projects/create" className="sm:hidden">
                                 <Button size="sm" className="p-2 h-10 w-10 flex items-center justify-center">
                                     <Plus className="w-5 h-5" />
@@ -399,7 +404,7 @@ export const Navbar: React.FC = () => {
                         </div>
 
                         {/* Create Project Button for Organizations */}
-                        {isOrganization && profile.organization_verified && (
+                        {isOrganization && orgProfile?.organization_status === 'approved' && (
                             <div className="pt-2 border-t border-gray-200">
                                 <Link to="/projects/create" className="block">
                                     <Button className="w-full h-12 flex items-center justify-center gap-3 text-base font-medium">

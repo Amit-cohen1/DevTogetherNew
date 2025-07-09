@@ -15,10 +15,18 @@ import {
   AlertTriangle,
   Eye
 } from 'lucide-react'
+import type { Profile } from '../../types/database';
 
 interface OrganizationManagementProps {}
 
 type FilterStatus = 'all' | 'pending' | 'verified' | 'rejected'
+
+// If PendingOrganization already exists, extend it with moderation fields:
+// type PendingOrganization = Profile & {
+//   organization_status?: 'pending' | 'approved' | 'rejected' | 'blocked';
+//   can_resubmit?: boolean;
+//   organization_rejection_reason?: string | null;
+// };
 
 const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   const { profile } = useAuth()
@@ -38,11 +46,11 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
     // Apply status filter
     if (filterStatus === 'pending') {
-      filtered = filtered.filter(org => !org.organization_verified && !org.organization_rejection_reason)
+      filtered = filtered.filter(org => (org as Profile).organization_status === 'pending')
     } else if (filterStatus === 'verified') {
-      filtered = filtered.filter(org => org.organization_verified)
+      filtered = filtered.filter(org => (org as Profile).organization_status === 'approved')
     } else if (filterStatus === 'rejected') {
-      filtered = filtered.filter(org => org.organization_rejection_reason)
+      filtered = filtered.filter(org => (org as Profile).organization_status === 'rejected')
     }
 
     // Apply search filter
@@ -115,14 +123,14 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   }
 
   const getStatusDisplay = (org: PendingOrganization) => {
-    if (org.organization_verified) {
+    if (((org as Profile).organization_status === 'approved')) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
           <CheckCircle className="w-3 h-3 mr-1" />
           Verified
         </span>
       )
-    } else if (org.organization_rejection_reason) {
+    } else if (((org as Profile).organization_status === 'rejected')) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
           <XCircle className="w-3 h-3 mr-1" />
@@ -142,9 +150,9 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   const getFilterCounts = () => {
     return {
       all: organizations.length,
-      pending: organizations.filter(org => !org.organization_verified && !org.organization_rejection_reason).length,
-      verified: organizations.filter(org => org.organization_verified).length,
-      rejected: organizations.filter(org => org.organization_rejection_reason).length
+      pending: organizations.filter(org => (org as Profile).organization_status === 'pending').length,
+      verified: organizations.filter(org => (org as Profile).organization_status === 'approved').length,
+      rejected: organizations.filter(org => (org as Profile).organization_status === 'rejected').length
     }
   }
 
@@ -341,7 +349,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                       View Details
                     </Button>
 
-                    {!org.organization_verified && !org.organization_rejection_reason && (
+                    {((org as Profile).organization_status === 'pending') && (
                       <>
                         <Button
                           onClick={() => handleApprove(org.id)}
@@ -458,7 +466,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-                {!selectedOrganization.organization_verified && !selectedOrganization.organization_rejection_reason && (
+                {((selectedOrganization as Profile).organization_status === 'pending') && (
                   <>
                     <Button
                       onClick={() => handleApprove(selectedOrganization.id)}
