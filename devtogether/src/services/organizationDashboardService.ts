@@ -81,7 +81,8 @@ class OrganizationDashboardService {
             const { data: projects, error: projectsError } = await supabase
                 .from('projects')
                 .select('id, status')
-                .eq('organization_id', organizationId);
+                .eq('organization_id', organizationId)
+                .eq('blocked', false);
 
             if (projectsError) throw projectsError;
 
@@ -91,7 +92,8 @@ class OrganizationDashboardService {
             const { data: applications, error: applicationsError } = await supabase
                 .from('applications')
                 .select('id, status, created_at, updated_at, project_id')
-                .in('project_id', projectIds);
+                .in('project_id', projectIds)
+                .eq('status', 'accepted');
 
             if (applicationsError) throw applicationsError;
 
@@ -162,6 +164,7 @@ class OrganizationDashboardService {
                     )
                 `)
                 .eq('organization_id', organizationId)
+                .eq('blocked', false)
                 .order('created_at', { ascending: false })
                 .limit(limit);
 
@@ -258,8 +261,7 @@ class OrganizationDashboardService {
                     )
                 `)
                 .in('project_id', projectIds)
-                .order('created_at', { ascending: false })
-                .limit(limit);
+                .eq('status', 'accepted');
 
             if (applicationsError) throw applicationsError;
 
@@ -439,6 +441,17 @@ class OrganizationDashboardService {
         }, 0);
 
         return Math.round(totalResponseTime / respondedApplications.length);
+    }
+
+    async isOrganizationBlocked(orgId: string): Promise<boolean> {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('organization_status, blocked, blocked_reason')
+            .eq('id', orgId)
+            .eq('role', 'organization')
+            .single();
+        if (error) throw error;
+        return data?.organization_status === 'blocked' || !!data?.blocked;
     }
 }
 

@@ -17,6 +17,7 @@ import {
   Eye,
   Mail
 } from 'lucide-react'
+import AdminTabHeader from './AdminTabHeader';
 
 interface PartnerApplicationManagementProps {}
 
@@ -158,6 +159,17 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
 
   const filterCounts = getFilterCounts()
 
+  const statArray = [
+    { label: 'All', value: filterCounts.all, color: 'bg-blue-50' },
+    { label: 'Pending', value: filterCounts.pending, color: 'bg-yellow-50' },
+    { label: 'Approved', value: filterCounts.approved, color: 'bg-green-50' },
+    { label: 'Rejected', value: filterCounts.rejected, color: 'bg-red-50' },
+  ];
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -200,33 +212,13 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Partner Application Management</h2>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            Review and manage partnership applications from organizations
-          </p>
-        </div>
-        <Button onClick={loadPartnerApplications} variant="secondary" className="w-full sm:w-auto">
-          Refresh
-        </Button>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search applications..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-          />
-        </div>
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-gray-400" />
+      <AdminTabHeader
+        title="Partner Applications"
+        searchPlaceholder="Search partner applications..."
+        onSearch={handleSearch}
+        stats={statArray}
+      >
+        <div className="flex items-center space-x-2 w-full sm:w-auto mt-2 sm:mt-0">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
@@ -238,27 +230,7 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
             <option value="rejected">Rejected ({filterCounts.rejected})</option>
           </select>
         </div>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-blue-600">{filterCounts.all}</div>
-          <div className="text-xs sm:text-sm text-blue-600">Total Applications</div>
-        </div>
-        <div className="bg-yellow-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-yellow-600">{filterCounts.pending}</div>
-          <div className="text-xs sm:text-sm text-yellow-600">Pending Review</div>
-        </div>
-        <div className="bg-green-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-green-600">{filterCounts.approved}</div>
-          <div className="text-xs sm:text-sm text-green-600">Approved</div>
-        </div>
-        <div className="bg-red-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-red-600">{filterCounts.rejected}</div>
-          <div className="text-xs sm:text-sm text-red-600">Rejected</div>
-        </div>
-      </div>
+      </AdminTabHeader>
 
       {/* Applications List */}
       <div className="bg-white rounded-lg shadow overflow-hidden">

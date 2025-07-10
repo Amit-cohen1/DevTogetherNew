@@ -91,7 +91,9 @@ export const projectService = {
           avatar_url,
           email,
           first_name,
-          last_name
+          last_name,
+          blocked,
+          organization_status
         ),
         applications(
           id,
@@ -103,12 +105,14 @@ export const projectService = {
             first_name,
             last_name,
             avatar_url,
-            email
+            email,
+            blocked
           )
         )
       `)
             .order('created_at', { ascending: false })
             .neq('status', 'rejected') // Exclude rejected projects for public/developer views
+            .eq('blocked', false); // Exclude blocked projects
 
         // Apply filters
         if (filters?.status) {
@@ -140,8 +144,14 @@ export const projectService = {
             throw new Error(error.message)
         }
 
+        // Filter out projects whose organization is blocked or has organization_status === 'blocked'
+        const projectsWithTeamMembers = (data || []).filter((project: any) => {
+            const org = project.organization;
+            return org && org.blocked !== true && org.organization_status !== 'blocked';
+        })
+
         // Transform data to include proper team member composition
-        const projectsWithTeamMembers = data?.map((project: any) => {
+        const projectsWithTeamMembersFinal = projectsWithTeamMembers.map((project: any) => {
             console.log(`🏗️ Processing project: ${project.title}`)
             console.log(`   Organization:`, project.organization)
             console.log(`   Applications:`, project.applications)
@@ -225,9 +235,9 @@ export const projectService = {
             return result
         }) || []
 
-        console.log('✅ ProjectService.getProjectsWithTeamMembers completed, returning', projectsWithTeamMembers.length, 'projects')
+        console.log('✅ ProjectService.getProjectsWithTeamMembers completed, returning', projectsWithTeamMembersFinal.length, 'projects')
 
-        return projectsWithTeamMembers
+        return projectsWithTeamMembersFinal
     },
 
     // Get a single project by ID

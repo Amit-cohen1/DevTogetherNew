@@ -105,7 +105,7 @@ class DashboardService {
             if (activeError) throw activeError;
 
             const activeProjects = activeProjectsData?.filter(
-                (app: any) => app.projects && app.projects.status === 'active'
+                (app: any) => app.projects && (app.projects.status === 'open' || app.projects.status === 'in_progress')
             ).length || 0;
 
             const completedProjects = activeProjectsData?.filter(
@@ -158,6 +158,8 @@ class DashboardService {
                 (data || []).map(async (app: any) => {
                     const project = app.projects;
                     if (!project) return null;
+                    // Only include if project.status is 'open' or 'in_progress'
+                    if (!(project.status === 'open' || project.status === 'in_progress')) return null;
 
                     // Get organization details
                     let orgData = null;
@@ -166,6 +168,7 @@ class DashboardService {
                             .from('profiles')
                             .select('id, first_name, last_name, organization_name, avatar_url')
                             .eq('id', project.organization_id)
+                            .eq('blocked', false)
                             .single();
                         orgData = org ? {
                             ...org,
@@ -194,7 +197,7 @@ class DashboardService {
                         `)
                         .eq('project_id', project.id)
                         .eq('status', 'accepted')
-                        .neq('developer_id', userId); // Exclude current user
+                        .neq('developer_id', userId);
 
                     if (otherMembers) {
                         otherMembers.forEach((member: any) => {
@@ -214,6 +217,7 @@ class DashboardService {
                         .from('profiles')
                         .select('id, first_name, last_name, avatar_url')
                         .eq('id', userId)
+                        .eq('blocked', false)
                         .single();
 
                     if (currentUser) {
@@ -291,6 +295,7 @@ class DashboardService {
                             .from('profiles')
                             .select('first_name, last_name, organization_name')
                             .eq('id', app.projects.organization_id)
+                            .eq('blocked', false)
                             .single();
 
                         return {
@@ -389,6 +394,7 @@ class DashboardService {
                 .from('profiles')
                 .select('skills')
                 .eq('id', userId)
+                .eq('blocked', false)
                 .single();
 
             if (profileError) throw profileError;
@@ -409,7 +415,8 @@ class DashboardService {
                 .select(`
           *
         `)
-                .eq('status', 'open');
+                .eq('status', 'open')
+                .eq('blocked', false);
 
             // Only add the filter if there are applied project IDs
             if (appliedProjectIds.length > 0) {
@@ -433,6 +440,7 @@ class DashboardService {
                             .from('profiles')
                             .select('id, first_name, last_name, organization_name, avatar_url')
                             .eq('id', project.organization_id)
+                            .eq('blocked', false)
                             .single();
                         orgData = org ? {
                             ...org,
@@ -824,6 +832,17 @@ class DashboardService {
             console.error('Error fetching recent activity:', error);
             throw error;
         }
+    }
+
+    async isDeveloperBlocked(userId: string): Promise<boolean> {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('blocked, blocked_reason')
+            .eq('id', userId)
+            .eq('role', 'developer')
+            .single();
+        if (error) throw error;
+        return !!data?.blocked;
     }
 
     private formatActivityTime(dateString: string): string {

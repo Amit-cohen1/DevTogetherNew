@@ -4,7 +4,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../ui/Button'
 import OrganizationManagement from './OrganizationManagement'
 import PartnerApplicationManagement from './PartnerApplicationManagement'
-import ProjectApprovalManagement from './ProjectApprovalManagement'
+import ProjectsManagement from './ProjectsManagement';
+import DeveloperManagement from './DeveloperManagement';
 import { 
   Users, 
   Building, 
@@ -25,7 +26,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'partners' | 'projects'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'partners' | 'projects' | 'developers'>('overview');
 
   useEffect(() => {
     loadAdminStats()
@@ -99,11 +100,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       {/* Mobile-Responsive Tab Navigation */}
       <div className="mb-8">
         <div className="border-b border-gray-200">
-          <div className="overflow-x-auto">
-            <nav className="-mb-px flex space-x-2 sm:space-x-8 min-w-max px-2 sm:px-0">
+          <div className="overflow-x-auto overflow-y-hidden scrollbar-hide">
+            <nav className="-mb-px flex space-x-2 sm:space-x-8 min-w-max px-2 sm:px-0 whitespace-nowrap">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
                   activeTab === 'overview'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -113,7 +114,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </button>
               <button
                 onClick={() => setActiveTab('organizations')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
                   activeTab === 'organizations'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -123,7 +124,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </button>
               <button
                 onClick={() => setActiveTab('partners')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
                   activeTab === 'partners'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -133,149 +134,71 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </button>
               <button
                 onClick={() => setActiveTab('projects')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
                   activeTab === 'projects'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Project Approvals
+                Projects
+              </button>
+              <button
+                onClick={() => setActiveTab('developers')}
+                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
+                  activeTab === 'developers'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Developers
               </button>
             </nav>
           </div>
         </div>
       </div>
 
-      {/* Mobile-Responsive Statistics Cards - Only in Overview */}
+      {/* Modern Overview Tab */}
       {activeTab === 'overview' && stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
-          {/* Total Developers */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Total Developers</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.totalDevelopers.toLocaleString()}</dd>
-                </dl>
-              </div>
+        <>
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+            <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center min-h-[90px]">
+              <Users className="h-5 w-5 text-blue-600 mb-1" />
+              <div className="text-xs font-medium text-gray-500">Total Developers</div>
+              <div className="text-lg font-bold text-gray-900">{stats.totalDevelopers}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center min-h-[90px]">
+              <FileText className="h-5 w-5 text-green-600 mb-1" />
+              <div className="text-xs font-medium text-gray-500">Total Projects</div>
+              <div className="text-lg font-bold text-gray-900">{stats.totalProjects}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center min-h-[90px]">
+              <Building className="h-5 w-5 text-purple-600 mb-1" />
+              <div className="text-xs font-medium text-gray-500">Total Organizations</div>
+              <div className="text-lg font-bold text-gray-900">{stats.totalOrganizations}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center min-h-[90px]">
+              <UserCheck className="h-5 w-5 text-pink-600 mb-1" />
+              <div className="text-xs font-medium text-gray-500">Partner Applications</div>
+              <div className="text-lg font-bold text-gray-900">{stats.totalPartnerApplications}</div>
+            </div>
+            <div className="bg-yellow-100 border border-yellow-300 shadow-lg rounded-xl p-4 flex flex-col items-center justify-center min-h-[90px] col-span-2 md:col-span-1">
+              <Clock className="h-5 w-5 text-yellow-600 mb-1 animate-pulse" />
+              <div className="text-xs font-medium text-yellow-700">Pending Projects</div>
+              <div className="text-lg font-bold text-yellow-800">{stats.pendingProjects}</div>
+            </div>
+            <div className="bg-yellow-100 border border-yellow-300 shadow-lg rounded-xl p-4 flex flex-col items-center justify-center min-h-[90px] col-span-2 md:col-span-1">
+              <Clock className="h-5 w-5 text-yellow-600 mb-1 animate-pulse" />
+              <div className="text-xs font-medium text-yellow-700">Pending Organizations</div>
+              <div className="text-lg font-bold text-yellow-800">{stats.pendingOrganizations}</div>
+            </div>
+            <div className="bg-yellow-100 border border-yellow-300 shadow-lg rounded-xl p-4 flex flex-col items-center justify-center min-h-[90px] col-span-2 md:col-span-1">
+              <Clock className="h-5 w-5 text-yellow-600 mb-1 animate-pulse" />
+              <div className="text-xs font-medium text-yellow-700">Pending Partner Apps</div>
+              <div className="text-lg font-bold text-yellow-800">{stats.pendingPartnerApplications}</div>
             </div>
           </div>
-          {/* Total Projects */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Total Projects</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.totalProjects.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          {/* Total Organizations */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Building className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Total Organizations</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.totalOrganizations.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          {/* Verified Organizations */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Verified Organizations</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.verifiedOrganizations.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          {/* Pending Organizations */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Pending Organizations</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.pendingOrganizations.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          {/* Rejected Organizations */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Rejected Organizations</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.rejectedOrganizations.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          {/* Partner Applications */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <UserCheck className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Partner Applications</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.totalPartnerApplications.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          {/* Pending Partner Applications */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Pending Partner Apps</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.pendingPartnerApplications.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          {/* Pending Projects */}
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col justify-between min-h-[90px] sm:min-h-[110px]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-              </div>
-              <div className="ml-2 sm:ml-3 w-0 flex-1">
-                <dl>
-                  <dt className="text-xs font-medium text-gray-500 truncate">Pending Projects</dt>
-                  <dd className="text-sm sm:text-lg font-bold text-gray-900">{stats.pendingProjects.toLocaleString()}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Tab Content */}
@@ -347,7 +270,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       {activeTab === 'partners' && <PartnerApplicationManagement />}
 
       {/* Project Approval Management Tab */}
-      {activeTab === 'projects' && <ProjectApprovalManagement />}
+      {activeTab === 'projects' && (
+        <ProjectsManagement />
+      )}
+      {activeTab === 'developers' && <DeveloperManagement />}
     </div>
   )
 }

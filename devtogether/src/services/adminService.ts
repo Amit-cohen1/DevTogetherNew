@@ -157,13 +157,17 @@ class AdminService {
   }
 
   // Reject organization
-  async rejectOrganization(organizationId: string, adminId: string, reason: string): Promise<void> {
+  async rejectOrganization(organizationId: string, adminId: string, reason: string, canResubmit: boolean): Promise<void> {
     try {
-      const { error } = await supabase.rpc('reject_organization', {
-        p_organization_id: organizationId,
-        p_admin_id: adminId,
-        p_reason: reason,
-      })
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          organization_status: 'rejected',
+          organization_rejection_reason: reason,
+          can_resubmit: canResubmit,
+          organization_verified: false,
+        })
+        .eq('id', organizationId);
 
       if (error) throw error
       toastService.info('Organization rejected.');
@@ -284,6 +288,85 @@ class AdminService {
       console.error('Error revoking admin access:', error)
       throw error
     }
+  }
+
+  // Block developer
+  async blockDeveloper(userId: string, reason: string): Promise<void> {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ blocked: true, blocked_reason: reason })
+      .eq('id', userId)
+      .eq('role', 'developer');
+    if (error) throw error;
+    await toastService.info('Developer blocked.');
+    // Optionally: send notification to user
+  }
+
+  // Unblock developer
+  async unblockDeveloper(userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ blocked: false, blocked_reason: null })
+      .eq('id', userId)
+      .eq('role', 'developer');
+    if (error) throw error;
+    await toastService.info('Developer unblocked.');
+    // Optionally: send notification to user
+  }
+
+  // Block organization
+  async blockOrganization(orgId: string, reason: string): Promise<void> {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ organization_status: 'blocked', blocked_reason: reason })
+      .eq('id', orgId)
+      .eq('role', 'organization');
+    if (error) throw error;
+    await toastService.info('Organization blocked.');
+    // Optionally: send notification to org
+  }
+
+  // Unblock organization
+  async unblockOrganization(orgId: string): Promise<void> {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ organization_status: 'approved', blocked_reason: null })
+      .eq('id', orgId)
+      .eq('role', 'organization');
+    if (error) throw error;
+    await toastService.info('Organization unblocked.');
+    // Optionally: send notification to org
+  }
+
+  // Block project
+  async blockProject(projectId: string, reason: string): Promise<void> {
+    const { error } = await supabase
+      .from('projects')
+      .update({ blocked: true, blocked_reason: reason })
+      .eq('id', projectId);
+    if (error) throw error;
+    await toastService.info('Project blocked.');
+    // Optionally: send notification to org/team
+  }
+
+  // Unblock project
+  async unblockProject(projectId: string): Promise<void> {
+    const { error } = await supabase
+      .from('projects')
+      .update({ blocked: false, blocked_reason: null })
+      .eq('id', projectId);
+    if (error) throw error;
+    await toastService.info('Project unblocked.');
+    // Optionally: send notification to org/team
+  }
+
+  // Get all developers (excluding admins)
+  async getAllDevelopers() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, blocked, blocked_reason, role')
+      .eq('role', 'developer');
+    return { data, error };
   }
 }
 
