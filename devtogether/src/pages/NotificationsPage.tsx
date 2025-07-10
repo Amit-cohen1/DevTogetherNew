@@ -16,7 +16,10 @@ import {
     Trash2,
     ExternalLink,
     RefreshCw,
-    Eye
+    Eye,
+    Shield,
+    MessageCircle,
+    Activity
 } from 'lucide-react'
 import type { Notification } from '../services/notificationService'
 
@@ -27,13 +30,16 @@ interface FilterOptions {
 }
 
 interface NotificationStats {
-    total: number
-    unread: number
-    application: number
-    project: number
-    team: number
-    achievement: number
-    system: number
+    total: number;
+    unread: number;
+    application: number;
+    project: number;
+    team: number;
+    achievement: number;
+    system: number;
+    moderation: number;
+    chat: number;
+    status_change: number;
 }
 
 export default function NotificationsPage() {
@@ -56,7 +62,10 @@ export default function NotificationsPage() {
         project: 0,
         team: 0,
         achievement: 0,
-        system: 0
+        system: 0,
+        moderation: 0,
+        chat: 0,
+        status_change: 0
     })
 
     // Filter state
@@ -75,10 +84,13 @@ export default function NotificationsPage() {
             project: notifications.filter(n => n.type === 'project').length,
             team: notifications.filter(n => n.type === 'team').length,
             achievement: notifications.filter(n => n.type === 'achievement').length,
-            system: notifications.filter(n => n.type === 'system').length
-        }
-        setStats(newStats)
-    }, [notifications])
+            system: notifications.filter(n => n.type === 'system').length,
+            moderation: notifications.filter(n => n.type === 'moderation').length,
+            chat: notifications.filter(n => n.type === 'chat').length,
+            status_change: notifications.filter(n => n.type === 'status_change').length
+        };
+        setStats(newStats);
+    }, [notifications]);
 
     // Apply filters
     useEffect(() => {
@@ -120,19 +132,25 @@ export default function NotificationsPage() {
     const getNotificationIcon = (type: string) => {
         switch (type) {
             case 'application':
-                return <Briefcase className="w-5 h-5 text-blue-600" />
+                return <Briefcase className="w-5 h-5 text-blue-600" />;
             case 'project':
-                return <AlertCircle className="w-5 h-5 text-green-600" />
+                return <AlertCircle className="w-5 h-5 text-green-600" />;
             case 'team':
-                return <Users className="w-5 h-5 text-purple-600" />
+                return <Users className="w-5 h-5 text-purple-600" />;
             case 'achievement':
-                return <Trophy className="w-5 h-5 text-yellow-600" />
+                return <Trophy className="w-5 h-5 text-yellow-600" />;
             case 'system':
-                return <AlertCircle className="w-5 h-5 text-gray-600" />
+                return <AlertCircle className="w-5 h-5 text-gray-600" />;
+            case 'moderation':
+                return <Shield className="w-5 h-5 text-red-600" />;
+            case 'chat':
+                return <MessageCircle className="w-5 h-5 text-indigo-600" />;
+            case 'status_change':
+                return <Activity className="w-5 h-5 text-orange-600" />;
             default:
-                return <Bell className="w-5 h-5 text-gray-600" />
+                return <Bell className="w-5 h-5 text-gray-600" />;
         }
-    }
+    };
 
     const getNotificationLink = (notification: Notification): string => {
         const data = notification.data || {}
@@ -245,7 +263,7 @@ export default function NotificationsPage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-4 mb-8">
                     <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
                         <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
                         <div className="text-sm text-gray-600">Total</div>
@@ -273,6 +291,18 @@ export default function NotificationsPage() {
                     <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
                         <div className="text-2xl font-bold text-gray-600">{stats.system}</div>
                         <div className="text-sm text-gray-600">System</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-red-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-red-600">{stats.moderation}</div>
+                        <div className="text-sm text-red-600">Admin</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-indigo-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-indigo-600">{stats.chat}</div>
+                        <div className="text-sm text-indigo-600">Chat</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-orange-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-orange-600">{stats.status_change}</div>
+                        <div className="text-sm text-orange-600">Status Change</div>
                     </div>
                 </div>
 
@@ -304,6 +334,9 @@ export default function NotificationsPage() {
                             <option value="team">Team</option>
                             <option value="achievement">Achievements</option>
                             <option value="system">System</option>
+                            <option value="moderation">Admin</option>
+                            <option value="chat">Chat</option>
+                            <option value="status_change">Status Change</option>
                         </Select>
 
                         {/* Status Filter */}

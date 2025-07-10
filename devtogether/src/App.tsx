@@ -280,7 +280,7 @@ function App() {
                 <Route
                   path="/notifications"
                   element={
-                    <ProtectedRoute requiredRole="organization">
+                    <ProtectedRoute>
                       <OrgApprovalGuard>
                         <NotificationsPage />
                       </OrgApprovalGuard>

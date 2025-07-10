@@ -38,12 +38,15 @@ const DeveloperManagement: React.FC = () => {
     if (!selectedDeveloper || !blockReason.trim()) return;
     try {
       setIsProcessing(true);
+      console.log('Attempting to block developer:', selectedDeveloper, 'Reason:', blockReason);
       await adminService.blockDeveloper(selectedDeveloper.id, blockReason);
+      console.log('Block developer call succeeded');
       await loadDevelopers();
       setShowBlockModal(false);
       setSelectedDeveloper(null);
       setBlockReason('');
     } catch (err) {
+      console.error('Error blocking developer:', err);
       setError('Failed to block developer');
     } finally {
       setIsProcessing(false);
