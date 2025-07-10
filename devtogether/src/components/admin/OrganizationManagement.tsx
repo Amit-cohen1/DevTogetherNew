@@ -13,9 +13,14 @@ import {
   Calendar,
   Building,
   AlertTriangle,
-  Eye
+  Eye,
+  User,
+  Folder
 } from 'lucide-react'
 import type { Profile } from '../../types/database';
+import { organizationDashboardService } from '../../services/organizationDashboardService';
+import { projectService } from '../../services/projects';
+import AdminTabHeader from './AdminTabHeader';
 
 interface OrganizationManagementProps {}
 
@@ -40,6 +45,12 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blockReason, setBlockReason] = useState('');
+  const [orgStats, setOrgStats] = useState<Record<string, any>>({});
+  const [orgTeam, setOrgTeam] = useState<Record<string, any>>({});
+  const [orgProjects, setOrgProjects] = useState<Record<string, any>>({});
+  const [canResubmit, setCanResubmit] = useState(true);
 
   const filterAndSearchOrganizations = useCallback(() => {
     let filtered = organizations.filter(org => org.onboarding_complete === true);
@@ -106,21 +117,66 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
   const handleReject = async () => {
     if (!profile?.id || !selectedOrganization || !rejectReason.trim()) return
-
+    setActionLoading(selectedOrganization.id)
+    setError(null)
     try {
-      setActionLoading(selectedOrganization.id)
-      await adminService.rejectOrganization(selectedOrganization.id, profile.id, rejectReason)
-      await loadOrganizations()
+      await adminService.rejectOrganization(selectedOrganization.id, profile.id, rejectReason, canResubmit)
       setShowRejectModal(false)
-      setSelectedOrganization(null)
       setRejectReason('')
+      setCanResubmit(true)
+      await loadOrganizations()
     } catch (err) {
       console.error('Error rejecting organization:', err)
       setError('Failed to reject organization')
-    } finally {
-      setActionLoading(null)
     }
+    setActionLoading(null)
   }
+
+  const handleBlock = async () => {
+    if (!profile?.id || !selectedOrganization || !blockReason.trim()) return;
+    try {
+      setActionLoading(selectedOrganization.id);
+      await adminService.blockOrganization(selectedOrganization.id, blockReason);
+      await loadOrganizations();
+      setShowBlockModal(false);
+      setSelectedOrganization(null);
+      setBlockReason('');
+    } catch (err) {
+      setError('Failed to block organization');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnblock = async (organizationId: string) => {
+    if (!profile?.id) return;
+    try {
+      setActionLoading(organizationId);
+      await adminService.unblockOrganization(organizationId);
+      await loadOrganizations();
+    } catch (err) {
+      setError('Failed to unblock organization');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const loadOrgStats = async (orgId: string) => {
+    const [stats, team, projects] = await Promise.all([
+      organizationDashboardService.getOrganizationStats(orgId),
+      organizationDashboardService.getTeamAnalytics(orgId),
+      projectService.getOrganizationProjectsWithTeamMembers(orgId)
+    ]);
+    setOrgStats((prev) => ({ ...prev, [orgId]: stats }));
+    setOrgTeam((prev) => ({ ...prev, [orgId]: team }));
+    setOrgProjects((prev) => ({ ...prev, [orgId]: projects }));
+  };
+
+  useEffect(() => {
+    if (selectedOrganization) {
+      loadOrgStats(selectedOrganization.id);
+    }
+  }, [selectedOrganization]);
 
   const getStatusDisplay = (org: PendingOrganization) => {
     if (((org as Profile).organization_status === 'approved')) {
@@ -157,6 +213,17 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   }
 
   const filterCounts = getFilterCounts()
+
+  const statArray = [
+    { label: 'All', value: filterCounts.all, color: 'bg-blue-50' },
+    { label: 'Pending', value: filterCounts.pending, color: 'bg-yellow-50' },
+    { label: 'Verified', value: filterCounts.verified, color: 'bg-green-50' },
+    { label: 'Rejected', value: filterCounts.rejected, color: 'bg-red-50' },
+  ];
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
 
   if (loading) {
     return (
@@ -200,33 +267,13 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Organization Management</h2>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            Review and manage organization verification requests
-          </p>
-        </div>
-        <Button onClick={loadOrganizations} variant="secondary" className="w-full sm:w-auto">
-          Refresh
-        </Button>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search organizations..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-          />
-        </div>
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-gray-400" />
+      <AdminTabHeader
+        title="Organizations"
+        searchPlaceholder="Search organizations..."
+        onSearch={handleSearch}
+        stats={statArray}
+      >
+        <div className="flex items-center space-x-2 w-full sm:w-auto mt-2 sm:mt-0">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
@@ -238,27 +285,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
             <option value="rejected">Rejected ({filterCounts.rejected})</option>
           </select>
         </div>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-blue-600">{filterCounts.all}</div>
-          <div className="text-xs sm:text-sm text-blue-600">Total Organizations</div>
-        </div>
-        <div className="bg-yellow-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-yellow-600">{filterCounts.pending}</div>
-          <div className="text-xs sm:text-sm text-yellow-600">Pending Review</div>
-        </div>
-        <div className="bg-green-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-green-600">{filterCounts.verified}</div>
-          <div className="text-xs sm:text-sm text-green-600">Verified</div>
-        </div>
-        <div className="bg-red-50 rounded-lg p-3 sm:p-4">
-          <div className="text-lg sm:text-2xl font-bold text-red-600">{filterCounts.rejected}</div>
-          <div className="text-xs sm:text-sm text-red-600">Rejected</div>
-        </div>
-      </div>
+      </AdminTabHeader>
 
       {/* Organization List */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -336,6 +363,13 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                         </p>
                       </div>
                     )}
+                    {/* Member and Project Counts */}
+                    {orgStats[org.id] && (
+                      <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                        <span><User className="inline w-4 h-4 mr-1" />{orgStats[org.id].totalTeamMembers} Members</span>
+                        <span><Folder className="inline w-4 h-4 mr-1" />{orgStats[org.id].totalProjects} Projects</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-row sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-6 w-full sm:w-auto">
@@ -384,109 +418,227 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
       {/* Organization Details Modal */}
       {selectedOrganization && !showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
-            <div className="p-4 sm:p-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0 shadow-2xl border border-gray-100 p-2 sm:p-4 relative">
+            {/* Modal Header */}
+            <button
+              onClick={() => setSelectedOrganization(null)}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 focus:bg-gray-200 text-gray-500 hover:text-gray-700 focus:text-gray-700 shadow-sm transition z-10"
+              aria-label="Close"
+              style={{ fontSize: 24 }}
+            >
+              ×
+            </button>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 border-b border-gray-100 bg-gray-50 rounded-t-lg gap-2 sm:gap-0">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                     {selectedOrganization.organization_name || 'Unnamed Organization'}
+                    <span>{getStatusDisplay(selectedOrganization)}</span>
                   </h3>
-                  <div className="mt-2">{getStatusDisplay(selectedOrganization)}</div>
                 </div>
-                <Button
-                  onClick={() => setSelectedOrganization(null)}
-                  variant="secondary"
-                  size="sm"
-                  className="text-lg leading-none p-1 h-8 w-8"
-                >
-                  ×
-                </Button>
+                <div className="flex gap-4 mt-2 text-xs text-gray-500 flex-wrap">
+                  <span><User className="inline w-4 h-4 mr-1" />{orgStats[selectedOrganization.id]?.totalTeamMembers ?? '-'} Members</span>
+                  <span><Folder className="inline w-4 h-4 mr-1" />{orgStats[selectedOrganization.id]?.totalProjects ?? '-'} Projects</span>
+                </div>
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <p className="text-gray-900 text-sm sm:text-base break-all">{selectedOrganization.email}</p>
-                </div>
-
-                {selectedOrganization.bio && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <p className="text-gray-900 text-sm sm:text-base">{selectedOrganization.bio}</p>
-                  </div>
-                )}
-
-                {selectedOrganization.location && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Location
-                    </label>
-                    <p className="text-gray-900 text-sm sm:text-base">{selectedOrganization.location}</p>
-                  </div>
-                )}
-
-                {selectedOrganization.website && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Website
-                    </label>
-                    <a
-                      href={selectedOrganization.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 text-sm sm:text-base break-all"
-                    >
-                      {selectedOrganization.website}
-                    </a>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Registration Date
-                  </label>
-                  <p className="text-gray-900 text-sm sm:text-base">
-                    {new Date(selectedOrganization.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-
-                {selectedOrganization.organization_rejection_reason && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Rejection Reason
-                    </label>
-                    <p className="text-red-600 text-sm sm:text-base">{selectedOrganization.organization_rejection_reason}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+              <div className="flex flex-wrap gap-2 mt-4 sm:mt-0 w-full sm:w-auto justify-end">
                 {((selectedOrganization as Profile).organization_status === 'pending') && (
                   <>
                     <Button
                       onClick={() => handleApprove(selectedOrganization.id)}
                       disabled={actionLoading === selectedOrganization.id}
-                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                      className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
+                      size="sm"
+                      title="Approve Organization"
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      {actionLoading === selectedOrganization.id ? 'Approving...' : 'Approve Organization'}
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      {actionLoading === selectedOrganization.id ? 'Approving...' : 'Approve'}
                     </Button>
                     <Button
                       onClick={() => setShowRejectModal(true)}
                       variant="secondary"
-                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto"
+                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 text-xs sm:text-sm"
+                      size="sm"
+                      title="Reject Organization"
                     >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject Organization
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Reject
                     </Button>
                   </>
                 )}
+                {((selectedOrganization as Profile).organization_status !== 'blocked') ? (
+                  <Button
+                    onClick={() => setShowBlockModal(true)}
+                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm shadow"
+                    size="sm"
+                    title="Block Organization"
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-1" />
+                    Block
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => handleUnblock(selectedOrganization.id)}
+                    className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm shadow"
+                    size="sm"
+                    title="Unblock Organization"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Unblock
+                  </Button>
+                )}
               </div>
+            </div>
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 space-y-6">
+              {/* Info Section */}
+              <div>
+                <h4 className="font-semibold mb-2 text-gray-800 flex items-center gap-2"><Building className="w-4 h-4" /> Info</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                    <p className="text-gray-900 text-sm break-all">{selectedOrganization.email}</p>
+                  </div>
+                  {selectedOrganization.website && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Website</label>
+                      <a
+                        href={selectedOrganization.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-sm break-all"
+                      >
+                        {selectedOrganization.website}
+                      </a>
+                    </div>
+                  )}
+                  {selectedOrganization.location && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
+                      <p className="text-gray-900 text-sm">{selectedOrganization.location}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Registration Date</label>
+                    <p className="text-gray-900 text-sm">{new Date(selectedOrganization.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                {selectedOrganization.bio && (
+                  <div className="mt-2">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                    <p className="text-gray-900 text-sm whitespace-pre-wrap">{selectedOrganization.bio}</p>
+                  </div>
+                )}
+                {selectedOrganization.organization_rejection_reason && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-xs sm:text-sm text-red-800 break-words">
+                      <strong>Rejection Reason:</strong> {selectedOrganization.organization_rejection_reason}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {/* Members Section */}
+              <div>
+                <h4 className="font-semibold mb-2 text-gray-800 flex items-center gap-2"><User className="w-4 h-4" /> Members</h4>
+                <div className="flex flex-wrap gap-2">
+                  {orgTeam[selectedOrganization.id]?.totalMembers === 0 && <span className="text-gray-400">No members</span>}
+                  {orgTeam[selectedOrganization.id]?.memberDistribution?.flatMap((dist: any) => dist.members).map((member: any) => (
+                    <div key={member.id} className="flex items-center gap-2 bg-gray-100 rounded px-2 py-1">
+                      {member.avatar_url && <img src={member.avatar_url} alt={member.name} className="w-6 h-6 rounded-full" />}
+                      <span>{member.name}</span>
+                      <span className="text-xs text-gray-400">({member.projectCount} projects)</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Projects Section */}
+              <div>
+                <h4 className="font-semibold mb-2 text-gray-800 flex items-center gap-2"><Folder className="w-4 h-4" /> Projects</h4>
+                <div className="flex flex-col gap-2">
+                  {orgProjects[selectedOrganization.id]?.length === 0 && <span className="text-gray-400">No projects</span>}
+                  {orgProjects[selectedOrganization.id]?.map((project: any) => {
+                    // Show status badge and member count like in project modal
+                    let badgeColor =
+                      project.status === 'open' || project.status === 'in_progress' ? 'bg-green-500' :
+                      project.status === 'pending' ? 'bg-yellow-500' :
+                      project.status === 'rejected' ? 'bg-red-500' :
+                      project.status === 'completed' ? 'bg-gray-500' :
+                      project.status === 'cancelled' ? 'bg-gray-400' : 'bg-gray-300';
+                    let badgeLabel =
+                      project.status === 'open' || project.status === 'in_progress' ? 'Active' :
+                      project.status.charAt(0).toUpperCase() + project.status.slice(1);
+                    return (
+                      <div key={project.id} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white ${badgeColor}`}>{badgeLabel}</span>
+                        <span className="font-medium">{project.title}</span>
+                        <span className="text-xs text-gray-400">{project.team_members.length} members</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Activity Section (optional) */}
+              {orgTeam[selectedOrganization.id]?.recentActivity && orgTeam[selectedOrganization.id].recentActivity.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2 text-gray-800 flex items-center gap-2"><Clock className="w-4 h-4" /> Recent Activity</h4>
+                  <ul className="text-xs text-gray-700 space-y-1">
+                    {orgTeam[selectedOrganization.id].recentActivity.map((activity: any, idx: number) => (
+                      <li key={idx}>
+                        <span className="font-medium">{activity.memberName}</span> {activity.action.replace('_', ' ')} <span className="text-gray-500">{activity.projectTitle}</span> on {new Date(activity.timestamp).toLocaleDateString()}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            {/* Modal Footer Controls (for mobile/easy access) */}
+            <div className="flex flex-wrap gap-2 justify-end p-4 border-t border-gray-100 bg-gray-50 rounded-b-lg">
+              {((selectedOrganization as Profile).organization_status === 'pending') && (
+                <>
+                  <Button
+                    onClick={() => handleApprove(selectedOrganization.id)}
+                    disabled={actionLoading === selectedOrganization.id}
+                    className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
+                    size="sm"
+                    title="Approve Organization"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    {actionLoading === selectedOrganization.id ? 'Approving...' : 'Approve'}
+                  </Button>
+                  <Button
+                    onClick={() => setShowRejectModal(true)}
+                    variant="secondary"
+                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 text-xs sm:text-sm"
+                    size="sm"
+                    title="Reject Organization"
+                  >
+                    <XCircle className="w-4 h-4 mr-1" />
+                    Reject
+                  </Button>
+                </>
+              )}
+              {((selectedOrganization as Profile).organization_status !== 'blocked') ? (
+                <Button
+                  onClick={() => setShowBlockModal(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm shadow"
+                  size="sm"
+                  title="Block Organization"
+                >
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                  Block
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleUnblock(selectedOrganization.id)}
+                  className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm shadow"
+                  size="sm"
+                  title="Unblock Organization"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Unblock
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -510,11 +662,22 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                 rows={3}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
               />
+              <div className="flex items-center mt-4">
+                <input
+                  type="checkbox"
+                  id="canResubmit"
+                  checked={canResubmit}
+                  onChange={e => setCanResubmit(e.target.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor="canResubmit" className="text-sm text-gray-700">Allow organization to resubmit after rejection</label>
+              </div>
               <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <Button
                   onClick={() => {
                     setShowRejectModal(false)
                     setRejectReason('')
+                    setCanResubmit(true)
                   }}
                   variant="secondary"
                   className="w-full sm:w-auto"
@@ -530,6 +693,36 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {selectedOrganization && orgTeam[selectedOrganization.id] && (
+        <div className="mt-6">
+          <h4 className="font-semibold mb-2">Members</h4>
+          <div className="flex flex-wrap gap-2">
+            {orgTeam[selectedOrganization.id].totalMembers === 0 && <span className="text-gray-400">No members</span>}
+            {orgTeam[selectedOrganization.id].memberDistribution?.flatMap((dist: any) => dist.members).map((member: any) => (
+              <div key={member.id} className="flex items-center gap-2 bg-gray-100 rounded px-2 py-1">
+                {member.avatar_url && <img src={member.avatar_url} alt={member.name} className="w-6 h-6 rounded-full" />}
+                <span>{member.name}</span>
+                <span className="text-xs text-gray-400">({member.projectCount} projects)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {selectedOrganization && orgProjects[selectedOrganization.id] && (
+        <div className="mt-6">
+          <h4 className="font-semibold mb-2">Projects</h4>
+          <div className="flex flex-col gap-2">
+            {orgProjects[selectedOrganization.id].length === 0 && <span className="text-gray-400">No projects</span>}
+            {orgProjects[selectedOrganization.id].map((project: any) => (
+              <div key={project.id} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
+                <span className="font-medium">{project.title}</span>
+                <span className="text-xs text-gray-500">{project.status}</span>
+                <span className="text-xs text-gray-400">{project.team_members.length} members</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

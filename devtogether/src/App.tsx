@@ -57,7 +57,7 @@ import OrganizationProjectsPage from './pages/dashboard/OrganizationProjectsPage
 import AccessibilityPage from './pages/AccessibilityPage'
 import PendingApprovalPage from './pages/PendingApprovalPage';
 import RejectedOrganizationPage from './pages/RejectedOrganizationPage';
-import BlockedOrganizationPage from './pages/BlockedOrganizationPage';
+import BlockedPage from './pages/BlockedOrganizationPage';
 import { useAuth } from './contexts/AuthContext';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -270,10 +270,8 @@ function App() {
                 <Route
                   path="/my-applications"
                   element={
-                    <ProtectedRoute requiredRole="organization">
-                      <OrgApprovalGuard>
-                        <MyApplications />
-                      </OrgApprovalGuard>
+                    <ProtectedRoute requiredRole="developer">
+                      <MyApplications />
                     </ProtectedRoute>
                   }
                 />
@@ -334,14 +332,10 @@ function App() {
                   }
                 />
 
-                {/* Blocked Organization Route */}
+                {/* Blocked User/Org Route */}
                 <Route
-                  path="/blocked-organization"
-                  element={
-                    <ProtectedRoute>
-                      <BlockedOrganizationPage />
-                    </ProtectedRoute>
-                  }
+                  path="/blocked"
+                  element={<BlockedPage />}
                 />
 
                 {/* Admin Route */}

@@ -554,6 +554,8 @@ export interface Profile {
     // New moderation fields
     organization_status?: OrganizationStatus // 'pending', 'approved', 'rejected', 'blocked'
     can_resubmit?: boolean
+    blocked?: boolean
+    blocked_reason?: string | null
 }
 
 // Search related types

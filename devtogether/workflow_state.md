@@ -1279,3 +1279,78 @@ Unapproved organizations were always redirected to the home page (/) instead of 
 - Code is clean, maintainable, and follows the single-responsibility principle for access control.
 
 ---
+
+### Phase 11: Next-Gen Admin Dashboard (Blueprint)
+
+#### Objective
+Build a robust, secure, and fully-featured Admin Dashboard for DevTogether, supporting all critical admin workflows, with full mobile and desktop support.
+
+#### Core Features
+1. **User Management**
+   - Centralized tabs for Developers, Organizations, Admins
+   - List, search, filter, and sort users by type and status
+   - View user details (profile, status, activity)
+   - Actions: Block/Unblock, Promote/Demote (to admin), Reset password, View audit log
+   - Status indicators: Active, Blocked, Pending, etc.
+   - **Mobile:** Responsive tables/cards, swipe actions, sticky action bar
+
+2. **Organization Management**
+   - List all organizations with status (pending, approved, rejected, blocked)
+   - Approve/Reject/Block/Unblock orgs
+   - View org details, projects, team members
+   - Search/filter by status, name, etc.
+   - **Mobile:** Collapsible cards, quick actions, filter drawer
+
+3. **Developer Management**
+   - List all developers with status (active, blocked, etc.)
+   - Block/Unblock, Promote to admin, View applications/projects
+   - Search/filter by skills, activity, etc.
+   - **Mobile:** Card view, swipe to block/unblock, search bar
+
+4. **Project Management**
+   - List all projects with status (pending, open, in_progress, completed, cancelled, rejected)
+   - Approve/Reject/Block/Delete projects
+   - Filter by organization, status, tech stack, etc.
+   - View project details, team, applications
+   - **Mobile:** Responsive grid/list, filter drawer, action menu
+
+5. **Partner Application Management**
+   - List, approve/reject, view details
+   - **Mobile:** Card stack, quick approve/reject
+
+6. **System Audit & Security**
+   - All admin actions are logged (who, what, when)
+   - View audit log per user/project/org
+   - **Mobile:** Timeline view, filter by action/type
+
+7. **Dashboard Overview**
+   - Accurate, real-time stats for all entities
+   - Quick links to pending actions (approvals, blocks, etc.)
+   - System health/status
+   - **Mobile:** Stat cards, quick action buttons
+
+#### UI/UX Requirements
+- **Full mobile support:** All features must be fully usable on mobile (responsive tables, cards, drawers, sticky actions)
+- **Accessible:** WCAG 2.1 AA compliance
+- **Modern, clean design:** Consistent with platform branding
+- **Performance:** Fast load, lazy loading for large lists
+- **Security:** All actions require confirmation, audit logging
+
+#### Implementation Steps
+1. Blueprint & UI/UX wireframes (desktop + mobile)
+2. User management module (dev/org/admin tabs, block/unblock, promote, audit)
+3. Project management module (list, filter, actions)
+4. Organization management module (approval, block, details)
+5. Partner application module
+6. System audit log
+7. Dashboard overview & stats
+8. Testing (unit, integration, E2E, mobile)
+9. Documentation
+
+#### Completion Criteria
+- All admin actions available via dashboard (no DB access needed)
+- Fully responsive and mobile-friendly
+- All actions logged and auditable
+- Security and accessibility best practices followed
+
+---

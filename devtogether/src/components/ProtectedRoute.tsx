@@ -39,6 +39,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         )
     }
 
+    // If user is authenticated and blocked, redirect to /blocked
+    if (isAuthenticated && profile) {
+        const userProfile = profile as import('../types/database').Profile;
+        const isBlocked =
+            (userProfile.role === 'developer' && userProfile.blocked) ||
+            (userProfile.role === 'organization' && (userProfile.organization_status === 'blocked' || userProfile.blocked));
+        if (isBlocked) {
+            return <Navigate to="/blocked" replace />;
+        }
+    }
+
     // If specific role is required, check user role
     if (requiredRole && profile) {
         const requiredRolesArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
