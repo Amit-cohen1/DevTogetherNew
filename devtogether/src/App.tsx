@@ -308,11 +308,7 @@ function App() {
                 <Route
                   path="/notifications"
                   element={
-<<<<<<< Updated upstream
-                    <ProtectedRoute>
-=======
                     <ProtectedRoute requiredRole={["organization", "admin", "developer"]}>
->>>>>>> Stashed changes
                       <OrgApprovalGuard>
                         <NotificationsPage />
                       </OrgApprovalGuard>
