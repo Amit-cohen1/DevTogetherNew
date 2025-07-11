@@ -100,8 +100,12 @@ export const OnboardingPage: React.FC = () => {
     }
 
     const handleComplete = () => {
-        const dashboardPath = (profile.role === 'developer' || profile.role === 'admin') ? '/dashboard' : '/organization/dashboard'
-        navigate(dashboardPath)
+        if (profile.role === 'organization') {
+            navigate('/pending-approval');
+        } else {
+            const dashboardPath = (profile.role === 'developer' || profile.role === 'admin') ? '/dashboard' : '/organization/dashboard';
+            navigate(dashboardPath);
+        }
     }
 
     const renderCurrentStep = () => {

@@ -78,8 +78,8 @@ export const projectService = {
         application_type?: Project['application_type']
         technology_stack?: string[]
         organization_id?: string
-    }): Promise<ProjectWithTeamMembers[]> {
-        console.log('🔍 ProjectService.getProjectsWithTeamMembers called with filters:', filters)
+    }, includeRejected: boolean = false): Promise<ProjectWithTeamMembers[]> {
+        console.log('🔍 ProjectService.getProjectsWithTeamMembers called with filters:', filters, 'includeRejected:', includeRejected)
 
         let query = supabase
             .from('projects')
@@ -111,8 +111,11 @@ export const projectService = {
         )
       `)
             .order('created_at', { ascending: false })
-            .neq('status', 'rejected') // Exclude rejected projects for public/developer views
             .eq('blocked', false); // Exclude blocked projects
+
+        if (!includeRejected) {
+            query = query.neq('status', 'rejected'); // Exclude rejected projects for public/developer views
+        }
 
         // Apply filters
         if (filters?.status) {
@@ -425,5 +428,42 @@ export const projectService = {
             })
             .eq('id', projectId);
         return !error;
-    }
+    },
+
+    async requestWorkspaceAccess(projectId: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('projects')
+            .update({ admin_workspace_access_requested: true })
+            .eq('id', projectId);
+        if (error) {
+            toastService.error('Failed to request workspace access.');
+            return false;
+        }
+        toastService.success('Workspace access request sent to organization.');
+        return true;
+    },
+    async grantWorkspaceAccess(projectId: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('projects')
+            .update({ admin_workspace_access_granted: true, admin_workspace_access_requested: false })
+            .eq('id', projectId);
+        if (error) {
+            toastService.error('Failed to grant workspace access.');
+            return false;
+        }
+        toastService.success('Admin workspace access granted.');
+        return true;
+    },
+    async denyWorkspaceAccess(projectId: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('projects')
+            .update({ admin_workspace_access_granted: false, admin_workspace_access_requested: false })
+            .eq('id', projectId);
+        if (error) {
+            toastService.error('Failed to deny workspace access.');
+            return false;
+        }
+        toastService.success('Admin workspace access denied.');
+        return true;
+    },
 } 

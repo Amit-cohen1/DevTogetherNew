@@ -4,8 +4,8 @@ import { MessageCircle, FileText, Users, Settings, ExternalLink, Calendar, Video
 interface QuickActionsProps {
     projectId: string;
     isOwner: boolean;
-    userRole: 'organization' | 'developer' | null;
-    onSectionChange?: (section: string) => void;
+    userRole: 'organization' | 'developer' | 'admin' | null;
+    onSectionChange: (section: string) => void;
 }
 
 export default function QuickActions({ projectId, isOwner, userRole, onSectionChange }: QuickActionsProps) {
@@ -13,14 +13,14 @@ export default function QuickActions({ projectId, isOwner, userRole, onSectionCh
         switch (action) {
             case 'messages':
                 // Navigate to chat section
-                onSectionChange?.('chat');
+                onSectionChange('chat');
                 break;
             case 'project-details':
                 window.open(`/projects/${projectId}`, '_blank');
                 break;
             case 'team':
                 // Navigate to team section
-                onSectionChange?.('team');
+                onSectionChange('team');
                 break;
             case 'applications':
                 if (isOwner) {

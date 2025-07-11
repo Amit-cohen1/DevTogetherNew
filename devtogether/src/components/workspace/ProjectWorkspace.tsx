@@ -55,6 +55,14 @@ export default function ProjectWorkspace() {
         }
     }, [projectId, user?.id, loadWorkspaceData]);
 
+    // New: check admin workspace access
+    const [adminAccessAllowed, setAdminAccessAllowed] = useState(true);
+    useEffect(() => {
+        if (user?.role === 'admin' && projectId) {
+            workspaceService.checkWorkspaceAccess(projectId, user.id, 'admin').then(setAdminAccessAllowed);
+        }
+    }, [user?.role, projectId, user?.id]);
+
     const handleStatusUpdate = () => {
         // Reload workspace data to reflect status changes
         loadWorkspaceData();
@@ -98,7 +106,57 @@ export default function ProjectWorkspace() {
         );
     }
 
-    const { project, teamMembers, isOwner, userRole } = workspaceData;
+    const project = workspaceData.project;
+    if (['pending', 'rejected'].includes(project.status)) {
+        let message = '';
+        if (project.status === 'pending') {
+            message = 'This project is awaiting admin approval. The workspace will be available once the project is approved by an admin.';
+        } else if (project.status === 'rejected') {
+            if ((project as any).can_resubmit) {
+                message = 'This project was rejected by an admin. You can fix the issues and resubmit the project for review.';
+            } else {
+                message = 'This project was rejected by an admin and cannot be resubmitted automatically. If you believe this is a mistake, please contact devtogether.help@gmail.com for support.';
+            }
+        }
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-4 max-w-md">
+                        {message}
+                    </div>
+                    <button
+                        onClick={() => window.history.back()}
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (user?.role === 'admin' && !adminAccessAllowed) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="bg-blue-100 text-blue-800 p-4 rounded-lg mb-4 max-w-md">
+                        Admin access to this workspace is locked.<br />
+                        The organization must approve your access request before you can enter this workspace.
+                    </div>
+                    <button
+                        onClick={() => window.history.back()}
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const { teamMembers, isOwner, userRole } = workspaceData;
 
     // Check if current user can edit status (owner or promoted developer)
     const canEditStatus = isOwner || (
@@ -369,6 +427,28 @@ export default function ProjectWorkspace() {
                                                 </p>
                                             </div>
                                         )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Admin Role Section */}
+                            {userRole === 'admin' && (
+                                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                        Your Role
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-2 py-1 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 text-sm font-medium rounded border border-purple-200 flex items-center gap-1">
+                                                Platform Admin
+                                                <Shield className="w-4 h-4 text-purple-600" />
+                                            </span>
+                                        </div>
+                                        <div className="mt-3 p-3 bg-purple-50 rounded-lg">
+                                            <p className="text-xs text-purple-700">
+                                                You have admin access to this workspace. You can view project activity and collaborate with the team.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             )}

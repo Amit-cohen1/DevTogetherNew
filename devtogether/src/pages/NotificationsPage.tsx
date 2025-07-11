@@ -22,6 +22,7 @@ import {
     Activity
 } from 'lucide-react'
 import type { Notification } from '../services/notificationService'
+import { useAuth } from '../contexts/AuthContext';
 
 interface FilterOptions {
     type: string
@@ -30,6 +31,7 @@ interface FilterOptions {
 }
 
 interface NotificationStats {
+<<<<<<< Updated upstream
     total: number;
     unread: number;
     application: number;
@@ -40,6 +42,16 @@ interface NotificationStats {
     moderation: number;
     chat: number;
     status_change: number;
+=======
+    total: number
+    unread: number
+    application: number
+    project: number
+    team: number
+    achievement: number
+    system: number
+    moderation: number;
+>>>>>>> Stashed changes
 }
 
 export default function NotificationsPage() {
@@ -53,6 +65,8 @@ export default function NotificationsPage() {
         loadNotifications 
     } = useNotifications()
 
+    const { profile } = useAuth();
+
     // State
     const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([])
     const [stats, setStats] = useState<NotificationStats>({
@@ -64,8 +78,11 @@ export default function NotificationsPage() {
         achievement: 0,
         system: 0,
         moderation: 0,
+<<<<<<< Updated upstream
         chat: 0,
         status_change: 0
+=======
+>>>>>>> Stashed changes
     })
 
     // Filter state
@@ -86,16 +103,31 @@ export default function NotificationsPage() {
             achievement: notifications.filter(n => n.type === 'achievement').length,
             system: notifications.filter(n => n.type === 'system').length,
             moderation: notifications.filter(n => n.type === 'moderation').length,
+<<<<<<< Updated upstream
             chat: notifications.filter(n => n.type === 'chat').length,
             status_change: notifications.filter(n => n.type === 'status_change').length
         };
         setStats(newStats);
     }, [notifications]);
+=======
+        }
+        setStats(newStats)
+    }, [notifications])
+>>>>>>> Stashed changes
 
     // Apply filters
     useEffect(() => {
         applyFilters()
     }, [notifications, filters])
+
+    // Filter out moderation notifications for non-admins
+    useEffect(() => {
+        let filtered = [...notifications];
+        if (!profile?.is_admin && !profile?.role?.includes('admin')) {
+            filtered = filtered.filter(n => n.type !== 'moderation');
+        }
+        setFilteredNotifications(filtered);
+    }, [notifications, filters, profile]);
 
     const applyFilters = () => {
         let filtered = [...notifications]
@@ -140,6 +172,7 @@ export default function NotificationsPage() {
             case 'achievement':
                 return <Trophy className="w-5 h-5 text-yellow-600" />;
             case 'system':
+<<<<<<< Updated upstream
                 return <AlertCircle className="w-5 h-5 text-gray-600" />;
             case 'moderation':
                 return <Shield className="w-5 h-5 text-red-600" />;
@@ -147,6 +180,11 @@ export default function NotificationsPage() {
                 return <MessageCircle className="w-5 h-5 text-indigo-600" />;
             case 'status_change':
                 return <Activity className="w-5 h-5 text-orange-600" />;
+=======
+                return <AlertCircle className="w-5 h-5 text-gray-600" />
+            case 'moderation':
+                return <Bell className="w-5 h-5 text-pink-600" />
+>>>>>>> Stashed changes
             default:
                 return <Bell className="w-5 h-5 text-gray-600" />;
         }
@@ -156,6 +194,8 @@ export default function NotificationsPage() {
         const data = notification.data || {}
 
         switch (notification.type) {
+            case 'moderation':
+                return data.actionUrl || '/admin';
             case 'application':
                 if (data.projectId) {
                     return `/projects/${data.projectId}`
@@ -292,6 +332,7 @@ export default function NotificationsPage() {
                         <div className="text-2xl font-bold text-gray-600">{stats.system}</div>
                         <div className="text-sm text-gray-600">System</div>
                     </div>
+<<<<<<< Updated upstream
                     <div className="bg-white rounded-lg border border-red-200 p-4 text-center">
                         <div className="text-2xl font-bold text-red-600">{stats.moderation}</div>
                         <div className="text-sm text-red-600">Admin</div>
@@ -303,6 +344,11 @@ export default function NotificationsPage() {
                     <div className="bg-white rounded-lg border border-orange-200 p-4 text-center">
                         <div className="text-2xl font-bold text-orange-600">{stats.status_change}</div>
                         <div className="text-sm text-orange-600">Status Change</div>
+=======
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-pink-600">{stats.moderation}</div>
+                        <div className="text-sm text-pink-600">Moderation</div>
+>>>>>>> Stashed changes
                     </div>
                 </div>
 
@@ -334,9 +380,13 @@ export default function NotificationsPage() {
                             <option value="team">Team</option>
                             <option value="achievement">Achievements</option>
                             <option value="system">System</option>
+<<<<<<< Updated upstream
                             <option value="moderation">Admin</option>
                             <option value="chat">Chat</option>
                             <option value="status_change">Status Change</option>
+=======
+                            <option value="moderation">Moderation</option>
+>>>>>>> Stashed changes
                         </Select>
 
                         {/* Status Filter */}

@@ -30,6 +30,7 @@ import {
     Award
 } from 'lucide-react'
 import { DIFFICULTY_LEVELS, APPLICATION_TYPES } from '../../utils/constants'
+import { toastService } from '../../services/toastService';
 
 interface ProjectWithDetails extends Project {
     organization?: {
@@ -49,6 +50,8 @@ interface ProjectWithDetails extends Project {
         }
         status: string
     }>
+    can_resubmit: boolean;
+    rejection_reason: string | null;
 }
 
 export default function ProjectDetailsPage() {
@@ -62,6 +65,7 @@ export default function ProjectDetailsPage() {
     const [showApplicationForm, setShowApplicationForm] = useState(false)
     const [hasApplied, setHasApplied] = useState(false)
     const [checkingApplication, setCheckingApplication] = useState(false)
+    const [resubmitting, setResubmitting] = useState(false);
 
     useEffect(() => {
         if (projectId) {
@@ -114,6 +118,20 @@ export default function ProjectDetailsPage() {
         setHasApplied(true)
         // Optionally show a toast notification
     }
+
+    const handleResubmit = async () => {
+        if (!project) return;
+        setResubmitting(true);
+        try {
+            await projectService.resubmitProject(project.id);
+            toastService.success('Project resubmitted for review.');
+            await loadProject();
+        } catch (err) {
+            toastService.error('Failed to resubmit project.');
+        } finally {
+            setResubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -564,6 +582,27 @@ export default function ProjectDetailsPage() {
                                     </div>
                                 </div>
                             </section>
+                            {/* Rejection Reason & Resubmit (ORG ONLY) */}
+                            {isOrganization && project.organization_id === user?.id &&
+                              (['rejected', 'cancelled'].includes(project.status) && project.rejection_reason) && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                                  <h3 className="text-lg font-semibold text-red-800 mb-2 flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5" /> Project Rejected
+                                  </h3>
+                                  <p className="text-red-700 mb-4">
+                                    <strong>Reason:</strong> {project.rejection_reason}
+                                  </p>
+                                  {project.can_resubmit && (
+                                    <Button
+                                      onClick={handleResubmit}
+                                      disabled={resubmitting}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    >
+                                      {resubmitting ? 'Resubmitting...' : 'Resubmit for Review'}
+                                    </Button>
+                                  )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Right Column - Organization Info */}

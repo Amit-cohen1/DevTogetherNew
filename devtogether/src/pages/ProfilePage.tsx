@@ -16,7 +16,7 @@ import { Loader2, AlertCircle } from 'lucide-react'
 const ProfilePage: React.FC = () => {
     const { userId } = useParams<{ userId: string }>()
     const navigate = useNavigate()
-    const { user: currentUser, profile: currentProfile } = useAuth()
+    const { user: currentUser, profile: currentProfile, signOut } = useAuth()
 
     const [profile, setProfile] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
@@ -100,7 +100,7 @@ const ProfilePage: React.FC = () => {
     }
 
     return (
-        <Layout className="bg-gray-50">
+        <Layout>
             <div className="max-w-7xl mx-auto px-4 py-8">
                 {/* Profile Header */}
                 <ProfileHeader

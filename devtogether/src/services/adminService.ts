@@ -314,7 +314,7 @@ class AdminService {
     // Optionally: send notification to user
   }
 
-  // Block organization
+  // Block organization (direct update)
   async blockOrganization(orgId: string, reason: string): Promise<void> {
     const { error } = await supabase
       .from('profiles')
@@ -323,10 +323,9 @@ class AdminService {
       .eq('role', 'organization');
     if (error) throw error;
     await toastService.info('Organization blocked.');
-    // Optionally: send notification to org
   }
 
-  // Unblock organization
+  // Unblock organization (direct update)
   async unblockOrganization(orgId: string): Promise<void> {
     const { error } = await supabase
       .from('profiles')
@@ -335,7 +334,6 @@ class AdminService {
       .eq('role', 'organization');
     if (error) throw error;
     await toastService.info('Organization unblocked.');
-    // Optionally: send notification to org
   }
 
   // Block project

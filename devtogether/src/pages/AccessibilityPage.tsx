@@ -18,7 +18,7 @@ const AccessibilityPage: React.FC = () => {
                     We welcome your feedback on the accessibility of DevTogether. Please let us know if you encounter accessibility barriers:
                 </p>
                 <ul className="list-disc list-inside">
-                    <li>Email: <a className="text-primary-600 hover:underline" href="mailto:devtogther@gmail.com">devtogther@gmail.com</a></li>
+                    <li>Email: <a className="text-primary-600 hover:underline" href="mailto:devtogether.help@gmail.com">devtogether.help@gmail.com</a></li>
                 </ul>
                 <div dir="ltr">
                     <h2 className="text-2xl font-semibold mt-6">ברוכים הבאים – הצהרת נגישות</h2>
@@ -29,7 +29,7 @@ const AccessibilityPage: React.FC = () => {
                         במידה ונתקלתם בבעיה או ליקוי בנושא נגישות באתר, נשמח אם תעדכנו אותנו ונפעל לתקן זאת בהקדם:
                     </p>
                     <ul className="list-disc list-inside">
-                        <li>דוא"ל: <a className="text-primary-600 hover:underline" href="mailto:devtogther@gmail.com">devtogther@gmail.com</a></li>
+                        <li>דוא"ל: <a className="text-primary-600 hover:underline" href="mailto:devtogether.help@gmail.com">devtogether.help@gmail.com</a></li>
                     </ul>
                 </div>
             </div>

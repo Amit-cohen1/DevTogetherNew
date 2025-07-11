@@ -125,6 +125,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
       setRejectReason('')
       setCanResubmit(true)
       await loadOrganizations()
+      setSelectedOrganization(null)
     } catch (err) {
       console.error('Error rejecting organization:', err)
       setError('Failed to reject organization')
@@ -191,6 +192,13 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
           <XCircle className="w-3 h-3 mr-1" />
           Rejected
+        </span>
+      )
+    } else if (((org as Profile).organization_status === 'blocked')) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+          <AlertTriangle className="w-3 h-3 mr-1" />
+          Blocked
         </span>
       )
     } else {
@@ -419,7 +427,8 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
       {/* Organization Details Modal */}
       {selectedOrganization && !showRejectModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0 shadow-2xl border border-gray-100 p-2 sm:p-4 relative">
+          {/* Outer modal container: */}
+          <div className="bg-white rounded-2xl max-w-2xl w-full mx-2 sm:mx-0 shadow-2xl border border-gray-100 p-2 sm:p-4 relative flex flex-col">
             {/* Modal Header */}
             <button
               onClick={() => setSelectedOrganization(null)}
@@ -429,7 +438,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
             >
               ×
             </button>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 border-b border-gray-100 bg-gray-50 rounded-t-lg gap-2 sm:gap-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 border-b border-gray-100 bg-gray-50 rounded-t-2xl gap-2 sm:gap-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -442,56 +451,9 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                   <span><Folder className="inline w-4 h-4 mr-1" />{orgStats[selectedOrganization.id]?.totalProjects ?? '-'} Projects</span>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 mt-4 sm:mt-0 w-full sm:w-auto justify-end">
-                {((selectedOrganization as Profile).organization_status === 'pending') && (
-                  <>
-                    <Button
-                      onClick={() => handleApprove(selectedOrganization.id)}
-                      disabled={actionLoading === selectedOrganization.id}
-                      className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
-                      size="sm"
-                      title="Approve Organization"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      {actionLoading === selectedOrganization.id ? 'Approving...' : 'Approve'}
-                    </Button>
-                    <Button
-                      onClick={() => setShowRejectModal(true)}
-                      variant="secondary"
-                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 text-xs sm:text-sm"
-                      size="sm"
-                      title="Reject Organization"
-                    >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      Reject
-                    </Button>
-                  </>
-                )}
-                {((selectedOrganization as Profile).organization_status !== 'blocked') ? (
-                  <Button
-                    onClick={() => setShowBlockModal(true)}
-                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm shadow"
-                    size="sm"
-                    title="Block Organization"
-                  >
-                    <AlertTriangle className="w-4 h-4 mr-1" />
-                    Block
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => handleUnblock(selectedOrganization.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm shadow"
-                    size="sm"
-                    title="Unblock Organization"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Unblock
-                  </Button>
-                )}
-              </div>
             </div>
             {/* Modal Body */}
-            <div className="p-4 sm:p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto max-h-[65vh]">
               {/* Info Section */}
               <div>
                 <h4 className="font-semibold mb-2 text-gray-800 flex items-center gap-2"><Building className="w-4 h-4" /> Info</h4>
@@ -593,7 +555,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
               )}
             </div>
             {/* Modal Footer Controls (for mobile/easy access) */}
-            <div className="flex flex-wrap gap-2 justify-end p-4 border-t border-gray-100 bg-gray-50 rounded-b-lg">
+            <div className="flex flex-wrap gap-2 justify-end p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
               {((selectedOrganization as Profile).organization_status === 'pending') && (
                 <>
                   <Button
@@ -723,6 +685,53 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                 <span className="text-xs text-gray-400">{project.team_members.length} members</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+      {showBlockModal && selectedOrganization && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-2 sm:mx-0 shadow-2xl border border-gray-100">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center mb-4">
+                <AlertTriangle className="w-6 h-6 text-amber-500 mr-2" />
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">Block Organization</h3>
+              </div>
+              <p className="text-gray-700 mb-4 text-sm sm:text-base">
+                Are you sure you want to <span className="font-semibold text-amber-600">block</span> <strong>{selectedOrganization.organization_name}</strong>?
+                <br />Blocked organizations cannot access the platform until unblocked.
+              </p>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Reason for blocking (required)</label>
+              <textarea
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                placeholder="Enter reason for blocking..."
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm sm:text-base mb-2"
+              />
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700 mb-2">{error}</div>
+              )}
+              <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+                <Button
+                  onClick={() => {
+                    setShowBlockModal(false);
+                    setBlockReason('');
+                    setError(null);
+                  }}
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleBlock}
+                  disabled={!blockReason.trim() || actionLoading === selectedOrganization.id}
+                  className="bg-amber-500 hover:bg-amber-600 w-full sm:w-auto text-white"
+                >
+                  {actionLoading === selectedOrganization.id ? 'Blocking...' : 'Confirm Block'}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

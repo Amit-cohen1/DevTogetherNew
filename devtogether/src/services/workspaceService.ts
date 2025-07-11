@@ -19,7 +19,7 @@ export interface WorkspaceData {
     teamMembers: TeamMember[];
     isOwner: boolean;
     isMember: boolean;
-    userRole: 'organization' | 'developer' | null;
+    userRole: 'organization' | 'developer' | 'admin' | null;
 }
 
 export interface ProjectStatusUpdate {
@@ -45,16 +45,26 @@ class WorkspaceService {
                 if (!project) {
                     throw new Error('Project not found');
                 }
-
-                // Convert to legacy format for backward compatibility
+                // Add admin workspace fields if missing
                 return {
-                    project,
+                    project: {
+                        ...project,
+                        admin_workspace_access_requested: project.admin_workspace_access_requested ?? false,
+                        admin_workspace_access_granted: project.admin_workspace_access_granted ?? false,
+                    },
                     teamMembers: [],
                     isOwner: project.organization_id === userId,
                     isMember: project.organization_id === userId,
                     userRole: project.organization_id === userId ? 'organization' : null
                 };
             }
+
+            // Add admin workspace fields if missing
+            const projectWithAdminFields = {
+                ...projectWithMembers,
+                admin_workspace_access_requested: projectWithMembers.admin_workspace_access_requested ?? false,
+                admin_workspace_access_granted: projectWithMembers.admin_workspace_access_granted ?? false,
+            };
 
             // Convert new team member structure to legacy format for backward compatibility
             const legacyTeamMembers: TeamMember[] = projectWithMembers.team_members.map((member: DatabaseTeamMember) => {
@@ -100,21 +110,57 @@ class WorkspaceService {
             // Check user permissions
             const isOwner = projectWithMembers.organization_id === userId;
             const isMember = projectWithMembers.team_members.some(member => member.profile.id === userId);
+            
+            // Special case: Check if user is admin with granted workspace access
+            const isAdminWithAccess = await this.checkIfAdminWithWorkspaceAccess(userId, projectWithAdminFields);
+            
+            // User has access if they are owner, team member, or admin with granted access
+            const hasAccess = isMember || isAdminWithAccess;
 
             const userMember = projectWithMembers.team_members.find(m => m.profile.id === userId);
             const userRole = isOwner ? 'organization' :
-                userMember?.type === 'developer' ? 'developer' : null;
+                userMember?.type === 'developer' ? 'developer' : 
+                isAdminWithAccess ? 'admin' : null;
 
             return {
-                project: projectWithMembers,
+                project: projectWithAdminFields,
                 teamMembers: legacyTeamMembers,
                 isOwner,
-                isMember,
+                isMember: hasAccess, // Updated to include admin access
                 userRole
             };
         } catch (error) {
             console.error('Error fetching workspace data:', error);
             return null;
+        }
+    }
+
+    // Helper method to check if user is admin with workspace access
+    private async checkIfAdminWithWorkspaceAccess(userId: string, project: any): Promise<boolean> {
+        try {
+            // Check if user is admin
+            const { data: userProfile, error } = await supabase
+                .from('profiles')
+                .select('is_admin, role')
+                .eq('id', userId)
+                .single();
+
+            if (error || !userProfile) {
+                return false;
+            }
+
+            // Check if user is admin (either by is_admin flag or role)
+            const isAdmin = userProfile.is_admin === true || userProfile.role === 'admin';
+            
+            if (!isAdmin) {
+                return false;
+            }
+
+            // If admin, check if workspace access is granted
+            return project.admin_workspace_access_granted === true;
+        } catch (error) {
+            console.error('Error checking admin workspace access:', error);
+            return false;
         }
     }
 
@@ -163,10 +209,16 @@ class WorkspaceService {
         }
     }
 
-    async checkWorkspaceAccess(projectId: string, userId: string): Promise<boolean> {
+    async checkWorkspaceAccess(projectId: string, userId: string, userRole?: string): Promise<boolean> {
         try {
             const workspaceData = await this.getWorkspaceData(projectId, userId);
-            return workspaceData?.isMember || false;
+            if (!workspaceData) return false;
+            // If admin, check admin_workspace_access_granted
+            if (userRole === 'admin') {
+                // @ts-ignore: project may have extra fields
+                return !!workspaceData.project.admin_workspace_access_granted;
+            }
+            return workspaceData.isMember || false;
         } catch (error) {
             console.error('Error checking workspace access:', error);
             return false;

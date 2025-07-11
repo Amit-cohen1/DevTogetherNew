@@ -117,10 +117,10 @@ export const AuthCallbackPage: React.FC = () => {
                             <p className="text-xs text-gray-500">
                                 If this problem persists, please contact support at{' '}
                                 <a
-                                    href="mailto:support@devtogether.com"
+                                    href="mailto:devtogether.help@gmail.com"
                                     className="text-primary-600 hover:text-primary-500"
                                 >
-                                    support@devtogether.com
+                                    devtogether.help@gmail.com
                                 </a>
                             </p>
                         </div>

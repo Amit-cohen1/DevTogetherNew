@@ -60,7 +60,7 @@ import RejectedOrganizationPage from './pages/RejectedOrganizationPage';
 import BlockedPage from './pages/BlockedOrganizationPage';
 import { useAuth } from './contexts/AuthContext';
 import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { Profile } from './types/database';
 
 // Custom wrapper to redirect unverified orgs
@@ -83,12 +83,40 @@ const OrgApprovalGuard: React.FC<{ children: React.ReactNode }> = ({ children })
   return <>{children}</>;
 };
 
+// Move the redirect logic into a separate component
+function AuthRedirector() {
+  const { isAuthenticated, profile, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (loading || !isAuthenticated || !profile) return;
+    const userProfile = profile as import('./types/database').Profile;
+    const isHome = location.pathname === '/';
+    if (isHome) {
+      if (userProfile.role === 'organization') {
+        if (userProfile.organization_status === 'pending') {
+          navigate('/pending-approval', { replace: true });
+        } else if (userProfile.organization_status === 'rejected') {
+          navigate('/rejected-organization', { replace: true });
+        } else if (userProfile.organization_status === 'blocked' || userProfile.blocked) {
+          navigate('/blocked', { replace: true });
+        }
+      } else if (userProfile.role === 'developer' && userProfile.blocked) {
+        navigate('/blocked', { replace: true });
+      }
+    }
+  }, [isAuthenticated, profile, loading, location.pathname, navigate]);
+  return null;
+}
+
 function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <AccessibilityProvider>
-          <Router>
+    <Router>
+      <AuthProvider>
+        <AuthRedirector />
+        <NotificationProvider>
+          <AccessibilityProvider>
             <ScrollToTop />
             <div className="App">
               <Routes>
@@ -280,7 +308,11 @@ function App() {
                 <Route
                   path="/notifications"
                   element={
+<<<<<<< Updated upstream
                     <ProtectedRoute>
+=======
+                    <ProtectedRoute requiredRole={["organization", "admin", "developer"]}>
+>>>>>>> Stashed changes
                       <OrgApprovalGuard>
                         <NotificationsPage />
                       </OrgApprovalGuard>
@@ -355,11 +387,11 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
-            <ToastProvider />
-          </Router>
-        </AccessibilityProvider>
-      </NotificationProvider>
-    </AuthProvider>
+          </AccessibilityProvider>
+        </NotificationProvider>
+        <ToastProvider />
+      </AuthProvider>
+    </Router>
   )
 }
 

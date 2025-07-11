@@ -23,6 +23,16 @@ import {
     Heart
 } from 'lucide-react'
 import { DIFFICULTY_LEVELS, APPLICATION_TYPES, TECHNOLOGY_STACK_OPTIONS } from '../../utils/constants'
+import { projectService } from '../../services/projects';
+
+const STATUS_TABS_ORG = [
+  { label: 'All', value: 'all' },
+  { label: 'Open', value: 'open' },
+  { label: 'In Progress', value: 'in_progress' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Cancelled', value: 'cancelled' },
+  { label: 'Rejected', value: 'rejected' },
+];
 
 export default function ProjectsPage() {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -51,6 +61,7 @@ export default function ProjectsPage() {
         timeCommitment: true,
         status: true
     })
+    const [activeStatusTab, setActiveStatusTab] = useState('all');
 
     // Initialize from URL params and load initial projects
     useEffect(() => {
@@ -129,7 +140,20 @@ export default function ProjectsPage() {
                 limit: 20
             }
 
-            const searchResult = await searchService.performFullTextSearch(searchParams)
+            // If user is organization, always include rejected
+            let searchResult
+            if (user && user.role === 'organization') {
+                // Use projectService directly to get all org projects with rejected
+                const orgProjects = await projectService.getProjectsWithTeamMembers({ organization_id: user.id }, true)
+                searchResult = {
+                    projects: orgProjects,
+                    total_count: orgProjects.length,
+                    search_time: 0,
+                    suggestions: []
+                }
+            } else {
+                searchResult = await searchService.performFullTextSearch(searchParams)
+            }
             console.log('🔍 Search results received:', searchResult)
             console.log('🔍 First project applications:', (searchResult.projects[0] as any)?.applications)
             setResults(searchResult)

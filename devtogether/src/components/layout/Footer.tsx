@@ -16,7 +16,7 @@ export const Footer: React.FC = () => {
         },
         {
             label: 'Support',
-            href: 'mailto:devtogther@gmail.com',
+            href: 'mailto:devtogether.help@gmail.com',
             icon: Mail
         }
     ]

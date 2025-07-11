@@ -7,6 +7,7 @@ import {
     DashboardProject,
     ApplicationSummary
 } from '../../services/organizationDashboardService';
+import { projectService } from '../../services/projects';
 import { Button } from '../ui/Button';
 import {
     Building2,
@@ -22,6 +23,7 @@ import {
     MessageSquare
 } from 'lucide-react';
 import type { Profile } from '../../types/database';
+import { ResubmitProjectModal } from '../projects/ResubmitProjectModal';
 
 interface DashboardData {
     stats: OrganizationStats;
@@ -35,6 +37,8 @@ const OrganizationDashboard: React.FC = () => {
 
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [resubmitProject, setResubmitProject] = useState<DashboardProject | null>(null);
+    // Remove resubmitTitle, resubmitDescription, resubmitError, resubmitSuccess, resubmitLoading
 
     const loadData = useCallback(async () => {
         try {
@@ -89,6 +93,41 @@ const OrganizationDashboard: React.FC = () => {
     if (!data) return null;
 
     const { stats, recentProjects, pendingApplications } = data;
+
+    const handleResubmit = async () => {
+        if (!resubmitProject) return;
+        // setResubmitLoading(true); // This state was removed
+        // setResubmitError(null); // This state was removed
+        try {
+            // Remove title/description update logic, as modal now handles all fields
+            const ok = await projectService.resubmitProject(resubmitProject.id);
+            if (ok) {
+                // setResubmitSuccess(true); // This state was removed
+                setTimeout(() => {
+                    setResubmitProject(null);
+                    loadData();
+                }, 1200);
+            } else {
+                // setResubmitError('Failed to resubmit project.'); // This state was removed
+            }
+        } catch (err: any) {
+            // setResubmitError(err.message || 'Failed to resubmit project.'); // This state was removed
+        } finally {
+            // setResubmitLoading(false); // This state was removed
+        }
+    };
+
+    // Add a helper to convert DashboardProject to ProjectWithTeamMembers
+    function toProjectWithTeamMembers(project: DashboardProject | null) {
+      if (!project) return null;
+      return {
+        ...project,
+        team_members: [], // DashboardProject does not have team_members
+        applications: [], // DashboardProject does not have applications
+        organization: undefined, // DashboardProject does not have organization
+        organization_id: project.organization_id,
+      };
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-800">
@@ -194,26 +233,74 @@ const OrganizationDashboard: React.FC = () => {
                         ) : (
                             <div className="space-y-4">
                                 {recentProjects.map((project) => (
-                                    <div key={project.id} className="group flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{project.title}</h3>
-                                            <div className="flex items-center space-x-4 mt-2">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    project.status === 'open' ? 'bg-green-100 text-green-800' :
-                                                    project.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-gray-100 text-gray-800'
+                                    <div key={project.id} className={`flex items-center p-4 rounded-2xl shadow border transition-colors ${
+                                        project.status === 'open' ? 'bg-green-50 border-green-200' :
+                                        project.status === 'in_progress' ? 'bg-blue-50 border-blue-200' :
+                                        project.status === 'rejected' ? 'bg-red-50 border-red-200' :
+                                        'bg-gray-50 border-gray-200'
+                                    }`}>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                                                    project.status === 'open' ? 'bg-green-100 text-green-800 border-green-300' :
+                                                    project.status === 'in_progress' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                                    project.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-300' :
+                                                    'bg-gray-100 text-gray-800 border-gray-300'
                                                 }`}>
-                                                    {project.status === 'in_progress' ? 'In Progress' : project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                                                    {project.status === 'open' && <CheckCircle className="h-3 w-3 mr-1" />} 
+                                                    {project.status === 'in_progress' && <Clock className="h-3 w-3 mr-1" />} 
+                                                    {project.status === 'rejected' && <AlertTriangle className="h-3 w-3 mr-1" />} 
+                                                    {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                                                 </span>
-                                                <div className="flex items-center text-sm text-gray-500">
-                                                    <Users className="w-4 h-4 mr-1.5" />
-                                                    <span>{project.teamMemberCount} members</span>
-                                                </div>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 ml-2">
+                                                    <Users className="h-3 w-3 mr-1" />
+                                                    {project.teamMemberCount} members
+                                                </span>
                                             </div>
+                                            <h3 className="font-semibold text-gray-900 text-base mb-1 mt-1">{project.title}</h3>
+                                            <p className="text-gray-700 text-sm line-clamp-2 mb-2">{project.description}</p>
+                                            {project.status === 'rejected' && project.rejection_reason && (
+                                                <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs font-semibold">
+                                                    <AlertTriangle className="inline w-4 h-4 mr-1 align-text-bottom" />
+                                                    {project.rejection_reason}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${project.id}`)} icon={<Eye className="w-4 h-4" />} />
-                                            <Button variant="outline" size="sm" onClick={() => navigate(`/workspace/${project.id}`)} icon={<MessageSquare className="w-4 h-4" />} />
+                                        <div className="flex flex-col gap-2 ml-4 min-w-[120px] items-end">
+                                            {project.status === 'rejected' && (
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    className="w-full"
+                                                    onClick={() => {
+                                                        setResubmitProject(project);
+                                                        // setResubmitTitle(project.title); // This state was removed
+                                                        // setResubmitDescription(project.description || ''); // This state was removed
+                                                        // setResubmitError(null); // This state was removed
+                                                        // setResubmitSuccess(false); // This state was removed
+                                                    }}
+                                                >
+                                                    Resubmit
+                                                </Button>
+                                            )}
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="w-full"
+                                                onClick={() => navigate(`/workspace/${project.id}`)}
+                                                icon={<MessageSquare className="w-4 h-4" />}
+                                            >
+                                                Workspace
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full"
+                                                onClick={() => navigate(`/projects/${project.id}`)}
+                                                icon={<Eye className="w-4 h-4" />}
+                                            >
+                                                Learn More
+                                            </Button>
                                         </div>
                                     </div>
                                 ))}
@@ -317,6 +404,14 @@ const OrganizationDashboard: React.FC = () => {
             </div>
                 </div>
             </div>
+
+    {/* Resubmit Modal */}
+    <ResubmitProjectModal
+      open={!!resubmitProject}
+      project={resubmitProject ? toProjectWithTeamMembers(resubmitProject) : null}
+      onClose={() => setResubmitProject(null)}
+      onSuccess={() => { setResubmitProject(null); loadData(); }}
+    />
         </div>
     );
 };

@@ -36,6 +36,24 @@ export default function ProjectStatus({ project, isOwner, canEditStatus, onStatu
 
     const currentStatus = statusOptions.find(s => s.value === project.status) || statusOptions[0];
 
+    // Determine allowed status options for the current user
+    let allowedStatusOptions = statusOptions;
+    if (!isOwner && !canEditStatus) {
+        allowedStatusOptions = [];
+    } else if (isOwner) {
+        // Organization owner logic
+        if (project.status === 'rejected') {
+            // Allow resubmit: can set to 'pending' (resubmit flow)
+            allowedStatusOptions = statusOptions.filter(option => option.value !== 'open');
+            allowedStatusOptions.unshift({ value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' });
+        } else {
+            // Regular org: cannot set to 'open' or 'pending'
+            allowedStatusOptions = statusOptions.filter(option => option.value !== 'open' && option.value !== 'pending');
+        }
+    } else {
+        // Status manager or admin: show all options (admin logic can be refined if needed)
+    }
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
@@ -125,7 +143,7 @@ export default function ProjectStatus({ project, isOwner, canEditStatus, onStatu
                             onChange={(e) => setEditingStatus(prev => ({ ...prev, currentPhase: e.target.value as ProjectStatusType }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                            {statusOptions.map(option => (
+                            {allowedStatusOptions.map(option => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>

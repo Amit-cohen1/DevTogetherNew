@@ -3,8 +3,9 @@ import { User, Crown, Mail, ExternalLink } from 'lucide-react';
 import { TeamMember } from '../../services/workspaceService';
 
 interface TeamMemberListProps {
+    projectId: string;
     teamMembers: TeamMember[];
-    currentUserRole: 'organization' | 'developer' | null;
+    currentUserRole: 'organization' | 'developer' | 'admin' | null;
 }
 
 export default function TeamMemberList({ teamMembers, currentUserRole }: TeamMemberListProps) {
