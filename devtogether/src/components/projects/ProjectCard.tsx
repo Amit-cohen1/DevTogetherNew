@@ -19,13 +19,20 @@ import {
     Crown
 } from 'lucide-react'
 import { DIFFICULTY_LEVELS, APPLICATION_TYPES } from '../../utils/constants'
+import { projectService } from '../../services/projects'
+import { ResubmitProjectModal } from './ResubmitProjectModal';
 
 interface ProjectCardProps {
-    project: ProjectWithTeamMembers
+    project: ProjectWithTeamMembers & {
+        admin_workspace_access_requested?: boolean;
+        admin_workspace_access_granted?: boolean;
+    }
     variant?: 'default' | 'large' | 'featured'
+    onResubmitted?: () => void;
+    onResubmitClick?: () => void;
 }
 
-export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) {
+export function ProjectCard({ project, variant = 'default', onResubmitted, onResubmitClick }: ProjectCardProps) {
     const { user } = useAuth()
     const [hasWorkspaceAccess, setHasWorkspaceAccess] = useState(false)
     const [isBookmarked, setIsBookmarked] = useState(false)
@@ -192,6 +199,54 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                     </button>
                 </div>
 
+                {/* Add after status row, only for org owner */}
+                {user?.id === project.organization_id && project.admin_workspace_access_requested?.valueOf() && !project.admin_workspace_access_granted?.valueOf() && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-800 text-xs flex flex-col gap-2">
+                        <div>
+                            <b>Admin requested access to this workspace.</b>
+                            <br />Approve to allow admin to enter the workspace for this project.
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                            <button
+                                className="px-3 py-1 rounded bg-green-600 text-white text-xs font-medium hover:bg-green-700"
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                        const success = await projectService.grantWorkspaceAccess(project.id);
+                                        if (success) {
+                                            window.location.reload();
+                                        } else {
+                                            alert('Failed to approve admin access. Please try again or contact support.');
+                                        }
+                                    } catch (err: any) {
+                                        alert('An error occurred: ' + (err?.message || err));
+                                    }
+                                }}
+                            >
+                                Approve
+                            </button>
+                            <button
+                                className="px-3 py-1 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700"
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                        const success = await projectService.denyWorkspaceAccess(project.id);
+                                        if (success) {
+                                            window.location.reload();
+                                        } else {
+                                            alert('Failed to deny admin access. Please try again or contact support.');
+                                        }
+                                    } catch (err: any) {
+                                        alert('An error occurred: ' + (err?.message || err));
+                                    }
+                                }}
+                            >
+                                Deny
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Project Title & Organization */}
                 <div className="mb-4">
                     <Link
@@ -351,16 +406,22 @@ export function ProjectCard({ project, variant = 'default' }: ProjectCardProps) 
                         </div>
                     )}
 
+                    {project.status === 'rejected' && user?.id === project.organization_id && project.rejection_reason && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                            <b>Rejection Reason:</b> {project.rejection_reason}
+                        </div>
+                    )}
+
                     {project.status === 'rejected' && (project as any).can_resubmit && user?.id === project.organization_id && (
                         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
                             <p><b>Project was rejected.</b> You can resubmit it.</p>
-                            <Link
-                                to={`/projects/${project.id}/edit`}
+                            <button
                                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors mt-2"
+                                onClick={onResubmitClick}
                             >
                                 <Settings className="h-3.5 w-3.5 mr-1.5" />
                                 Resubmit Project
-                            </Link>
+                            </button>
                         </div>
                     )}
 

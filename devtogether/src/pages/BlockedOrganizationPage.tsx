@@ -51,7 +51,7 @@ const BlockedPage: React.FC = () => {
           Sign Out
         </Button>
         <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400 w-full">
-          Need help? Contact <a href="mailto:support@devtogether.org" className="underline">support@devtogether.org</a>
+          Need help? Contact <a href="mailto:devtogether.help@gmail.com" className="underline">devtogether.help@gmail.com</a>
         </div>
       </div>
     </div>

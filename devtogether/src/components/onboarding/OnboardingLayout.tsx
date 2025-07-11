@@ -114,10 +114,10 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
                     <p className="text-sm text-gray-500">
                         Need help? Contact us at{' '}
                         <a
-                            href="mailto:support@devtogether.com"
+                            href="mailto:devtogether.help@gmail.com"
                             className="text-primary-600 hover:text-primary-500 font-medium"
                         >
-                            support@devtogether.com
+                            devtogether.help@gmail.com
                         </a>
                     </p>
                 </div>

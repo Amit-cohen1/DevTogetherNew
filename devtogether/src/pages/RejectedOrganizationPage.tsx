@@ -14,6 +14,12 @@ const RejectedOrganizationPage: React.FC = () => {
   // Type assertion to Profile to access new fields
   const orgProfile = profile as Profile | null;
 
+  // Move all useState hooks to the top, before any early return
+  const [organizationName, setOrganizationName] = useState(orgProfile?.organization_name || '');
+  const [bio, setBio] = useState(orgProfile?.bio || '');
+  const [website, setWebsite] = useState(orgProfile?.website || '');
+  const [location, setLocation] = useState(orgProfile?.location || '');
+
   if (!orgProfile || orgProfile.role !== 'organization' || orgProfile.organization_status !== 'rejected') {
     navigate('/');
     return null;
@@ -26,13 +32,17 @@ const RejectedOrganizationPage: React.FC = () => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const updatedData = {};
-    // Optionally collect updated org info here
+    const updatedData = {
+      organization_name: organizationName,
+      bio,
+      website,
+      location,
+    };
     const ok = await resubmitOrganization(orgProfile.id, updatedData);
     setSubmitting(false);
     if (ok) {
       setSuccess(true);
-      updateProfile && updateProfile({ organization_status: 'pending', organization_rejection_reason: null } as Partial<Profile>);
+      updateProfile && updateProfile({ organization_status: 'pending', organization_rejection_reason: null, organization_name: organizationName, bio, website, location } as Partial<Profile>);
     } else {
       setError('Failed to resubmit. Please try again or contact support.');
     }
@@ -53,13 +63,55 @@ const RejectedOrganizationPage: React.FC = () => {
           <div className="mt-1 text-yellow-700 dark:text-yellow-200">{reason}</div>
         </div>
         {canResubmit && !success && (
-          <button
-            className="mt-4 px-6 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 w-full sm:w-auto"
-            onClick={handleResubmit}
-            disabled={submitting}
-          >
-            {submitting ? 'Resubmitting...' : 'Resubmit for Review'}
-          </button>
+          <form className="w-full" onSubmit={handleResubmit}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Organization Name</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                value={organizationName}
+                onChange={e => setOrganizationName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Bio</label>
+              <textarea
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+                rows={3}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Location</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+                placeholder="City, State/Country"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Website</label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                value={website}
+                onChange={e => setWebsite(e.target.value)}
+                placeholder="https://yourorganization.org"
+              />
+            </div>
+            <button
+              className="mt-2 px-6 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 w-full sm:w-auto"
+              type="submit"
+              disabled={submitting}
+            >
+              {submitting ? 'Resubmitting...' : 'Resubmit for Review'}
+            </button>
+          </form>
         )}
         {success && (
           <div className="mt-4 text-green-600 text-center w-full">Resubmission sent! We will review your organization again soon.</div>
@@ -68,7 +120,7 @@ const RejectedOrganizationPage: React.FC = () => {
           <div className="mt-4 text-red-600 text-center w-full">{error}</div>
         )}
         <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400 w-full">
-          Need help? Contact <a href="mailto:support@devtogether.org" className="underline">support@devtogether.org</a>
+          Need help? Contact <a href="mailto:devtogether.help@gmail.com" className="underline">devtogether.help@gmail.com</a>
         </div>
       </div>
     </div>

@@ -325,7 +325,7 @@ class MessageService {
             // Check if user is part of the project team
             const { data: project, error: projectError } = await supabase
                 .from('projects')
-                .select('organization_id')
+                .select('organization_id, admin_workspace_access_granted')
                 .eq('id', projectId)
                 .single();
 
@@ -347,7 +347,29 @@ class MessageService {
                 .eq('status', 'accepted')
                 .single();
 
-            return !applicationError && !!application;
+            if (!applicationError && !!application) {
+                return true;
+            }
+
+            // Check if user is admin with workspace access granted
+            const { data: userProfile, error: userError } = await supabase
+                .from('profiles')
+                .select('is_admin, role')
+                .eq('id', userId)
+                .single();
+
+            if (userError || !userProfile) {
+                return false;
+            }
+
+            // Check if user is admin (either by is_admin flag or role)
+            const isAdmin = userProfile.is_admin === true || userProfile.role === 'admin';
+            
+            if (isAdmin && project.admin_workspace_access_granted === true) {
+                return true;
+            }
+
+            return false;
         } catch (error) {
             console.error('Error checking message access:', error);
             return false;

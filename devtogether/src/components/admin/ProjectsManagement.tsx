@@ -27,7 +27,9 @@ const ProjectDetailsModal: React.FC<{
   onStatusChange: (status: string) => void;
   onRequestWorkspace: () => void;
   actionLoading: boolean;
-}> = ({ project, onClose, onApprove, onReject, onBlock, onUnblock, onStatusChange, onRequestWorkspace, actionLoading }) => {
+  adminWorkspaceAccessRequested: boolean;
+  adminWorkspaceAccessGranted: boolean;
+}> = ({ project, onClose, onApprove, onReject, onBlock, onUnblock, onStatusChange, onRequestWorkspace, actionLoading, adminWorkspaceAccessRequested, adminWorkspaceAccessGranted }) => {
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showBlock, setShowBlock] = useState(false);
@@ -76,7 +78,29 @@ const ProjectDetailsModal: React.FC<{
             ) : (
               <Button onClick={onUnblock} className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm shadow" size="sm" title="Unblock Project" disabled={actionLoading}><CheckCircle className="w-4 h-4 mr-1" />Unblock</Button>
             )}
-            <Button onClick={onRequestWorkspace} className="bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm shadow" size="sm" title="Request Workspace Access" disabled={actionLoading}><Folder className="w-4 h-4 mr-1" />Request Workspace</Button>
+            {!adminWorkspaceAccessGranted ? (
+              <Button
+                onClick={onRequestWorkspace}
+                className="bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm shadow"
+                size="sm"
+                title="Request Workspace Access"
+                disabled={adminWorkspaceAccessRequested || actionLoading}
+              >
+                <Folder className="w-4 h-4 mr-1" />
+                {adminWorkspaceAccessRequested ? 'Request Pending' : 'Request Workspace'}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => window.open(`/workspace/${project.id}`, '_blank')}
+                className="bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm shadow"
+                size="sm"
+                title="Access Workspace"
+                disabled={actionLoading}
+              >
+                <Folder className="w-4 h-4 mr-1" />
+                Go to Workspace
+              </Button>
+            )}
           </div>
         </div>
         {/* Body */}
@@ -87,6 +111,14 @@ const ProjectDetailsModal: React.FC<{
               <p className="text-gray-700 whitespace-pre-wrap text-sm sm:text-base">{project.description}</p>
             </div>
           </div>
+          {project.status === 'rejected' && project.rejection_reason && (
+            <div>
+              <h4 className="font-semibold mb-2 text-red-700 flex items-center gap-2"><XCircle className="w-4 h-4" /> Rejection Reason</h4>
+              <div className="bg-red-50 rounded-lg p-3 sm:p-4">
+                <p className="text-red-700 whitespace-pre-wrap text-sm sm:text-base">{project.rejection_reason}</p>
+              </div>
+            </div>
+          )}
           <div>
             <h4 className="font-semibold mb-2 text-gray-800 flex items-center gap-2"><Users className="w-4 h-4" /> Team</h4>
             <div className="flex flex-wrap gap-2">
@@ -160,8 +192,8 @@ const ProjectsManagement: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch all projects with team/org info
-      const data = await projectService.getProjectsWithTeamMembers();
+      // Fetch all projects with team/org info, including rejected
+      const data = await projectService.getProjectsWithTeamMembers(undefined, true);
       setProjects(data);
     } catch (err) {
       setError('Failed to load projects');
@@ -271,6 +303,23 @@ const ProjectsManagement: React.FC = () => {
     }
   };
 
+  const handleRequestWorkspace = async (project: any) => {
+    if (project.status === 'pending') {
+      alert('You must approve the project before requesting workspace access.');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await projectService.requestWorkspaceAccess(project.id);
+      await loadProjects();
+    } catch (err) {
+      alert('Failed to request workspace access');
+    } finally {
+      setActionLoading(false);
+      setSelectedProject(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AdminTabHeader
@@ -334,6 +383,11 @@ const ProjectsManagement: React.FC = () => {
                         <span><Users className="inline w-4 h-4 mr-1" />{project.team_members?.length || 0} Members</span>
                         <span><Clock className="inline w-4 h-4 mr-1" />{new Date(project.created_at).toLocaleDateString()}</span>
                       </div>
+                      {project.status === 'rejected' && project.rejection_reason && (
+                        <div className="mt-2 text-xs text-red-600 font-semibold">
+                          Rejection Reason: {project.rejection_reason}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-row sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-6 w-full sm:w-auto">
                       <Button size="sm" variant="secondary" onClick={e => { e.stopPropagation(); setSelectedProject(project); }}><Eye className="w-4 h-4 mr-1" />View Details</Button>
@@ -355,7 +409,9 @@ const ProjectsManagement: React.FC = () => {
           onBlock={(reason) => handleBlock(selectedProject, reason)}
           onUnblock={() => handleUnblock(selectedProject)}
           onStatusChange={(status) => handleStatusChange(selectedProject, status as 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'rejected')}
-          onRequestWorkspace={() => {}}
+          onRequestWorkspace={() => handleRequestWorkspace(selectedProject)}
+          adminWorkspaceAccessRequested={!!selectedProject.admin_workspace_access_requested}
+          adminWorkspaceAccessGranted={!!selectedProject.admin_workspace_access_granted}
           actionLoading={actionLoading}
         />
       )}

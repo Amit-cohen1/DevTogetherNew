@@ -82,10 +82,10 @@ export const VerifyEmailPage: React.FC = () => {
                         <p className="text-xs text-gray-500">
                             Having trouble? Contact our support team at{' '}
                             <a
-                                href="mailto:support@devtogether.com"
+                                href="mailto:devtogether.help@gmail.com"
                                 className="text-primary-600 hover:text-primary-500"
                             >
-                                support@devtogether.com
+                                devtogether.help@gmail.com
                             </a>
                         </p>
                     </div>

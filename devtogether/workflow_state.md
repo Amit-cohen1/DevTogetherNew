@@ -1354,3 +1354,160 @@ Build a robust, secure, and fully-featured Admin Dashboard for DevTogether, supp
 - Security and accessibility best practices followed
 
 ---
+
+## Plan: Restrict Access for Pending Organizations (BLUEPRINT)
+
+### Goal
+Organizations with `organization_status === 'pending'` should:
+- Only be able to access `/pending-approval` and `/profile` (and edit profile modal/page).
+- Be redirected to `/pending-approval` from any other route.
+- See no navbar on `/profile` or edit profile if pending.
+- See a clear message on profile page if pending.
+
+---
+
+### Steps
+
+1. **Global Route Guard**
+   - In the main router (or ProtectedRoute/context):
+     - On every route, check if the user is an organization with `organization_status === 'pending'`.
+     - If so, allow only `/pending-approval` and `/profile` (and edit profile modal/page).
+     - Any other route: redirect to `/pending-approval`.
+
+2. **Profile Page Logic**
+   - If org is pending:
+     - Hide the navbar (conditionally render it only if not pending org).
+     - Show a message: "Your organization is pending admin approval. You can edit your profile, but cannot access the rest of the site until approved."
+
+3. **Edit Profile Page/Modal**
+   - If org is pending:
+     - Hide the navbar.
+     - (Optional) Show a similar message as in profile.
+
+4. **Testing**
+   - Register a new org, verify only `/pending-approval` and `/profile`/edit are accessible.
+   - Try to access other routes (dashboard, home, etc.) and confirm redirect.
+   - Confirm navbar is hidden on profile/edit for pending orgs.
+
+---
+
+### Pseudocode Example
+
+```tsx
+// In ProtectedRoute or main router
+if (user.role === 'organization' && user.organization_status === 'pending') {
+  if (route !== '/pending-approval' && route !== '/profile' && !isEditProfile) {
+    redirect('/pending-approval');
+  }
+}
+
+// In ProfilePage
+if (user.role === 'organization' && user.organization_status === 'pending') {
+  hideNavbar();
+  showPendingMessage();
+}
+```
+
+---
+
+### Notes
+- Make sure edit profile modal/page is still accessible from profile.
+- All other navigation (sidebar, links, etc.) should be disabled or hidden for pending orgs.
+- This logic should not affect developers or approved/rejected orgs.
+
+## Pseudocode
+
+For each file containing a target email:
+  - Open file
+  - Replace all instances of the old email with devtogether.help@gmail.com
+  - Save file
+
+## Next Step
+Apply these changes to all relevant files and verify correctness.
+
+## Plan
+
+### Organization Registration & Status Flow (BLUEPRINT)
+
+#### 1. After Organization Registration
+- Immediately redirect new organizations to `/pending-approval`.
+- Do **not** allow access to profile or any other page except `/pending-approval`.
+
+#### 2. Pending Organization
+- `/pending-approval` page is the only accessible route.
+- Remove profile editing from this page (no edit allowed while pending).
+
+#### 3. Approved Organization
+- Full access to all organization features/pages.
+
+#### 4. Rejected Organization
+- If `organization_status === 'rejected'`, always redirect to `/rejected-organization` (except for `/auth/*` routes).
+- `/rejected-organization` page:
+  - Show rejection reason.
+  - If `can_resubmit` is true:
+    - Show profile editing form (allow org to update info to fix issues).
+    - Show resubmit button (sets status to pending, clears rejection reason).
+  - If `can_resubmit` is false:
+    - Show only rejection reason and support email (no edit/resubmit).
+
+#### 5. Blocked Organization
+- Already handled: redirect to `/blocked`.
+
+#### 6. Route Guards
+- Update `ProtectedRoute`:
+  - Pending orgs: only `/pending-approval` allowed.
+  - Rejected orgs: only `/rejected-organization` allowed.
+  - Blocked orgs: only `/blocked` allowed.
+
+#### 7. After Resubmission
+- If org resubmits, set status to `pending` and redirect to `/pending-approval`.
+
+#### 8. After Approval
+- Normal access restored.
+
+---
+
+## Log
+- Added plan for new org onboarding and rejection flow, including all required frontend and route guard changes.
+
+### Project Rejection & Resubmit Flow for Organizations (BLUEPRINT)
+
+1. **Display Rejection Reason:**
+   - On ProjectDetailsPage, if the project status is 'rejected' or 'cancelled' and `rejection_reason` exists, show a clear message to the organization with the reason for rejection.
+
+2. **Show Resubmit Button:**
+   - If `can_resubmit` is true and the project is rejected/cancelled, show a "Resubmit for Review" button to the organization.
+   - Only show this button to the organization that owns the project.
+
+3. **Handle Resubmit Action:**
+   - On click, call the backend to update the project status to 'pending', clear the rejection reason, and set can_resubmit=false.
+   - Show a success message and reload the project data.
+
+4. **UI/UX:**
+   - Make the rejection message and resubmit button visually prominent.
+   - Disable the resubmit button while the request is in progress.
+
+5. **Testing:**
+   - Verify that after resubmission, the project returns to 'pending' and the admin sees it in the approval queue.
+   - Ensure the organization cannot resubmit again unless allowed by admin.
+
+### 1. Resubmit Flow for Rejected Projects (Organization Dashboard)
+- Add a "Resubmit" button to each project card with status 'rejected' in the organization dashboard (Recent Projects and All Projects views).
+- When clicked, open a modal/form for the organization to optionally update project details and confirm resubmission.
+- On submit, update the project status to 'pending' (if allowed by trigger/RLS), and clear the rejection reason.
+- Show success/error feedback to the user.
+
+### 2. Unify Project Fetching Logic (Status Filtering)
+- Refactor all project-fetching service functions (adminService, projectsService, organizationDashboardService, etc.) to accept a status filter (array or string), or an `includeRejected` boolean.
+- Ensure that when the admin dashboard or My Projects page requests projects with status 'rejected' (or 'all'), the query does not filter them out.
+- Update UI components to pass the correct filter based on the selected tab/filter (e.g., All, Rejected, Active, etc.).
+
+### 3. UI/UX Consistency & Testing
+- Ensure that rejected projects appear in all relevant admin/org views when the filter is set.
+- Add/adjust empty state messages for cases where no rejected projects exist.
+- Test the full flow: rejection, resubmit, and visibility in all dashboards.
+
+---
+
+## Log
+- Plan for rejected project resubmit and status filter unification written.

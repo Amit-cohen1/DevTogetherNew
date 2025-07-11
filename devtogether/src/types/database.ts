@@ -507,7 +507,30 @@ export type Enums<T extends keyof Database['public']['Enums']> = Database['publi
 
 // Common types
 export type User = Tables<'profiles'>
-export type Project = Tables<'projects'>
+export interface Project {
+    id: string
+    organization_id: string
+    title: string
+    description: string
+    requirements: string
+    technology_stack: string[]
+    difficulty_level: 'beginner' | 'intermediate' | 'advanced'
+    status: 'pending' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'rejected'
+    application_type: 'individual' | 'team' | 'both'
+    max_team_size: number | null
+    deadline: string | null
+    estimated_duration: string | null
+    is_remote: boolean
+    location: string | null
+    rejection_reason: string | null
+    created_at: string
+    updated_at: string
+    // New fields for admin workspace access
+    admin_workspace_access_requested?: boolean
+    admin_workspace_access_granted?: boolean
+    // Add can_resubmit for rejected projects
+    can_resubmit?: boolean
+}
 export type Application = Tables<'applications'>
 export type Message = Tables<'messages'>
 export type ProfileAnalytics = Tables<'profile_analytics'>
@@ -655,6 +678,11 @@ export interface ProjectWithTeamMembers extends Project {
         } | null
     }>
     rejection_reason: string | null
+    // New fields for admin workspace access
+    admin_workspace_access_requested?: boolean
+    admin_workspace_access_granted?: boolean
+    // Add can_resubmit for rejected projects
+    can_resubmit?: boolean
 }
 
 // New enhanced organization profile types

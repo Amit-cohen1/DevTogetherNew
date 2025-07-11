@@ -5,6 +5,7 @@ import { ProjectWithTeamMembers } from '../../types/database';
 import { ProjectCard } from '../../components/projects/ProjectCard';
 import { Layout } from '../../components/layout/Layout';
 import { Button } from '../../components/ui/Button';
+import { ResubmitProjectModal } from '../../components/projects/ResubmitProjectModal';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -12,6 +13,7 @@ const STATUS_OPTIONS = [
   { value: 'in_progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
+  { value: 'rejected', label: 'Rejected' },
 ];
 
 export default function OrganizationProjectsPage() {
@@ -20,13 +22,15 @@ export default function OrganizationProjectsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resubmitProject, setResubmitProject] = useState<ProjectWithTeamMembers | null>(null);
 
   useEffect(() => {
     if (!profile?.id) return;
     setLoading(true);
     setError(null);
+    // Always include rejected projects for org dashboard
     projectService
-      .getOrganizationProjectsWithTeamMembers(profile.id)
+      .getProjectsWithTeamMembers({ organization_id: profile.id }, true)
       .then(setProjects)
       .catch((err) => setError(err.message || 'Failed to load projects'))
       .finally(() => setLoading(false));
@@ -36,6 +40,18 @@ export default function OrganizationProjectsPage() {
     if (statusFilter === 'all') return projects;
     return projects.filter((p) => p.status === statusFilter);
   }, [projects, statusFilter]);
+
+  const handleResubmitSuccess = () => {
+    setResubmitProject(null);
+    // Optionally reload projects
+    if (profile?.id) {
+      setLoading(true);
+      projectService
+        .getProjectsWithTeamMembers({ organization_id: profile.id }, true)
+        .then(setProjects)
+        .finally(() => setLoading(false));
+    }
+  };
 
   return (
     <Layout>
@@ -74,12 +90,18 @@ export default function OrganizationProjectsPage() {
                 key={project.id}
                 project={project}
                 variant="default"
-                // TODO: Add management actions (edit, workspace, etc.)
+                onResubmitClick={() => setResubmitProject(project)}
               />
             ))}
           </div>
         )}
       </div>
+      <ResubmitProjectModal
+        open={!!resubmitProject}
+        project={resubmitProject}
+        onClose={() => setResubmitProject(null)}
+        onSuccess={handleResubmitSuccess}
+      />
     </Layout>
   );
 } 

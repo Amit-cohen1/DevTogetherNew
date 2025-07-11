@@ -39,6 +39,27 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         )
     }
 
+    // If user is authenticated and is a pending organization, restrict access
+    if (isAuthenticated && profile) {
+        const userProfile = profile as import('../types/database').Profile;
+        const isAuthRoute = location.pathname.startsWith('/auth');
+        if (userProfile.role === 'organization') {
+            if (userProfile.organization_status === 'pending') {
+                if (!isAuthRoute && location.pathname !== '/pending-approval') {
+                    return <Navigate to="/pending-approval" replace />;
+                }
+            } else if (userProfile.organization_status === 'rejected') {
+                if (!isAuthRoute && location.pathname !== '/rejected-organization') {
+                    return <Navigate to="/rejected-organization" replace />;
+                }
+            } else if (userProfile.organization_status === 'blocked' || userProfile.blocked) {
+                if (!isAuthRoute && location.pathname !== '/blocked') {
+                    return <Navigate to="/blocked" replace />;
+                }
+            }
+        }
+    }
+
     // If user is authenticated and blocked, redirect to /blocked
     if (isAuthenticated && profile) {
         const userProfile = profile as import('../types/database').Profile;

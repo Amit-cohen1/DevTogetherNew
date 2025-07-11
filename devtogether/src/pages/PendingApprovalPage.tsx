@@ -3,7 +3,7 @@ import { Mail, Hourglass } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const SUPPORT_EMAIL = 'devtogether@gmail.com';
+const SUPPORT_EMAIL = 'devtogether.help@gmail.com';
 
 const PendingApprovalHeader: React.FC = () => {
   const navigate = useNavigate();
@@ -16,12 +16,6 @@ const PendingApprovalHeader: React.FC = () => {
         <span className="font-bold text-lg text-blue-900 tracking-tight">DevTogether</span>
       </div>
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/profile')}
-          className="text-blue-700 hover:underline font-medium px-3 py-1 rounded transition-colors hover:bg-blue-100"
-        >
-          Edit Profile
-        </button>
         <button
           onClick={signOut}
           className="text-gray-600 hover:text-red-600 font-medium px-3 py-1 rounded transition-colors hover:bg-red-50"
