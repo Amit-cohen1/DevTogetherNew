@@ -6,6 +6,16 @@ import { toastService } from './toastService';
 export type CreateProjectData = Database['public']['Tables']['projects']['Insert']
 export type UpdateProjectData = Database['public']['Tables']['projects']['Update']
 
+// Supports multi-select filters for project queries
+interface FilterOptions {
+    status?: string | string[]  // Support both single and array
+    difficulty_level?: string | string[]  // Support both single and array  
+    application_type?: string | string[]  // Support both single and array
+    technology_stack?: string[]
+    organization_id?: string
+    is_remote?: boolean | null
+}
+
 export const projectService = {
     // Create a new project
     async createProject(projectData: CreateProjectData): Promise<Project> {
@@ -71,45 +81,39 @@ export const projectService = {
         return data || []
     },
 
-    // Get all projects with team member data (for project discovery page)
-    async getProjectsWithTeamMembers(filters?: {
-        status?: Project['status']
-        difficulty_level?: Project['difficulty_level']
-        application_type?: Project['application_type']
-        technology_stack?: string[]
-        organization_id?: string
-    }, includeRejected: boolean = false): Promise<ProjectWithTeamMembers[]> {
+    // Get all projects with team member data (for project discovery page) - updated with multi-select filter support
+    async getProjectsWithTeamMembers(filters?: FilterOptions, includeRejected: boolean = false): Promise<ProjectWithTeamMembers[]> {
         console.log('🔍 ProjectService.getProjectsWithTeamMembers called with filters:', filters, 'includeRejected:', includeRejected)
 
         let query = supabase
             .from('projects')
             .select(`
-        *,
-        organization:profiles!projects_organization_id_fkey(
-          id,
-          organization_name,
-          avatar_url,
-          email,
-          first_name,
-          last_name,
-          blocked,
-          organization_status
-        ),
-        applications(
-          id,
-          status,
-          status_manager,
-          created_at,
-          developer:profiles!applications_developer_id_fkey(
-            id,
-            first_name,
-            last_name,
-            avatar_url,
-            email,
-            blocked
-          )
-        )
-      `)
+            *,
+            organization:profiles!projects_organization_id_fkey(
+                id,
+                organization_name,
+                avatar_url,
+                email,
+                first_name,
+                last_name,
+                blocked,
+                organization_status
+            ),
+            applications(
+                id,
+                status,
+                status_manager,
+                created_at,
+                developer:profiles!applications_developer_id_fkey(
+                    id,
+                    first_name,
+                    last_name,
+                    avatar_url,
+                    email,
+                    blocked
+                )
+            )
+        `)
             .order('created_at', { ascending: false })
             .eq('blocked', false); // Exclude blocked projects
 
@@ -117,55 +121,69 @@ export const projectService = {
             query = query.neq('status', 'rejected'); // Exclude rejected projects for public/developer views
         }
 
-        // Apply filters
+        // Apply filters - supports arrays for multi-select
         if (filters?.status) {
-            query = query.eq('status', filters.status)
+            if (Array.isArray(filters.status)) {
+                query = query.in('status', filters.status);
+            } else {
+                query = query.eq('status', filters.status);
+            }
         }
 
         if (filters?.difficulty_level) {
-            query = query.eq('difficulty_level', filters.difficulty_level)
+            if (Array.isArray(filters.difficulty_level)) {
+                query = query.in('difficulty_level', filters.difficulty_level);
+            } else {
+                query = query.eq('difficulty_level', filters.difficulty_level);
+            }
         }
 
         if (filters?.application_type) {
-            query = query.eq('application_type', filters.application_type)
+            if (Array.isArray(filters.application_type)) {
+                query = query.in('application_type', filters.application_type);
+            } else {
+                query = query.eq('application_type', filters.application_type);
+            }
         }
 
         if (filters?.organization_id) {
-            query = query.eq('organization_id', filters.organization_id)
+            query = query.eq('organization_id', filters.organization_id);
+        }
+
+        if (filters?.is_remote !== undefined && filters.is_remote !== null) {
+            query = query.eq('is_remote', filters.is_remote);
         }
 
         if (filters?.technology_stack && filters.technology_stack.length > 0) {
-            query = query.overlaps('technology_stack', filters.technology_stack)
+            query = query.overlaps('technology_stack', filters.technology_stack);
         }
 
-        const { data, error } = await query
+        const { data, error } = await query;
 
-        console.log('📊 Raw Supabase query result:', { data, error })
+        console.log('📊 Raw Supabase query result:', { data, error });
 
         if (error) {
-            console.error('❌ Error fetching projects with team members:', error)
-            throw new Error(error.message)
+            console.error('❌ Error fetching projects with team members:', error);
+            throw new Error(error.message);
         }
 
-        // Filter out projects whose organization is blocked or has organization_status === 'blocked'
         const projectsWithTeamMembers = (data || []).filter((project: any) => {
             const org = project.organization;
             return org && org.blocked !== true && org.organization_status !== 'blocked';
-        })
+        });
 
-        // Transform data to include proper team member composition
         const projectsWithTeamMembersFinal = projectsWithTeamMembers.map((project: any) => {
-            console.log(`🏗️ Processing project: ${project.title}`)
-            console.log(`   Organization:`, project.organization)
-            console.log(`   Applications:`, project.applications)
+            console.log(`🏗️ Processing project: ${project.title}`);
+            console.log(`   Organization:`, project.organization);
+            console.log(`   Applications:`, project.applications);
 
-            const teamMembers: TeamMember[] = []
+            const teamMembers: TeamMember[] = [];
 
             // 1. Add organization owner as team leader (always first)
             if (project.organization) {
-                const orgMember = {
+                const ownerMember: TeamMember = {
                     id: project.organization.id,
-                    type: 'organization' as const,
+                    type: 'organization',
                     profile: {
                         id: project.organization.id,
                         first_name: project.organization.first_name,
@@ -174,34 +192,34 @@ export const projectService = {
                         avatar_url: project.organization.avatar_url,
                         email: project.organization.email
                     },
-                    role: 'owner' as const,
-                    joined_at: project.created_at // Project creation date
-                }
-                teamMembers.push(orgMember)
-                console.log(`   ✅ Added organization owner:`, orgMember.profile.organization_name)
+                    role: 'owner',
+                    joined_at: project.created_at
+                };
+
+                teamMembers.push(ownerMember);
+                console.log(`   ✅ Added organization owner:`, project.organization.organization_name || 'No Name');
             }
 
             // 2. Add accepted developers as team members
             const acceptedApplications = project.applications?.filter((app: any) =>
                 app.status === 'accepted' && app.developer !== null
-            ) || []
+            ) || [];
 
-            console.log(`   🔍 Found ${acceptedApplications.length} accepted applications`)
+            console.log(`   📨 Accepted applications: ${acceptedApplications.length}`);
 
             acceptedApplications.forEach((application: any) => {
-                const isStatusManager = application.status_manager === true
-
-                const devMember = {
+                const devMember: TeamMember = {
                     id: application.developer.id,
-                    type: 'developer' as const,
+                    type: 'developer',
                     profile: {
                         id: application.developer.id,
                         first_name: application.developer.first_name,
                         last_name: application.developer.last_name,
+                        organization_name: null,
                         avatar_url: application.developer.avatar_url,
                         email: application.developer.email
                     },
-                    role: isStatusManager ? 'status_manager' as const : 'member' as const,
+                    role: application.status_manager === true ? 'status_manager' : 'member',
                     application: {
                         id: application.id,
                         project_id: project.id,
@@ -214,33 +232,33 @@ export const projectService = {
                         portfolio_links: null
                     },
                     joined_at: application.created_at
-                }
+                };
 
-                teamMembers.push(devMember)
-                console.log(`   ✅ Added developer:`, `${devMember.profile.first_name} ${devMember.profile.last_name}`, `(${devMember.role})`)
-            })
+                teamMembers.push(devMember);
+                console.log(`   ✅ Added developer:`, `${devMember.profile.first_name} ${devMember.profile.last_name}`, `(${devMember.role})`);
+            });
 
-            console.log(`   📊 Total team members for ${project.title}: ${teamMembers.length}`)
+            console.log(`   📊 Total team members for ${project.title}: ${teamMembers.length}`);
 
             // Filter applications to only accepted ones with valid developers for backward compatibility
             const validApplications = project.applications?.filter((app: any) =>
                 app.status === 'accepted' && app.developer !== null
-            ) || []
+            ) || [];
 
             const result = {
                 ...project,
                 team_members: teamMembers,
                 applications: validApplications
-            }
+            };
 
-            console.log(`   🏁 Final team_members count: ${result.team_members.length}`)
+            console.log(`   🏁 Final team_members count: ${result.team_members.length}`);
 
-            return result
-        }) || []
+            return result;
+        }) || [];
 
-        console.log('✅ ProjectService.getProjectsWithTeamMembers completed, returning', projectsWithTeamMembersFinal.length, 'projects')
+        console.log('✅ ProjectService.getProjectsWithTeamMembers completed, returning', projectsWithTeamMembersFinal.length, 'projects');
 
-        return projectsWithTeamMembersFinal
+        return projectsWithTeamMembersFinal;
     },
 
     // Get a single project by ID
