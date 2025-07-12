@@ -20,10 +20,16 @@ import {
     ArrowRight,
     Settings,
     TrendingUp,
-    MessageSquare
+    MessageSquare,
+    FolderOpen,
+    Award
 } from 'lucide-react';
 import type { Profile } from '../../types/database';
 import { ResubmitProjectModal } from '../projects/ResubmitProjectModal';
+import GreetingBanner from './GreetingBanner';
+import OrganizationStatsCard from './OrganizationStatsCard';
+import { profileService, ProfileStats as ProfileStatsType } from '../../services/profileService';
+import { ProfileStats as ProfileStatsComponent } from '../profile/ProfileStats';
 
 interface DashboardData {
     stats: OrganizationStats;
@@ -39,6 +45,7 @@ const OrganizationDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [resubmitProject, setResubmitProject] = useState<DashboardProject | null>(null);
     // Remove resubmitTitle, resubmitDescription, resubmitError, resubmitSuccess, resubmitLoading
+    const [orgProfileStats, setOrgProfileStats] = useState<ProfileStatsType | null>(null);
 
     const loadData = useCallback(async () => {
         try {
@@ -46,7 +53,10 @@ const OrganizationDashboard: React.FC = () => {
             setData({
                 stats: dashboardData.stats,
                 recentProjects: dashboardData.projects.slice(0, 3), // Only show 3 most recent
-                pendingApplications: dashboardData.applications.filter(app => app.status === 'pending').slice(0, 5)
+                pendingApplications: dashboardData.applications
+                  .filter(app => app.status === 'pending')
+                  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                  .slice(0, 5)
             });
         } catch (error) {
             console.error('Error loading dashboard:', error);
@@ -58,8 +68,28 @@ const OrganizationDashboard: React.FC = () => {
     useEffect(() => {
         if (user && profile?.role === 'organization') {
             loadData();
+            // Fetch organization stats for the new component
+            (async () => {
+                try {
+                    const stats = await profileService.getOrganizationStats(user.id);
+                    // Map organization stats to ProfileStatsType if needed
+                    setOrgProfileStats({
+                        totalProjects: stats.totalProjects,
+                        activeProjects: stats.activeProjects,
+                        completedProjects: stats.completedProjects,
+                        totalApplications: stats.totalApplications,
+                        acceptedApplications: stats.acceptedApplications,
+                        acceptanceRate: stats.successRate, // Use successRate for acceptanceRate
+                        platformDays: 0, // Not available in org stats
+                        profileViews: 0, // Not available in org stats
+                        lastActivity: new Date().toISOString(), // Not available in org stats
+                    });
+                } catch (e) {
+                    setOrgProfileStats(null);
+                }
+            })();
         }
-    }, [user, profile, loadData]);
+    }, [user, profile]);
 
     const orgProfile = profile as Profile | null;
     const isVerified = orgProfile?.organization_status === 'approved';
@@ -131,125 +161,125 @@ const OrganizationDashboard: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {/* Welcome Header - Clean & Professional */}
-                <div className="mb-10">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                        Dashboard
-                    </h1>
-                    <p className="text-xl text-gray-600">
-                        Welcome back, {organizationName}. Here's your organization's summary.
-                    </p>
-                </div>
-
-                {/* Stats Section - Compact, Responsive, Light-Only */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                    {/* Active Projects Card */}
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between min-h-[110px]">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Active Projects</p>
-                                <span className="text-2xl font-bold text-gray-900">{stats.activeProjects}</span>
-                            </div>
-                            <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <Building2 className="h-5 w-5 text-blue-600" />
-                            </div>
-                        </div>
-                        <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-blue-500 rounded-full"
-                                style={{ width: `${Math.min(100, (stats.activeProjects / 10) * 100)}%` }}
-                            ></div>
-                        </div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Greeting Banner */}
+                <GreetingBanner
+                    name={organizationName}
+                />
+                {/* ProfileStats (Platform Statistics) */}
+                {orgProfileStats && (
+                    <div className="mb-8">
+                        <ProfileStatsComponent stats={orgProfileStats} />
                     </div>
-                    {/* Pending Applications Card */}
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between min-h-[110px]">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Applications</p>
-                                <span className="text-2xl font-bold text-gray-900">{stats.pendingApplications}</span>
-                            </div>
-                            <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <Users className="h-5 w-5 text-green-600" />
-                            </div>
-                        </div>
-                        {stats.pendingApplications > 0 ? (
-                            <div className="mt-2 flex items-center text-xs text-green-600">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                                <span>Action Required</span>
-                            </div>
-                        ) : (
-                            <div className="mt-2 flex items-center text-xs text-green-600">
-                                <CheckCircle className="w-3 h-3 mr-2" />
-                                <span>All reviewed</span>
-                            </div>
-                        )}
-                    </div>
-                    {/* Success Rate Card */}
-                    <div className="bg-white rounded-lg shadow border border-gray-200 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between min-h-[110px]">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</p>
-                                <span className="text-2xl font-bold text-gray-900">{stats.acceptanceRate.toFixed(0)}%</span>
-                            </div>
-                            <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <TrendingUp className="h-5 w-5 text-purple-600" />
-                            </div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500">Based on all completed projects.</div>
-                    </div>
-                </div>
+                )}
 
-                {/* Main Content Area - Clean & Structured */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Recent Projects - Takes 2 columns */}
-                    <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-900">Recent Projects</h2>
-                    <Button
-                        variant="primary"
-                                onClick={() => navigate('/dashboard/projects')}
-                                className="dark:text-white"
-                                icon={<ArrowRight className="w-4 h-4" />}
-                            >
-                                View All
-                    </Button>
-                        </div>
-
-                        {recentProjects.length === 0 ? (
-                            <div className="text-center py-16 px-6 border-2 border-dashed border-gray-300 rounded-lg">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Building2 className="w-8 h-8 text-gray-400" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">Launch Your First Initiative</h3>
-                                <p className="text-gray-600 mb-6 max-w-md mx-auto">Create a new project to connect with skilled developers and bring your ideas to life.</p>
-                                {isVerified && (
-                                    <Button onClick={() => navigate('/projects/create')} variant="primary">
-                                        <Plus className="w-5 h-5 mr-2" />
-                                        Create New Project
+                {/* Recent Applications - Compact Section */}
+                <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-lg font-semibold text-gray-900">Recent Applications</h3>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate('/applications')}
+                            icon={<ArrowRight className="w-4 h-4" />}
+                        >
+                            View All
                         </Button>
-                                )}
+                    </div>
+                    {pendingApplications.length === 0 ? (
+                        <div className="text-center py-6 text-gray-500 text-sm">No recent applications.</div>
+                    ) : (
+                        <div className="divide-y divide-gray-100">
+                            {pendingApplications.slice(0, 5).map((application) => (
+                                <div key={application.id} className="flex items-center py-2 gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
+                                        {((application.developer.first_name || 'A').charAt(0) + (application.developer.last_name || 'B').charAt(0))}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium text-gray-900 text-sm truncate">
+                                                {`${application.developer.first_name || ''} ${application.developer.last_name || ''}`.trim() || 'Anonymous'}
+                                            </span>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : application.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-gray-500 truncate">{application.project.title}</div>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => navigate('/applications')}
+                                    >
+                                        Review
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Recent Projects - Consistent Card */}
+                <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-lg font-semibold text-gray-900">Recent Projects</h3>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate('/dashboard/projects')}
+                            icon={<ArrowRight className="w-4 h-4" />}
+                        >
+                            View All
+                        </Button>
+                    </div>
+                    {recentProjects.length === 0 ? (
+                        <div className="text-center py-16 px-6 border-2 border-dashed border-gray-300 rounded-lg">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Building2 className="w-8 h-8 text-gray-400" />
                             </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {recentProjects.map((project) => (
-                                    <div key={project.id} className={`flex items-center p-4 rounded-2xl shadow border transition-colors ${
-                                        project.status === 'open' ? 'bg-green-50 border-green-200' :
-                                        project.status === 'in_progress' ? 'bg-blue-50 border-blue-200' :
-                                        project.status === 'rejected' ? 'bg-red-50 border-red-200' :
-                                        'bg-gray-50 border-gray-200'
-                                    }`}>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Launch Your First Initiative</h3>
+                            <p className="text-gray-600 mb-6 max-w-md mx-auto">Create a new project to connect with skilled developers and bring your ideas to life.</p>
+                            {isVerified && (
+                                <Button onClick={() => navigate('/projects/create')} variant="primary">
+                                    <Plus className="w-5 h-5 mr-2" />
+                                    Create New Project
+                                </Button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {recentProjects.map((project) => {
+                                // Status-based color and icon
+                                let cardBg = 'bg-gray-50 border-gray-200';
+                                let statusColor = 'bg-gray-100 text-gray-800 border-gray-300';
+                                let statusIcon = <FolderOpen className="h-3 w-3 mr-1" />;
+                                if (project.status === 'open') {
+                                    cardBg = 'bg-green-50 border-green-200';
+                                    statusColor = 'bg-green-100 text-green-800 border-green-300';
+                                    statusIcon = <CheckCircle className="h-3 w-3 mr-1" />;
+                                } else if (project.status === 'in_progress') {
+                                    cardBg = 'bg-blue-50 border-blue-200';
+                                    statusColor = 'bg-blue-100 text-blue-800 border-blue-300';
+                                    statusIcon = <Clock className="h-3 w-3 mr-1" />;
+                                } else if (project.status === 'completed') {
+                                    cardBg = 'bg-green-50 border-green-200 ring-2 ring-green-300';
+                                    statusColor = 'bg-green-100 text-green-800 border-green-300';
+                                    statusIcon = <Award className="h-3 w-3 mr-1 text-green-500 animate-bounce" />;
+                                } else if (project.status === 'rejected') {
+                                    cardBg = 'bg-red-50 border-red-200';
+                                    statusColor = 'bg-red-100 text-red-800 border-red-300';
+                                    statusIcon = <AlertTriangle className="h-3 w-3 mr-1" />;
+                                } else if (project.status === 'cancelled') {
+                                    cardBg = 'bg-gray-100 border-gray-300';
+                                    statusColor = 'bg-gray-200 text-gray-500 border-gray-300';
+                                    statusIcon = <AlertTriangle className="h-3 w-3 mr-1" />;
+                                }
+                                return (
+                                    <div key={project.id} className={`flex items-center p-4 rounded-2xl shadow border transition-colors ${cardBg}`}>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                                                    project.status === 'open' ? 'bg-green-100 text-green-800 border-green-300' :
-                                                    project.status === 'in_progress' ? 'bg-blue-100 text-blue-800 border-blue-300' :
-                                                    project.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-300' :
-                                                    'bg-gray-100 text-gray-800 border-gray-300'
-                                                }`}>
-                                                    {project.status === 'open' && <CheckCircle className="h-3 w-3 mr-1" />} 
-                                                    {project.status === 'in_progress' && <Clock className="h-3 w-3 mr-1" />} 
-                                                    {project.status === 'rejected' && <AlertTriangle className="h-3 w-3 mr-1" />} 
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
+                                                    {statusIcon}
                                                     {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                                                 </span>
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 ml-2">
@@ -258,7 +288,6 @@ const OrganizationDashboard: React.FC = () => {
                                                 </span>
                                             </div>
                                             <h3 className="font-semibold text-gray-900 text-base mb-1 mt-1">{project.title}</h3>
-                                            <p className="text-gray-700 text-sm line-clamp-2 mb-2">{project.description}</p>
                                             {project.status === 'rejected' && project.rejection_reason && (
                                                 <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs font-semibold">
                                                     <AlertTriangle className="inline w-4 h-4 mr-1 align-text-bottom" />
@@ -274,10 +303,6 @@ const OrganizationDashboard: React.FC = () => {
                                                     className="w-full"
                                                     onClick={() => {
                                                         setResubmitProject(project);
-                                                        // setResubmitTitle(project.title); // This state was removed
-                                                        // setResubmitDescription(project.description || ''); // This state was removed
-                                                        // setResubmitError(null); // This state was removed
-                                                        // setResubmitSuccess(false); // This state was removed
                                                     }}
                                                 >
                                                     Resubmit
@@ -299,66 +324,17 @@ const OrganizationDashboard: React.FC = () => {
                                                 onClick={() => navigate(`/projects/${project.id}`)}
                                                 icon={<Eye className="w-4 h-4" />}
                                             >
-                                                Learn More
+                                                Project Page
                                             </Button>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Pending Applications - Takes 1 column */}
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-900">Applications</h2>
-                            <Button
-                                variant="primary"
-                                onClick={() => navigate('/applications')}
-                                className="dark:text-white"
-                                icon={<ArrowRight className="w-4 h-4" />}
-                            >
-                                Review All
-                            </Button>
-                        </div>
-
-                        {pendingApplications.length === 0 ? (
-                            <div className="text-center py-16 px-6 border-2 border-dashed border-gray-300 rounded-lg">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <CheckCircle className="w-8 h-8 text-gray-400" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">Inbox Clear</h3>
-                                <p className="text-gray-600">No pending applications to review.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {pendingApplications.map((application) => (
-                                    <div key={application.id} className="group flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-semibold text-gray-600">
-                                                {((application.developer.first_name || 'A').charAt(0) + (application.developer.last_name || 'B').charAt(0))}
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-gray-900 text-sm">
-                                                    {`${application.developer.first_name || ''} ${application.developer.last_name || ''}`.trim() || 'Anonymous'}
-                                                </p>
-                                                <p className="text-xs text-gray-500">{application.project.title}</p>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            size="sm"
-                                            onClick={() => navigate('/applications')}
-                                            variant="secondary"
-                                            className="opacity-0 group-hover:opacity-100"
-                                        >
-                                            Review
-                                        </Button>
-                                    </div>
-                                ))}
+                                );
+                            })}
                         </div>
                     )}
-                </div>
-            </div>
+                </div> {/* End of Recent Projects card */}
+
+                {/* Remove empty Main Content Area grid for valid JSX */}
 
                 {/* Quick Actions Footer - Empowering & Clean */}
                 <div className="mt-12 bg-gray-100 rounded-xl p-8 border border-gray-200">

@@ -77,7 +77,7 @@ const ActiveProjectsSection: React.FC<ActiveProjectsSectionProps> = ({
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Active Projects</h3>
                 <button
-                    onClick={() => navigate('/my-applications?filter=accepted')}
+                    onClick={() => navigate('/my-projects')}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
                 >
                     <span>View All</span>

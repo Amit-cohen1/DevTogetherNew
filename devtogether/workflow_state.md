@@ -1511,3 +1511,149 @@ Apply these changes to all relevant files and verify correctness.
 
 ## Log
 - Plan for rejected project resubmit and status filter unification written.
+
+### Step 9.4.3: Developer Dashboard UI/UX Enhancement (Blueprint)
+
+**Objective**: Revamp the Developer Dashboard for a polished, engaging, and responsive user experience on both desktop and mobile. Deliver dynamic greetings, refined card layouts, reduced vertical scroll, and visually appealing components that adhere to DevTogether's professional design standards.
+
+**Key Improvements**
+1. **Dynamic Greeting Banner**
+   • Create `GreetingBanner` component that detects local time and displays "Good morning/afternoon/evening, <Name>! with a subtle gradient background and icon.
+   • Add small accent color bar (time-of-day based) to inject visual energy.
+2. **Responsive Stats Overview**
+   • Refactor `StatsCard` with `size` prop (default `lg`, new `sm`).
+   • Desktop: 4-card grid (unchanged). Tablet: 2-card grid. Mobile: horizontal scrollable list using `overflow-x-auto` with `sm` variant.
+   • Remove hard-coded mock trend data; show trend only when real data available.
+3. **Section Layout Optimisation**
+   • Convert `ActiveProjectsSection` & `ApplicationsTracker` into **CollapsiblePanels** on screens `< md` to minimise scroll.
+   • Standardise card padding/margins for tighter vertical rhythm.
+4. **Empty States & Skeletons**
+   • Add friendly empty-state components (illustration + CTA) for each dashboard section when data arrays are empty.
+5. **Quick Actions Refinement**
+   • Desktop: keep current footer card but reduce padding.
+   • Mobile: transform into sticky bottom action bar with three icon buttons.
+6. **Remove Mock Data**
+   • Purge placeholder statistics/trend numbers from `DeveloperDashboard` and related services; fallback to `N/A` or hide element until real analytics endpoint provided.
+7. **Accessibility & Theming**
+   • Ensure colour contrast meets WCAG AA.
+   • Provide keyboard navigation for collapsible panels and horizontal card list (focusable wrappers).
+8. **Testing**
+   • Unit test `GreetingBanner` time logic.
+   • Snapshot tests for mobile vs desktop layouts using React Testing Library.
+
+**Pseudocode Overview**
+```tsx
+// DeveloperDashboard.tsx
+<GreetingBanner name={profile.first_name} />
+<StatsOverview stats={stats} />
+<CollapsiblePanels>
+  <ActiveProjectsSection />
+  <ApplicationsTracker />
+</CollapsiblePanels>
+<SecondaryPanels>
+  <AchievementsBadges />
+  <RecentActivity />
+</SecondaryPanels>
+<QuickActionsBar />
+```
+
+**Estimated Effort**: 5–6 hrs (dev), 1 hr (QA)
+
+---
+
+### Move Platform Statistics from Profile to Dashboards
+
+1. Identify the ProfileStats (platform statistics) component currently used in the profile page (DeveloperProfile.tsx and/or OrganizationProfile.tsx).
+2. Remove the ProfileStats section from the profile page(s).
+3. Integrate the ProfileStats component into the DeveloperDashboard.tsx for developers.
+4. Integrate the ProfileStats component into the OrganizationDashboard.tsx for organizations.
+5. Ensure the stats are fetched and passed correctly in both dashboards, using the modern, visually rich component.
+6. Adjust dashboard layouts as needed for best appearance and UX.
+7. Test both dashboards to confirm correct display and data.
+
+### Refactor Profile Page for Pure Profile Management
+
+1. Remove all non-profile sections from ProfilePage.tsx:
+   - Achievements
+   - Project portfolio
+   - Stats
+   - Any dashboard/extra info
+2. Ensure only the following remain:
+   - Profile info (avatar, name, bio, links, etc.)
+   - Edit button that toggles inline editing (using EditProfileInline, not a modal)
+   - Share Profile box/button
+3. Editing should be fully inline, including avatar upload/change (no modal should appear).
+4. Test: Editing works inline for all fields, including avatar. No modal appears for editing. Only profile info and share profile are visible.
+
+### Profile Page Modern UX Refactor (2024-07)
+
+1. Layout: Display all profile fields (avatar, name, bio, email, location, skills, links, etc.) in visually separated, responsive sections/boxes under the header.
+2. Edit Button: Only one clear 'Edit Profile' button is visible in view mode.
+3. Inline Editing: Clicking 'Edit Profile' turns all fields into inline inputs/textareas (including avatar upload), no modal or page change.
+4. Save/Cancel UX: In edit mode, the 'Edit Profile' button is replaced by 'Save' and 'Cancel' buttons. These buttons are also shown as a sticky/fixed bar at the bottom of the viewport (always visible, especially on mobile).
+5. Remove Duplicates: No duplicate edit buttons anywhere on the page.
+6. Share Profile: The share profile box/button remains at the bottom of the page.
+7. Responsiveness: Ensure the layout and sticky save/cancel UX work well on both desktop and mobile.
+8. Test: Verify all profile fields are editable inline, avatar can be changed, and save/cancel are always accessible.
+
+## Plan: ProfilePage UI/UX Redesign
+
+### Goals
+- Deliver a visually stunning, modern, and inspiring profile page for both developers and organizations.
+- The page must serve two roles: (1) a clean, delightful editing experience, and (2) a beautiful, impressive public profile/landing page.
+- Draw visual/UX inspiration from HomePage and ProjectsPage (gradient backgrounds, cards, color, iconography, layout, and interactivity).
+
+### Key Design Elements
+
+#### 1. Hero/Header Section
+- Full-width, visually rich header with a gradient or image background (matching the platform's blue/purple branding).
+- Prominently display avatar (large, with border/shadow), name/org name, role badge, and location.
+- Add a subtle animated or decorative background (e.g., gradient, pattern, or SVG wave).
+- For developers: show skills as colored chips in the header, not below.
+- For organizations: show org logo, name, and tagline/mission.
+- Add social/profile links (GitHub, LinkedIn, website, etc.) as icon buttons in the header.
+- Edit button floats in the header (if own profile), styled as a modern icon button.
+
+#### 2. Main Content Card
+- Card overlays the header, slightly elevated (shadow, rounded corners, white background).
+- Bio/description is prominent, with improved typography and spacing.
+- For developers: show skills as chips in the header, not duplicated below.
+- For organizations: show mission/description, website, and contact info.
+- Responsive: on wide screens, expand card width and spacing for a premium feel.
+
+#### 3. Edit Mode
+- When editing, the header and card become editable in-place (avatar upload, name, bio, skills, links, etc.).
+- Use soft background highlight for editable fields (e.g., blue-50 or gray-50).
+- Avatar upload is visually prominent, with drag-and-drop or click-to-upload.
+- Skills selector uses chip UI, with add/remove and custom skills.
+- Save/Cancel buttons are styled and placed at the bottom of the card, not sticky.
+- All fields are pre-filled with current data.
+
+#### 4. General Visual Polish
+- Use gradients, color, and shadow for depth and vibrancy.
+- Use iconography for links, role badges, and actions.
+- Add subtle hover/active effects for interactive elements.
+- Ensure accessibility (contrast, focus states, alt text).
+- Remove all visual clutter; keep layout clean and modern.
+
+#### 5. Mobile Responsiveness
+- Header and card stack vertically on mobile.
+- Avatar and main info remain prominent.
+- All actions and fields are easily tappable.
+
+### Inspiration
+- HomePage: hero section, stats, card layout, color/gradient use.
+- ProjectsPage: card elevation, filter chips, iconography, responsive grid.
+- LinkedIn, Dribbble, and modern portfolio sites for profile polish.
+
+### Implementation Steps
+1. Redesign the header as a full-width hero with gradient background, avatar, name, role, location, skills, and links.
+2. Overlay the main content card with bio/description and details.
+3. Refactor edit mode to allow in-place editing of all header and card fields, with modern UI for avatar and skills.
+4. Polish all visual elements: color, shadow, spacing, icons, and responsiveness.
+5. Test for both developer and organization profiles, in both view and edit modes.
+
+---
+
+## Log
+- [ ] ProfilePage UI/UX redesign plan drafted.

@@ -18,6 +18,10 @@ interface StatsCardProps {
     className?: string;
     onClick?: () => void;
     color?: 'blue' | 'green' | 'yellow' | 'purple';
+    /**
+     * Visual size variant. `lg` is default desktop card, `sm` is compact version for mobile horizontal list.
+     */
+    size?: 'lg' | 'sm';
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({
@@ -29,7 +33,8 @@ const StatsCard: React.FC<StatsCardProps> = ({
     progress,
     className = '',
     onClick,
-    color = 'blue'
+    color = 'blue',
+    size = 'lg'
 }) => {
     const IconComponent = Icons[icon] as React.ComponentType<any>;
 
@@ -89,7 +94,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
     return (
         <div
             className={`
-        relative bg-white rounded-xl border border-gray-100 p-6 
+        relative bg-white rounded-xl border border-gray-100 ${size === 'lg' ? 'p-6' : 'p-4'} 
         hover:shadow-lg transition-all duration-200 hover:border-gray-200
         ${onClick ? 'cursor-pointer hover:scale-[1.02]' : ''}
         ${className}
@@ -99,8 +104,8 @@ const StatsCard: React.FC<StatsCardProps> = ({
             <div className="flex items-start justify-between">
                 <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-4">
-                        <div className={`p-2.5 ${colorClasses.iconBg} rounded-lg`}>
-                            <IconComponent className={`w-5 h-5 ${colorClasses.iconColor}`} />
+                        <div className={`${size === 'lg' ? 'p-2.5' : 'p-2'} ${colorClasses.iconBg} rounded-lg`}>
+                            <IconComponent className={`${size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'} ${colorClasses.iconColor}`} />
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">{title}</h3>
@@ -108,33 +113,33 @@ const StatsCard: React.FC<StatsCardProps> = ({
                     </div>
 
                     <div className="mb-3">
-                        <div className="text-3xl font-bold text-gray-900 mb-1">{value}</div>
+                        <div className={`${size === 'lg' ? 'text-3xl' : 'text-xl'} font-bold text-gray-900 mb-1`}>{value}</div>
                         {subtitle && (
-                            <p className="text-sm text-gray-500">{subtitle}</p>
+                            <p className={`${size === 'lg' ? 'text-sm' : 'text-xs'} text-gray-500`}>{subtitle}</p>
                         )}
                     </div>
 
                     {trend && (
                         <div className="flex items-center space-x-1">
                             {getTrendIcon()}
-                            <span className={`text-xs font-medium ${getTrendColor()}`}>
+                            <span className={`${size === 'lg' ? 'text-xs' : 'text-[10px]'} font-medium ${getTrendColor()}`}>
                                 {trend.value > 0 ? '+' : ''}{trend.value}
                             </span>
-                            <span className="text-xs text-gray-500">{trend.label}</span>
+                            <span className={`${size === 'lg' ? 'text-xs' : 'text-[10px]'} text-gray-500`}>{trend.label}</span>
                         </div>
                     )}
 
                     {progress && (
                         <div className="mt-3">
-                            <div className="flex items-center justify-between text-xs mb-2">
+                            <div className={`flex items-center justify-between ${size === 'lg' ? 'text-xs' : 'text-[10px]'} mb-2`}>
                                 <span className="text-gray-600 font-medium">Progress</span>
                                 <span className="font-semibold text-gray-900">
                                     {progress.current}/{progress.total}
                                 </span>
                             </div>
-                            <div className="bg-gray-100 rounded-full h-2">
+                            <div className={`${size === 'lg' ? 'h-2' : 'h-1.5'} bg-gray-100 rounded-full`}>
                                 <div
-                                    className={`${colorClasses.progressColor} h-2 rounded-full transition-all duration-500`}
+                                    className={`${colorClasses.progressColor} ${size === 'lg' ? 'h-2' : 'h-1.5'} rounded-full transition-all duration-500`}
                                     style={{ width: `${Math.min((progress.current / progress.total) * 100, 100)}%` }}
                                 />
                             </div>

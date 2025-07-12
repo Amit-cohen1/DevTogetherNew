@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
+import { profileService, ProfileStats as ProfileStatsType } from '../../services/profileService';
+import { ProfileStats as ProfileStatsComponent } from '../profile/ProfileStats';
 import type {
     DeveloperStats,
     DashboardProject,
@@ -11,7 +13,7 @@ import type {
     RecommendedProject
 } from '../../services/dashboardService';
 import type { Application } from '../../types/database';
-import StatsCard from './StatsCard';
+import GreetingBanner from './GreetingBanner';
 import ActiveProjectsSection from './ActiveProjectsSection';
 import ApplicationsTracker from './ApplicationsTracker';
 import AchievementsBadges from './AchievementsBadges';
@@ -30,6 +32,7 @@ const DeveloperDashboard: React.FC = () => {
     const [recommendations, setRecommendations] = useState<RecommendedProject[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [profileStats, setProfileStats] = useState<ProfileStatsType | null>(null);
 
     useEffect(() => {
         const loadDashboardData = async () => {
@@ -48,6 +51,9 @@ const DeveloperDashboard: React.FC = () => {
                 setRecentAchievements(data.recentAchievements);
                 setRecentActivity(data.recentActivity);
                 setRecommendations(data.recommendations);
+                // Fetch profile stats for the new component
+                const statsData = await profileService.getProfileStats(user.id);
+                setProfileStats(statsData);
             } catch (err) {
                 console.error('Error loading dashboard data:', err);
                 setError('Failed to load dashboard data. Please try refreshing the page.');
@@ -98,84 +104,32 @@ const DeveloperDashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
+                {/* Greeting Banner */}
+                <GreetingBanner name={profile?.first_name ?? undefined} />
+                {/* ProfileStats (Platform Statistics) */}
+                {profileStats && (
+                    <div className="mb-8">
+                        <ProfileStatsComponent stats={profileStats} />
+                    </div>
+                )}
+
+                {/* Recent Activity - full width, always on top */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Welcome back, {profile?.first_name || 'Developer'}!
-                    </h1>
-                    <p className="text-gray-600 mt-2">
-                        Here's an overview of your project activity and achievements.
-                    </p>
-                </div>
-
-                {/* Stats Overview */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <StatsCard
-                        title="Total Applications"
-                        value={stats?.totalApplications || 0}
-                        subtitle="+12% this month"
-                        icon="Send"
-                        color="blue"
-                        trend={{
-                            value: 12,
-                            label: 'vs last month',
-                            direction: 'up'
-                        }}
-                        onClick={() => navigate('/my-applications')}
-                    />
-                    <StatsCard
-                        title="Acceptance Rate"
-                        value={`${stats?.acceptanceRate || 0}%`}
-                        subtitle="Success rate"
-                        icon="CheckCircle"
-                        color="green"
-                        trend={{
-                            value: 8,
-                            label: 'vs last month',
-                            direction: 'up'
-                        }}
-                    />
-                    <StatsCard
-                        title="Active Projects"
-                        value={stats?.activeProjects || 0}
-                        subtitle="Currently working on"
-                        icon="FolderOpen"
-                        color="yellow"
-                        trend={{
-                            value: 0,
-                            label: 'no change',
-                            direction: 'neutral'
-                        }}
-                        onClick={() => navigate('/my-applications?filter=accepted')}
-                    />
-                    <StatsCard
-                        title="Completed Projects"
-                        value={stats?.completedProjects || 0}
-                        subtitle="Finished projects"
-                        icon="Award"
-                        color="purple"
-                        trend={{
-                            value: 2,
-                            label: 'this quarter',
-                            direction: 'up'
-                        }}
-                    />
-                </div>
-
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Active Projects */}
-                    <ActiveProjectsSection
-                        projects={activeProjects}
-                        loading={loading}
-                    />
-
-                    {/* Recent Applications */}
-                    <ApplicationsTracker
-                        applications={recentApplications}
+                    <RecentActivity
+                        activities={recentActivity}
                         loading={loading}
                     />
                 </div>
+
+                {/* Active Projects - only if there are active projects */}
+                {activeProjects.length > 0 && (
+                    <div className="mb-8">
+                        <ActiveProjectsSection
+                            projects={activeProjects}
+                            loading={loading}
+                        />
+                    </div>
+                )}
 
                 {/* Secondary Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -185,42 +139,16 @@ const DeveloperDashboard: React.FC = () => {
                         loading={loading}
                     />
 
-                    {/* Recent Activity */}
-                    <RecentActivity
-                        activities={recentActivity}
+                    {/* Recommendations */}
+                    {/* Only show recommendations if at least one is a real skill match */}
+                    {recommendations.some(
+                      (rec) => rec.matchScore > 10 && rec.matchReasons.some(r => !r.toLowerCase().includes('available project'))
+                    ) && (
+                      <RecommendationsSection
+                        recommendations={recommendations}
                         loading={loading}
-                    />
-                </div>
-
-                {/* Recommendations */}
-                <RecommendationsSection
-                    recommendations={recommendations}
-                    loading={loading}
-                />
-
-                {/* Quick Actions Footer */}
-                <div className="mt-12 bg-white rounded-xl border border-gray-100 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                    <div className="flex flex-wrap gap-4">
-                        <button
-                            onClick={() => navigate('/projects')}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            Browse New Projects
-                        </button>
-                        <button
-                            onClick={() => navigate('/my-applications')}
-                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                            View All Applications
-                        </button>
-                        <button
-                            onClick={() => navigate('/profile')}
-                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                            Update Profile
-                        </button>
-                    </div>
+                      />
+                    )}
                 </div>
             </div>
         </div>

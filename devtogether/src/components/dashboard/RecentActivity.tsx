@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { ActivityItem } from '../../services/dashboardService';
+import { ArrowRight } from 'lucide-react';
 
 interface RecentActivityProps {
     activities: ActivityItem[];
@@ -79,17 +80,14 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
         );
     }
 
+    if (!activities || activities.length === 0) {
+        return null;
+    }
+
     return (
         <div className="bg-white rounded-xl border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-                <button
-                    onClick={() => navigate('/my-applications')}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
-                >
-                    <span>View All</span>
-                    <Icons.ArrowUpRight className="w-4 h-4" />
-                </button>
             </div>
 
             {activities.length === 0 ? (
@@ -106,36 +104,45 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
                         const IconComponent = getActivityIcon(activity.type);
                         const colorClass = getActivityColor(activity.type);
 
+                        // Updated click handler logic
+                        const handleClick = () => {
+                            if (activity.type === 'application_submitted') {
+                                navigate('/my-applications');
+                            } else if (activity.type === 'application_accepted' || activity.type === 'application_rejected') {
+                                if (activity.relatedId) {
+                                    navigate(`/projects/${activity.relatedId}`);
+                                }
+                            } else if (activity.type === 'project_joined' || activity.type === 'project_completed') {
+                                navigate('/my-projects');
+                            } else if (activity.type === 'message_sent' || activity.type === 'message_received') {
+                                if (activity.relatedId) {
+                                    navigate(`/workspace/${activity.relatedId}`);
+                                }
+                            }
+                        };
+
                         return (
                             <div
                                 key={activity.id}
-                                className="flex items-start space-x-3 cursor-pointer hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors"
-                                onClick={() => {
-                                    if (activity.relatedId) {
-                                        if (activity.type.includes('application')) {
-                                            navigate(`/projects/${activity.relatedId}`);
-                                        } else if (activity.type.includes('message')) {
-                                            navigate(`/workspace/${activity.relatedId}`);
-                                        }
-                                    }
-                                }}
+                                className="flex items-start space-x-3 cursor-pointer hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors group"
+                                onClick={handleClick}
                             >
                                 <div className={`flex-shrink-0 w-8 h-8 ${colorClass} rounded-full flex items-center justify-center`}>
                                     <IconComponent className="w-4 h-4" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-medium text-gray-900">
-                                            {activity.title}
-                                        </h4>
-                                        <span className="text-xs text-gray-500 ml-2">
-                                            {activity.timestamp}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        {activity.description}
-                                    </p>
+                                <div className="flex-1">
+                                    <div className="font-medium text-gray-900">{activity.title}</div>
+                                    <div className="text-sm text-gray-600">{activity.description}</div>
+                                    <div className="text-xs text-gray-400 mt-1">{activity.timestamp}</div>
                                 </div>
+                                <button
+                                    className="ml-2 p-2 rounded-full bg-gray-100 text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors"
+                                    tabIndex={-1}
+                                    aria-label="Go to activity"
+                                    onClick={e => { e.stopPropagation(); handleClick(); }}
+                                >
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
                             </div>
                         );
                     })}

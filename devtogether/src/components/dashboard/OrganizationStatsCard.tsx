@@ -103,33 +103,31 @@ const OrganizationStatsCard: React.FC<OrganizationStatsCardProps> = ({
     }
 
     return (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
-                <div className={`w-12 h-12 ${colorClasses[color].bg} rounded-lg flex items-center justify-center`}>
-                    <Icon className={`w-6 h-6 ${colorClasses[color].icon}`} />
+                <div className={`w-8 h-8 md:w-12 md:h-12 ${colorClasses[color].bg} rounded-lg flex items-center justify-center`}>
+                    <Icon className={`w-5 h-5 md:w-6 md:h-6 ${colorClasses[color].icon}`} />
                 </div>
-                <div className="ml-4 flex-1">
-                    <p className="text-sm text-gray-600 font-medium">{title}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+                <div className="ml-3 md:ml-4 flex-1">
+                    <p className="text-xs md:text-sm text-gray-600 font-medium">{title}</p>
+                    <p className="text-lg md:text-2xl font-bold text-gray-900 mt-1">{value}</p>
                 </div>
             </div>
 
             {(change || subtitle) && (
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-2 md:mt-4 flex items-center justify-between">
                     {change && (
                         <div className="flex items-center space-x-1">
                             {getChangeIcon()}
-                            <span className={`text-sm font-medium ${getChangeTextColor()}`}>
-                                {Math.abs(change.value)}%
-                            </span>
-                            <span className="text-sm text-gray-500">
-                                from {change.period}
-                            </span>
+                            <span className={`text-xs md:text-sm font-medium ${getChangeTextColor()}`}>{Math.abs(change.value)}%</span>
+                            <span className="text-xs md:text-sm text-gray-500">from {change.period}</span>
                         </div>
                     )}
-
                     {subtitle && !change && (
-                        <p className="text-sm text-gray-500">{subtitle}</p>
+                        <p className="hidden md:block text-sm text-gray-500">{subtitle}</p>
+                    )}
+                    {subtitle && !change && (
+                        <p className="block md:hidden text-xs text-gray-400 truncate">{subtitle}</p>
                     )}
                 </div>
             )}

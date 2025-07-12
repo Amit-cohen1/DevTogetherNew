@@ -6,13 +6,15 @@ import {
     Globe,
     ExternalLink,
     Github,
+    
     Linkedin,
     Loader2
 } from 'lucide-react';
 import { User } from '../../types/database';
-import { profileService, ProfileStats as ProfileStatsType, SkillProficiency, ProjectPortfolioItem } from '../../services/profileService';
+import { profileService, ProfileStats as ProfileStatsType, SkillProficiency } from '../../services/profileService';
 import { dashboardService, Achievement } from '../../services/dashboardService';
-import { ProfileStats } from './ProfileStats';
+import { projectService } from '../../services/projects';
+import { ProjectWithTeamMembers } from '../../types/database';
 import { SkillsShowcase } from './SkillsShowcase';
 import { AchievementDisplay } from './AchievementDisplay';
 import { ProjectPortfolio } from './ProjectPortfolio';
@@ -27,10 +29,9 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
     profile,
     isOwnProfile
 }) => {
-    const [profileStats, setProfileStats] = useState<ProfileStatsType | null>(null);
     const [skillProficiency, setSkillProficiency] = useState<SkillProficiency[]>([]);
     const [achievements, setAchievements] = useState<Achievement[]>([]);
-    const [projectPortfolio, setProjectPortfolio] = useState<ProjectPortfolioItem[]>([]);
+    const [projectPortfolio, setProjectPortfolio] = useState<ProjectWithTeamMembers[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -47,17 +48,15 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
             }
 
             // Load all enhanced profile data in parallel
-            const [stats, skills, portfolio] = await Promise.all([
-                profileService.getProfileStats(profile.id),
+            const [skills, portfolio] = await Promise.all([
                 profileService.getSkillProficiency(profile.id),
-                profileService.getProjectPortfolio(profile.id)
+                projectService.getDeveloperProjectsWithTeamMembers(profile.id)
             ]);
 
             // Get achievements using dashboard service with proper DeveloperStats
             const dashboardStats = await dashboardService.getDeveloperStats(profile.id);
             const achievementData = await dashboardService.getAchievements(profile.id, dashboardStats);
 
-            setProfileStats(stats);
             setSkillProficiency(skills);
             setAchievements(achievementData);
             setProjectPortfolio(portfolio);
@@ -104,12 +103,7 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
             )}
 
             {/* Project Portfolio - Core Benefit, moved to top priority */}
-            <ProjectPortfolio projects={projectPortfolio} />
-
-            {/* Enhanced Profile Stats */}
-            {profileStats && (
-                <ProfileStats stats={profileStats} />
-            )}
+            <ProjectPortfolio projects={projectPortfolio} userId={profile.id} />
 
             {/* Enhanced Skills Showcase */}
             <SkillsShowcase skills={skillProficiency} />

@@ -26,6 +26,7 @@ import SharedProfilePage from './pages/SharedProfilePage'
 import CreateProjectPage from './pages/projects/CreateProjectPage'
 import ProjectsPage from './pages/projects/ProjectsPage'
 import ProjectDetailsPage from './pages/projects/ProjectDetailsPage'
+import MyProjectsPage from './pages/projects/MyProjectsPage';
 
 // Workspace
 import ProjectWorkspace from './components/workspace/ProjectWorkspace'
@@ -300,6 +301,16 @@ function App() {
                   element={
                     <ProtectedRoute requiredRole="developer">
                       <MyApplications />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* My Projects Route (Developer) */}
+                <Route
+                  path="/my-projects"
+                  element={
+                    <ProtectedRoute requiredRole="developer">
+                      <MyProjectsPage />
                     </ProtectedRoute>
                   }
                 />

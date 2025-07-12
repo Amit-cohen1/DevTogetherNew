@@ -261,7 +261,9 @@ class OrganizationDashboardService {
                     )
                 `)
                 .in('project_id', projectIds)
-                .eq('status', 'accepted');
+                // Remove status filter to fetch all applications
+                .order('created_at', { ascending: false })
+                .limit(limit);
 
             if (applicationsError) throw applicationsError;
 

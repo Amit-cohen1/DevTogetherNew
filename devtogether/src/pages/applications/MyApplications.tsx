@@ -358,120 +358,166 @@ export default function MyApplications() {
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            {filteredApplications.map((application) => (
-                                <div key={application.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                                    {/* Header */}
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-start gap-4">
-                                                {/* Organization Avatar */}
-                                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                                                    {application.project.organization.avatar_url ? (
-                                                        <img
-                                                            src={application.project.organization.avatar_url}
-                                                            alt={application.project.organization.organization_name || 'Organization'}
-                                                            className="w-12 h-12 rounded-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <Building className="w-6 h-6 text-gray-400" />
-                                                    )}
-                                                </div>
+                            {filteredApplications.map((application) => {
+                                const projectStatus = application.project.status;
+                                const isAccepted = application.status === 'accepted';
+                                const isPending = application.status === 'pending';
+                                const isRejected = application.status === 'rejected';
+                                const canGoToWorkspace = isAccepted && projectStatus !== 'rejected';
+                                const canViewProject = (
+                                    (isAccepted && (projectStatus === 'rejected' || projectStatus === 'cancelled')) ||
+                                    (isPending && projectStatus === 'open') ||
+                                    (isRejected && projectStatus === 'open')
+                                );
+                                const canWithdraw = isPending && projectStatus === 'open';
+                                const canResubmit = isRejected && projectStatus === 'open'; // always allow for now
+                                // Auto-withdraw pending if project is not open
+                                if (isPending && projectStatus !== 'open') {
+                                    application.status = 'withdrawn';
+                                }
+                                return (
+                                    <div key={application.id} className="bg-white rounded-lg border border-gray-200 p-6">
+                                        {/* Header */}
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-1">
+                                                <div className="flex items-start gap-4">
+                                                    {/* Organization Avatar */}
+                                                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                                                        {application.project.organization.avatar_url ? (
+                                                            <img
+                                                                src={application.project.organization.avatar_url}
+                                                                alt={application.project.organization.organization_name || 'Organization'}
+                                                                className="w-12 h-12 rounded-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <Building className="w-6 h-6 text-gray-400" />
+                                                        )}
+                                                    </div>
 
-                                                {/* Project Info */}
-                                                <div className="flex-1">
-                                                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                                        {application.project.title}
-                                                    </h3>
-                                                    <p className="text-gray-600 text-sm mb-2">
-                                                        {application.project.organization.organization_name}
-                                                    </p>
-                                                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                        <div className="flex items-center gap-1">
-                                                            <Calendar className="w-4 h-4" />
-                                                            <span>Applied {formatDate(application.created_at)}</span>
+                                                    {/* Project Info */}
+                                                    <div className="flex-1">
+                                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                                            {application.project.title}
+                                                        </h3>
+                                                        <p className="text-gray-600 text-sm mb-2">
+                                                            {application.project.organization.organization_name}
+                                                        </p>
+                                                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                            <div className="flex items-center gap-1">
+                                                                <Calendar className="w-4 h-4" />
+                                                                <span>Applied {formatDate(application.created_at)}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Status and Actions */}
-                                        <div className="flex items-center gap-3">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(application.status)}`}>
-                                                {getStatusIcon(application.status)}
-                                                <span className="ml-1">{application.status.toUpperCase()}</span>
-                                            </span>
-
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => navigate(`/projects/${application.project_id}`)}
-                                                    className="flex items-center gap-1"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    View Project
-                                                </Button>
-
-                                                {application.status === 'pending' && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleWithdrawApplication(application.id)}
-                                                        className="text-red-600 border-red-300 hover:bg-red-50"
-                                                    >
-                                                        Withdraw
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Status Message */}
-                                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                                        <p className="text-sm text-gray-700 flex items-center gap-2">
-                                            {getStatusIcon(application.status)}
-                                            {getStatusMessage(application.status)}
-                                        </p>
-                                    </div>
-
-                                    {/* Cover Letter Preview */}
-                                    {application.cover_letter && (
-                                        <div className="border-t border-gray-200 pt-4">
-                                            <h4 className="text-sm font-medium text-gray-900 mb-2">Cover Letter</h4>
-                                            <p className="text-sm text-gray-700 line-clamp-3">
-                                                {application.cover_letter}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Portfolio Links */}
-                                    {application.portfolio_links && application.portfolio_links.length > 0 && (
-                                        <div className="border-t border-gray-200 pt-4 mt-4">
-                                            <h4 className="text-sm font-medium text-gray-900 mb-2">Portfolio Links</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {application.portfolio_links.map((link, index) => {
-                                                    const parts = link.split(': ')
-                                                    const title = parts[0] || 'Portfolio Link'
-                                                    const url = parts[1] || link
-                                                    return (
-                                                        <a
-                                                            key={index}
-                                                            href={url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                                            {/* Status and Actions */}
+                                            <div className="flex items-center gap-3">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(application.status)}`}>
+                                                    {getStatusIcon(application.status)}
+                                                    <span className="ml-1">{application.status.toUpperCase()}</span>
+                                                </span>
+                                                <div className="flex gap-2">
+                                                    {canGoToWorkspace && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/workspace/${application.project_id}`)}
+                                                            className="flex items-center gap-1"
                                                         >
-                                                            <ExternalLink className="w-3 h-3" />
-                                                            {title}
-                                                        </a>
-                                                    )
-                                                })}
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Workspace
+                                                        </Button>
+                                                    )}
+                                                    {canViewProject && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/projects/${application.project_id}`)}
+                                                            className="flex items-center gap-1"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                            View Project
+                                                        </Button>
+                                                    )}
+                                                    {canWithdraw && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleWithdrawApplication(application.id)}
+                                                            className="text-red-600 border-red-300 hover:bg-red-50"
+                                                        >
+                                                            Withdraw
+                                                        </Button>
+                                                    )}
+                                                    {canResubmit && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/projects/${application.project_id}`)}
+                                                            className="flex items-center gap-1 text-blue-600 border-blue-300 hover:bg-blue-50"
+                                                        >
+                                                            <RefreshCw className="w-4 h-4" />
+                                                            Resubmit Application
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+
+                                        {/* Status Message */}
+                                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                            <p className="text-sm text-gray-700 flex items-center gap-2">
+                                                {getStatusIcon(application.status)}
+                                                {getStatusMessage(application.status)}
+                                            </p>
+                                            {/* Show workspace disabled message if needed */}
+                                            {isAccepted && projectStatus === 'rejected' && (
+                                                <div className="mt-2 text-red-600 font-medium">
+                                                    Workspace access is disabled for rejected projects.
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Cover Letter Preview */}
+                                        {application.cover_letter && (
+                                            <div className="border-t border-gray-200 pt-4">
+                                                <h4 className="text-sm font-medium text-gray-900 mb-2">Cover Letter</h4>
+                                                <p className="text-sm text-gray-700 line-clamp-3">
+                                                    {application.cover_letter}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Portfolio Links */}
+                                        {application.portfolio_links && application.portfolio_links.length > 0 && (
+                                            <div className="border-t border-gray-200 pt-4 mt-4">
+                                                <h4 className="text-sm font-medium text-gray-900 mb-2">Portfolio Links</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {application.portfolio_links.map((link, index) => {
+                                                        const parts = link.split(': ')
+                                                        const title = parts[0] || 'Portfolio Link'
+                                                        const url = parts[1] || link
+                                                        return (
+                                                            <a
+                                                                key={index}
+                                                                href={url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                                                            >
+                                                                <ExternalLink className="w-3 h-3" />
+                                                                {title}
+                                                            </a>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
