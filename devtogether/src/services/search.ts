@@ -18,13 +18,36 @@ export const searchService = {
         const { query, filters = {}, sort_by = 'relevance', sort_order = 'desc', page = 1, limit = 20 } = params
 
         try {
-            // Use the projectService to get projects with proper team member composition
-            const allProjects = await projectService.getProjectsWithTeamMembers({
-                status: filters.status?.length ? filters.status[0] as any : 'open',
-                difficulty_level: filters.difficulty_level?.length ? filters.difficulty_level[0] as any : undefined,
-                application_type: filters.application_type?.length ? filters.application_type[0] as any : undefined,
-                technology_stack: filters.technology_stack
-            })
+            // Prepare project service filters - FIXED: Now properly handles multi-select
+            const projectFilters: any = {};
+            
+            // Status filter - use all selected statuses
+            if (filters.status?.length) {
+                projectFilters.status = filters.status; // Pass entire array
+            }
+            
+            // Difficulty level filter - use all selected levels
+            if (filters.difficulty_level?.length) {
+                projectFilters.difficulty_level = filters.difficulty_level; // Pass entire array
+            }
+            
+            // Application type filter - use all selected types
+            if (filters.application_type?.length) {
+                projectFilters.application_type = filters.application_type; // Pass entire array
+            }
+            
+            // Technology stack filter
+            if (filters.technology_stack?.length) {
+                projectFilters.technology_stack = filters.technology_stack;
+            }
+            
+            // Remote work filter
+            if (filters.is_remote !== null && filters.is_remote !== undefined) {
+                projectFilters.is_remote = filters.is_remote;
+            }
+
+            // Get projects with proper team member composition using enhanced filters
+            const allProjects = await projectService.getProjectsWithTeamMembers(projectFilters);
 
             // Filter projects based on search query
             let filteredProjects = allProjects
@@ -40,31 +63,8 @@ export const searchService = {
                 )
             }
 
-            // Apply additional filters
-            if (filters.difficulty_level?.length && filters.difficulty_level.length > 1) {
-                filteredProjects = filteredProjects.filter(project =>
-                    filters.difficulty_level!.includes(project.difficulty_level)
-                )
-            }
-
-            if (filters.application_type?.length && filters.application_type.length > 1) {
-                filteredProjects = filteredProjects.filter(project =>
-                    filters.application_type!.includes(project.application_type)
-                )
-            }
-
-            if (filters.status?.length && filters.status.length > 1) {
-                filteredProjects = filteredProjects.filter(project =>
-                    filters.status!.includes(project.status)
-                )
-            }
-
-            if (filters.is_remote !== null && filters.is_remote !== undefined) {
-                filteredProjects = filteredProjects.filter(project =>
-                    project.is_remote === filters.is_remote
-                )
-            }
-
+            // Apply additional filters that aren't handled by projectService
+            
             // Date range filters
             if (filters.date_range?.start) {
                 filteredProjects = filteredProjects.filter(project =>
@@ -75,6 +75,33 @@ export const searchService = {
             if (filters.date_range?.end) {
                 filteredProjects = filteredProjects.filter(project =>
                     new Date(project.created_at) <= new Date(filters.date_range!.end!)
+                )
+            }
+
+            // Team size filter
+            if (filters.team_size) {
+                filteredProjects = filteredProjects.filter(project => {
+                    const teamSize = project.applications?.filter(app => app.status === 'accepted').length || 0;
+                    
+                    switch (filters.team_size) {
+                        case 'solo':
+                            return teamSize <= 1;
+                        case 'small':
+                            return teamSize >= 2 && teamSize <= 5;
+                        case 'medium':
+                            return teamSize >= 6 && teamSize <= 10;
+                        case 'large':
+                            return teamSize > 10;
+                        default:
+                            return true;
+                    }
+                });
+            }
+
+            // Location filter
+            if (filters.location?.city) {
+                filteredProjects = filteredProjects.filter(project =>
+                    project.location?.toLowerCase().includes(filters.location!.city!.toLowerCase())
                 )
             }
 
@@ -89,12 +116,9 @@ export const searchService = {
                     break
                 case 'deadline':
                     filteredProjects.sort((a, b) => {
-                        if (!a.deadline && !b.deadline) return 0
-                        if (!a.deadline) return 1
-                        if (!b.deadline) return -1
-                        const dateA = new Date(a.deadline).getTime()
-                        const dateB = new Date(b.deadline).getTime()
-                        return sort_order === 'asc' ? dateA - dateB : dateB - dateA
+                        const deadlineA = a.deadline ? new Date(a.deadline).getTime() : Infinity
+                        const deadlineB = b.deadline ? new Date(b.deadline).getTime() : Infinity
+                        return sort_order === 'asc' ? deadlineA - deadlineB : deadlineB - deadlineA
                     })
                     break
                 case 'title':
@@ -103,50 +127,139 @@ export const searchService = {
                         return sort_order === 'asc' ? comparison : -comparison
                     })
                     break
+                case 'relevance':
+                    // For relevance, we'll sort by search term match quality
+                    if (query.trim()) {
+                        const searchTerm = query.toLowerCase()
+                        filteredProjects.sort((a, b) => {
+                            const scoreA = this.calculateRelevanceScore(a, searchTerm)
+                            const scoreB = this.calculateRelevanceScore(b, searchTerm)
+                            return sort_order === 'asc' ? scoreA - scoreB : scoreB - scoreA
+                        })
+                    }
+                    break
                 case 'popularity':
-                    // Sort by team member count
+                    // Sort by number of applications or team members
                     filteredProjects.sort((a, b) => {
-                        const countA = a.team_members.length
-                        const countB = b.team_members.length
-                        return sort_order === 'asc' ? countA - countB : countB - countA
+                        const popularityA = (a.applications?.length || 0)
+                        const popularityB = (b.applications?.length || 0)
+                        return sort_order === 'asc' ? popularityA - popularityB : popularityB - popularityA
                     })
                     break
-                default: // relevance
-                    // For relevance, keep the natural order from database (created_at desc)
-                    filteredProjects.sort((a, b) => {
-                        const dateA = new Date(a.created_at).getTime()
-                        const dateB = new Date(b.created_at).getTime()
-                        return dateB - dateA
-                    })
             }
 
-            const totalCount = filteredProjects.length
-
             // Pagination
-            const offset = (page - 1) * limit
-            const paginatedProjects = filteredProjects.slice(offset, offset + limit)
+            const startIndex = (page - 1) * limit
+            const endIndex = startIndex + limit
+            const paginatedProjects = filteredProjects.slice(startIndex, endIndex)
 
             const searchTime = Date.now() - startTime
 
-            // Get search suggestions if query is short
-            const suggestions = query.length < 3 ? await this.getSearchSuggestions(query) : []
-
             return {
                 projects: paginatedProjects,
-                total_count: totalCount,
+                total_count: filteredProjects.length,
                 search_time: searchTime,
-                suggestions: suggestions.map(s => s.text)
+                suggestions: query.trim() ? this.generateSearchSuggestions(query, filteredProjects) : []
             }
+
         } catch (error) {
-            console.error('Full-text search failed:', error)
-            throw error
+            console.error('Search error:', error)
+            throw new Error('Search failed. Please try again.')
         }
     },
 
-    // Get search suggestions based on input
-    async getSearchSuggestions(partial: string): Promise<SearchSuggestion[]> {
-        if (!partial.trim()) return []
+    // Calculate relevance score for search results
+    calculateRelevanceScore(project: any, searchTerm: string): number {
+        let score = 0
+        
+        // Title match (highest weight)
+        if (project.title.toLowerCase().includes(searchTerm)) {
+            score += 10
+            if (project.title.toLowerCase().startsWith(searchTerm)) {
+                score += 5 // Bonus for starting with search term
+            }
+        }
+        
+        // Description match
+        if (project.description.toLowerCase().includes(searchTerm)) {
+            score += 5
+        }
+        
+        // Technology stack match
+        if (project.technology_stack.some((tech: string) => tech.toLowerCase().includes(searchTerm))) {
+            score += 7
+        }
+        
+        // Organization name match
+        if (project.organization?.organization_name?.toLowerCase().includes(searchTerm)) {
+            score += 6
+        }
+        
+        // Requirements match
+        if (project.requirements.toLowerCase().includes(searchTerm)) {
+            score += 3
+        }
+        
+        return score
+    },
 
+    // Generate search suggestions based on results
+    generateSearchSuggestions(query: string, projects: any[]): string[] {
+        const suggestions: Set<string> = new Set()
+        const queryLower = query.toLowerCase()
+        
+        // Extract technology suggestions
+        projects.forEach(project => {
+            project.technology_stack.forEach((tech: string) => {
+                if (tech.toLowerCase().includes(queryLower) && tech.toLowerCase() !== queryLower) {
+                    suggestions.add(tech)
+                }
+            })
+        })
+        
+        // Extract organization suggestions
+        projects.forEach(project => {
+            if (project.organization?.organization_name) {
+                const orgName = project.organization.organization_name
+                if (orgName.toLowerCase().includes(queryLower) && orgName.toLowerCase() !== queryLower) {
+                    suggestions.add(orgName)
+                }
+            }
+        })
+        
+        return Array.from(suggestions).slice(0, 5) // Limit to 5 suggestions
+    },
+
+    // Quick search for autocomplete
+    async quickSearch(query: string, limit: number = 10): Promise<Project[]> {
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .select(`
+                    id,
+                    title,
+                    description,
+                    technology_stack,
+                    status,
+                    organization:profiles!projects_organization_id_fkey(
+                        organization_name,
+                        avatar_url
+                    )
+                `)
+                .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+                .eq('status', 'open')
+                .limit(limit)
+
+            if (error) throw error
+            return data || []
+        } catch (error) {
+            console.error('Quick search error:', error)
+            return []
+        }
+    },
+
+    // Get search suggestions for autocomplete
+    async getSearchSuggestions(partial: string, limit: number = 5): Promise<SearchSuggestion[]> {
         try {
             const suggestions: SearchSuggestion[] = []
 
@@ -154,64 +267,51 @@ export const searchService = {
             const { data: techSuggestions } = await supabase
                 .from('projects')
                 .select('technology_stack')
-                .textSearch('technology_stack', `${partial}:*`)
-                .limit(5)
+                .eq('status', 'open')
 
-            if (techSuggestions) {
-                const techs = techSuggestions
-                    .flatMap((p: any) => p.technology_stack || [])
-                    .filter((tech: string) => tech.toLowerCase().includes(partial.toLowerCase()))
-                    .slice(0, 3)
-
-                techs.forEach((tech: string) => {
-                    if (!suggestions.find(s => s.text === tech)) {
-                        suggestions.push({ text: tech, type: 'technology' })
+            const techSet: Set<string> = new Set()
+            techSuggestions?.forEach((project: any) => {
+                (project.technology_stack || []).forEach((tech: string) => {
+                    if (tech.toLowerCase().includes(partial.toLowerCase())) {
+                        techSet.add(tech)
                     }
                 })
-            }
+            })
+
+            Array.from(techSet).slice(0, limit).forEach(tech => {
+                suggestions.push({
+                    type: 'technology',
+                    text: tech,
+                    count: 0 // Could be calculated if needed
+                })
+            })
 
             // Project title suggestions
             const { data: projectSuggestions } = await supabase
                 .from('projects')
                 .select('title')
                 .ilike('title', `%${partial}%`)
-                .limit(3)
+                .eq('status', 'open')
+                .limit(limit)
 
-            if (projectSuggestions) {
-                projectSuggestions.forEach((project: any) => {
-                    suggestions.push({ text: project.title, type: 'project' })
+            projectSuggestions?.forEach((project: any) => {
+                suggestions.push({
+                    type: 'project',
+                    text: project.title,
+                    count: 0
                 })
-            }
+            })
 
-            // Organization suggestions
-            const { data: orgSuggestions } = await supabase
-                .from('profiles')
-                .select('organization_name')
-                .not('organization_name', 'is', null)
-                .ilike('organization_name', `%${partial}%`)
-                .limit(2)
-
-            if (orgSuggestions) {
-                orgSuggestions.forEach((org: any) => {
-                    if (org.organization_name) {
-                        suggestions.push({ text: org.organization_name, type: 'organization' })
-                    }
-                })
-            }
-
-            return suggestions.slice(0, 8)
+            return suggestions.slice(0, limit)
         } catch (error) {
             console.error('Error getting search suggestions:', error)
             return []
         }
     },
 
-    // Save search to history
+    // Search history management
     async saveSearchToHistory(userId: string, searchTerm: string, filters: SearchFilters, resultCount: number): Promise<void> {
         try {
-            // Only save non-empty search terms
-            if (!searchTerm.trim()) return
-
             await supabase
                 .from('search_history')
                 .insert({
@@ -220,16 +320,11 @@ export const searchService = {
                     filters: filters as any,
                     result_count: resultCount
                 })
-
-            // Update popular searches
-            await this.updatePopularSearches(searchTerm)
         } catch (error) {
-            console.error('Error saving search history:', error)
-            // Don't throw error for history saving failures
+            console.error('Error saving search to history:', error)
         }
     },
 
-    // Get user's search history
     async getSearchHistory(userId: string, limit: number = 10): Promise<SearchHistory[]> {
         try {
             const { data, error } = await supabase
@@ -242,12 +337,11 @@ export const searchService = {
             if (error) throw error
             return data || []
         } catch (error) {
-            console.error('Error fetching search history:', error)
+            console.error('Error getting search history:', error)
             return []
         }
     },
 
-    // Delete search history
     async deleteSearchHistory(userId: string, searchHistoryId?: string): Promise<void> {
         try {
             let query = supabase
@@ -259,61 +353,13 @@ export const searchService = {
                 query = query.eq('id', searchHistoryId)
             }
 
-            const { error } = await query
-
-            if (error) throw error
+            await query
         } catch (error) {
             console.error('Error deleting search history:', error)
-            throw error
         }
     },
 
-    // Update popular searches
-    async updatePopularSearches(searchTerm: string): Promise<void> {
-        try {
-            // Only update for non-empty search terms
-            if (!searchTerm.trim()) return
-
-            const normalizedTerm = searchTerm.toLowerCase().trim()
-
-            // Try to insert first (for new search terms)
-            const { error: insertError } = await supabase
-                .from('popular_searches')
-                .insert({
-                    search_term: normalizedTerm,
-                    search_count: 1,
-                    last_searched: new Date().toISOString()
-                })
-
-            // If insert failed due to unique constraint, update existing record
-            if (insertError && insertError.code === '23505') {
-                // Get current count and increment it
-                const { data: existingSearch, error: selectError } = await supabase
-                    .from('popular_searches')
-                    .select('search_count')
-                    .eq('search_term', normalizedTerm)
-                    .single()
-
-                if (!selectError && existingSearch) {
-                    await supabase
-                        .from('popular_searches')
-                        .update({
-                            search_count: existingSearch.search_count + 1,
-                            last_searched: new Date().toISOString()
-                        })
-                        .eq('search_term', normalizedTerm)
-                }
-            } else if (insertError) {
-                // Some other error occurred
-                console.error('Error inserting popular search:', insertError)
-            }
-        } catch (error) {
-            console.error('Error updating popular searches:', error)
-            // Don't throw error for popular searches failures
-        }
-    },
-
-    // Get popular searches
+    // Popular searches
     async getPopularSearches(limit: number = 10): Promise<PopularSearch[]> {
         try {
             const { data, error } = await supabase
@@ -325,17 +371,54 @@ export const searchService = {
             if (error) throw error
             return data || []
         } catch (error) {
-            console.error('Error fetching popular searches:', error)
+            console.error('Error getting popular searches:', error)
             return []
         }
     },
 
-    // Track search analytics
+    async updatePopularSearch(searchTerm: string): Promise<void> {
+        try {
+            // First try to increment existing record
+            const { data: existing, error: fetchError } = await supabase
+                .from('popular_searches')
+                .select('*')
+                .eq('search_term', searchTerm)
+                .single()
+
+            if (fetchError && fetchError.code !== 'PGRST116') {
+                throw fetchError
+            }
+
+            if (existing) {
+                // Update existing record
+                await supabase
+                    .from('popular_searches')
+                    .update({
+                        search_count: existing.search_count + 1,
+                        last_searched: new Date().toISOString()
+                    })
+                    .eq('id', existing.id)
+            } else {
+                // Create new record
+                await supabase
+                    .from('popular_searches')
+                    .insert({
+                        search_term: searchTerm,
+                        search_count: 1,
+                        last_searched: new Date().toISOString()
+                    })
+            }
+        } catch (error) {
+            console.error('Error updating popular search:', error)
+        }
+    },
+
+    // Search analytics
     async trackSearchAnalytics(
-        searchTerm: string,
-        userId: string | null,
-        resultCount: number,
-        clickedProjectId?: string,
+        searchTerm: string, 
+        userId: string | null, 
+        resultCount: number, 
+        clickedProjectId?: string, 
         clickPosition?: number,
         sessionId?: string
     ): Promise<void> {
@@ -355,34 +438,28 @@ export const searchService = {
         }
     },
 
-    // Get quick search results (for navbar search)
-    async quickSearch(query: string, limit: number = 5): Promise<Project[]> {
-        if (!query.trim()) return []
-
+    async getSearchAnalytics(startDate?: string, endDate?: string): Promise<SearchAnalytics[]> {
         try {
-            // Use projectService to get projects with proper team member composition
-            const allProjects = await projectService.getProjectsWithTeamMembers({
-                status: 'open'
-            })
+            let query = supabase
+                .from('search_analytics')
+                .select('*')
+                .order('created_at', { ascending: false })
 
-            // Filter projects based on query
-            const searchTerm = query.toLowerCase()
-            const filteredProjects = allProjects.filter(project =>
-                project.title.toLowerCase().includes(searchTerm) ||
-                project.description.toLowerCase().includes(searchTerm) ||
-                project.technology_stack.some(tech => tech.toLowerCase().includes(searchTerm)) ||
-                project.organization?.organization_name?.toLowerCase().includes(searchTerm)
-            )
+            if (startDate) {
+                query = query.gte('created_at', startDate)
+            }
 
-            // Sort by relevance (created_at desc) and limit results
-            const sortedProjects = filteredProjects
-                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                .slice(0, limit)
+            if (endDate) {
+                query = query.lte('created_at', endDate)
+            }
 
-            return sortedProjects
+            const { data, error } = await query
+
+            if (error) throw error
+            return data || []
         } catch (error) {
-            console.error('Quick search error:', error)
+            console.error('Error getting search analytics:', error)
             return []
         }
     }
-} 
+}

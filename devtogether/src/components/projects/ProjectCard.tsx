@@ -27,7 +27,7 @@ interface ProjectCardProps {
         admin_workspace_access_requested?: boolean;
         admin_workspace_access_granted?: boolean;
     }
-    variant?: 'default' | 'large' | 'featured'
+    variant?: 'default' | 'large' | 'featured' | 'list'
     onResubmitted?: () => void;
     onResubmitClick?: () => void;
 }
