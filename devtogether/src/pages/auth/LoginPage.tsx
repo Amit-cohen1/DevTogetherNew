@@ -17,11 +17,11 @@ export const LoginPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [authError, setAuthError] = useState<string | null>(null)
 
-    const { signIn, signInWithOAuth } = useAuth()
+    const { signIn, signInWithOAuth, profile } = useAuth();
     const navigate = useNavigate()
     const location = useLocation()
 
-    const from = (location.state as any)?.from || '/'
+    const from = (location.state as any)?.from || null;
 
     const {
         register,
@@ -42,7 +42,19 @@ export const LoginPage: React.FC = () => {
             const { success, error } = await signIn(signInData)
 
             if (success) {
-                navigate(from, { replace: true })
+                // If coming from a protected route, go there; otherwise, go to dashboard for developers
+                if (from && from !== '/auth/login') {
+                    navigate(from, { replace: true })
+                } else {
+                    const p = profile;
+                    if (p?.role === 'developer') {
+                        navigate('/dashboard', { replace: true });
+                    } else if (p?.role === 'organization') {
+                        navigate('/organization/dashboard', { replace: true });
+                    } else {
+                        navigate('/dashboard', { replace: true });
+                    }
+                }
             } else {
                 setAuthError(error || 'Login failed. Please try again.')
             }

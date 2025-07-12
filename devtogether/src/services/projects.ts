@@ -390,6 +390,112 @@ export const projectService = {
         return this.getProjectsWithTeamMembers({ organization_id: organizationId })
     },
 
+    // Get all projects for a developer (where they were accepted), with team members
+    async getDeveloperProjectsWithTeamMembers(developerId: string, statusFilter?: string[]): Promise<ProjectWithTeamMembers[]> {
+        // Fetch all applications for this developer with status 'accepted'
+        let appQuery = supabase
+            .from('applications')
+            .select(`
+                id,
+                status,
+                project_id,
+                projects:projects!applications_project_id_fkey(
+                    *,
+                    organization:profiles!projects_organization_id_fkey(
+                        id,
+                        organization_name,
+                        avatar_url,
+                        email,
+                        first_name,
+                        last_name,
+                        blocked,
+                        organization_status
+                    ),
+                    applications(
+                        id,
+                        status,
+                        status_manager,
+                        created_at,
+                        developer:profiles!applications_developer_id_fkey(
+                            id,
+                            first_name,
+                            last_name,
+                            avatar_url,
+                            email,
+                            blocked
+                        )
+                    )
+                )
+            `)
+            .eq('developer_id', developerId)
+            .eq('status', 'accepted');
+
+        const { data, error } = await appQuery;
+        if (error) {
+            console.error('Error fetching developer projects:', error);
+            throw new Error(error.message);
+        }
+
+        // Filter by project status if needed
+        let projects: ProjectWithTeamMembers[] = (data || [])
+            .map((app: any) => app.projects)
+            .filter((project: any) => project && (!statusFilter || statusFilter.includes(project.status)));
+
+        // Remove duplicates (if any)
+        const seen = new Set();
+        projects = projects.filter((proj: any) => {
+            if (seen.has(proj.id)) return false;
+            seen.add(proj.id);
+            return true;
+        });
+
+        // Transform to include team members (reuse logic from getProjectsWithTeamMembers)
+        return projects.map((project: any) => {
+            const teamMembers: TeamMember[] = [];
+            // Add org owner
+            if (project.organization) {
+                teamMembers.push({
+                    id: project.organization.id,
+                    type: 'organization',
+                    profile: {
+                        id: project.organization.id,
+                        first_name: project.organization.first_name,
+                        last_name: project.organization.last_name,
+                        organization_name: project.organization.organization_name,
+                        avatar_url: project.organization.avatar_url,
+                        email: project.organization.email
+                    },
+                    role: 'owner',
+                    joined_at: project.created_at
+                });
+            }
+            // Add accepted developers
+            const acceptedApplications = project.applications?.filter((app: any) =>
+                app.status === 'accepted' && app.developer !== null
+            ) || [];
+            acceptedApplications.forEach((application: any) => {
+                const isStatusManager = application.status_manager === true;
+                teamMembers.push({
+                    id: application.developer.id,
+                    type: 'developer',
+                    profile: {
+                        id: application.developer.id,
+                        first_name: application.developer.first_name,
+                        last_name: application.developer.last_name,
+                        avatar_url: application.developer.avatar_url,
+                        email: application.developer.email
+                    },
+                    role: isStatusManager ? 'status_manager' : 'member',
+                    joined_at: application.created_at
+                });
+            });
+            return {
+                ...project,
+                teamMembers
+            };
+        });
+    },
+
     async approveProject(projectId: string, adminId: string): Promise<boolean> {
         const { error } = await supabase
             .from('projects')

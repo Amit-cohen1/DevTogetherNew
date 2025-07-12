@@ -127,7 +127,7 @@ const ApplicationsTracker: React.FC<ApplicationsTrackerProps> = ({
                 <div className="col-span-3">Organization</div>
                 <div className="col-span-2">Date Applied</div>
                 <div className="col-span-1">Status</div>
-                <div className="col-span-1">Action</div>
+                <div className="col-span-1 text-right">Action</div>
             </div>
 
             {/* Table Body */}
@@ -137,7 +137,7 @@ const ApplicationsTracker: React.FC<ApplicationsTrackerProps> = ({
                     return (
                         <div
                             key={application.id}
-                            className="grid grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-25 transition-colors"
+                            className="grid grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-25 transition-colors items-center"
                         >
                             {/* Project */}
                             <div className="col-span-5 flex items-center space-x-3">
@@ -171,7 +171,7 @@ const ApplicationsTracker: React.FC<ApplicationsTrackerProps> = ({
                             </div>
 
                             {/* Status */}
-                            <div className="col-span-1 flex items-center">
+                            <div className="col-span-1 flex items-center min-w-[90px]">
                                 <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${statusConfig.className}`}>
                                     {statusConfig.icon}
                                     <span className="hidden sm:inline">{statusConfig.label}</span>
@@ -179,14 +179,14 @@ const ApplicationsTracker: React.FC<ApplicationsTrackerProps> = ({
                             </div>
 
                             {/* Action */}
-                            <div className="col-span-1 flex items-center justify-end">
+                            <div className="col-span-1 flex items-center justify-end min-w-[48px] ml-2">
                                 {application.status === 'accepted' ? (
                                     <button
                                         onClick={() => navigate(`/workspace/${application.project_id}`)}
-                                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                                         title="Open Workspace"
                                     >
-                                        <ExternalLink className="w-4 h-4" />
+                                        <ExternalLink className="w-5 h-5" />
                                     </button>
                                 ) : (
                                     <button

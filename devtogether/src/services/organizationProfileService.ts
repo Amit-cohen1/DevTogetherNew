@@ -103,6 +103,32 @@ export function isOrganizationPending(profile: Profile): boolean {
   return profile.organization_status === 'pending';
 }
 
+// Fetch the count of organizations
+export async function getOrganizationCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('role', 'organization');
+  if (error) {
+    console.error('Error fetching organization count:', error);
+    return 0;
+  }
+  return count || 0;
+}
+
+// Fetch the count of developers
+export async function getDeveloperCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('role', 'developer');
+  if (error) {
+    console.error('Error fetching developer count:', error);
+    return 0;
+  }
+  return count || 0;
+}
+
 class OrganizationProfileService {
     // Get complete organization profile data
     async getOrganizationProfileData(organizationId: string): Promise<OrganizationProfileData | null> {

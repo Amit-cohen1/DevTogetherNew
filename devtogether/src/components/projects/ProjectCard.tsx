@@ -64,7 +64,7 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
             case 'in_progress':
                 return 'bg-blue-50 text-blue-700 border-blue-200'
             case 'completed':
-                return 'bg-gray-50 text-gray-700 border-gray-200'
+                return 'bg-green-50 text-green-700 border-green-400'
             case 'cancelled':
                 return 'bg-gray-100 text-gray-400 border-gray-200'
             case 'rejected':
@@ -90,15 +90,22 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
 
     // Enhanced card classes for professional design
     const getCardClasses = () => {
-        const baseClasses = `group relative bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-gray-300 overflow-hidden w-full flex flex-col h-full backdrop-blur-sm`
-        
+        const statusColor = {
+            open: 'border-green-400 bg-green-50',
+            in_progress: 'border-blue-400 bg-blue-50',
+            completed: 'border-green-400 bg-green-50 ring-2 ring-green-300',
+            cancelled: 'border-red-400 bg-red-50',
+            rejected: 'border-red-500 bg-red-50',
+            pending: 'border-yellow-300 bg-yellow-50',
+        }[project.status] || 'border-gray-200 bg-white';
+        const baseClasses = `group relative rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-gray-300 overflow-hidden w-full flex flex-col h-full backdrop-blur-sm ${statusColor}`;
         switch (variant) {
             case 'featured':
-                return `${baseClasses} ring-2 ring-blue-100 hover:ring-blue-200`
+                return `${baseClasses} ring-2 ring-blue-100 hover:ring-blue-200`;
             case 'large':
-                return `${baseClasses} hover:scale-[1.02] transform-gpu`
+                return `${baseClasses} hover:scale-[1.02] transform-gpu`;
             default:
-                return `${baseClasses} hover:-translate-y-1`
+                return `${baseClasses} hover:-translate-y-1`;
         }
     }
 
@@ -165,6 +172,11 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
                 {/* Top Row: Status & Bookmark */}
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-2">
+                        {project.status === 'completed' && (
+                            <span title="Project Completed!">
+                                <Award className="h-4 w-4 text-green-500 mr-1 animate-bounce" />
+                            </span>
+                        )}
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(project.status)}`}>
                             <CheckCircle className="h-3 w-3 mr-1" />
                             {project.status === 'open' && 'Open'}
@@ -461,7 +473,7 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
                             to={`/projects/${project.id}`}
                             className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200"
                         >
-                            Learn More
+                            Project Page
                             <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                         </Link>
                     </div>

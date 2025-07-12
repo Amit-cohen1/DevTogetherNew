@@ -74,6 +74,11 @@ export const Navbar: React.FC = () => {
             label: 'My Applications',
             path: '/my-applications',
             icon: User,
+        },
+        {
+            label: 'My Projects',
+            path: '/my-projects',
+            icon: Building,
         }
     ]
 

@@ -11,10 +11,13 @@ import {
     Link as LinkIcon,
     Eye,
     AlertCircle,
-    CheckCircle
+    CheckCircle,
+    Edit3,
+    ArrowLeft,
+    Trash2
 } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { FormField } from '../ui/FormField'
+import { Input } from '../ui/Input'
 import { Textarea } from '../ui/Textarea'
 import { Project } from '../../types/database'
 import { applicationService, ApplicationCreateData } from '../../services/applications'
@@ -65,142 +68,140 @@ const ApplicationPreview: React.FC<ApplicationPreviewProps> = ({
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                        <Eye className="w-5 h-5 text-primary-600" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Application Preview</h2>
-                        <p className="text-sm text-gray-600">Review your application before submitting</p>
-                    </div>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Review Your Application</h3>
+                    <p className="text-sm text-gray-600">Please review your application before submitting</p>
                 </div>
-                <Button variant="outline" onClick={onEdit} disabled={isSubmitting}>
-                    Edit Application
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={onEdit} disabled={isSubmitting}>
+                        <Edit3 className="w-4 h-4 mr-2" />
+                        Edit
+                    </Button>
+                </div>
             </div>
 
-            {/* Application Content */}
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                {/* Application Header */}
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
+            {/* Application Preview */}
+            <div className="bg-gray-50 rounded-xl p-6 space-y-6">
+                {/* Project Info */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-semibold text-gray-900 mb-2">Applying to:</h4>
+                    <div className="text-sm text-gray-600">
+                        <p className="font-medium text-gray-900">{project.title}</p>
+                        <p>Application Date: {formatDate(new Date().toISOString())}</p>
+                    </div>
+                </div>
+
+                {/* Developer Information */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Your Information
+                    </h4>
+                    <div className="space-y-3">
                         <div>
-                            <h3 className="text-lg font-medium text-gray-900">
-                                Application for: {project.title}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                                Submitted on: {formatDate(new Date().toISOString())}
+                            <span className="text-sm font-medium text-gray-700">Name: </span>
+                            <span className="text-sm text-gray-900">
+                                {developer.first_name} {developer.last_name}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-sm font-medium text-gray-700">Email: </span>
+                            <span className="text-sm text-gray-900">{developer.email}</span>
+                        </div>
+                        {developer.skills && developer.skills.length > 0 && (
+                            <div>
+                                <span className="text-sm font-medium text-gray-700">Skills: </span>
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    {developer.skills.map((skill, index) => (
+                                        <span
+                                            key={index}
+                                            className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-xs font-medium"
+                                        >
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {developer.bio && (
+                            <div>
+                                <span className="text-sm font-medium text-gray-700">Bio: </span>
+                                <p className="text-sm text-gray-900 mt-1">{developer.bio}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Cover Letter */}
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Cover Letter
+                    </h4>
+                    {formData.cover_letter ? (
+                        <div className="prose prose-sm max-w-none">
+                            <p className="text-gray-900 whitespace-pre-line leading-relaxed">
+                                {formData.cover_letter}
                             </p>
                         </div>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Pending Review
-                        </span>
-                    </div>
-                </div>
-
-                <div className="p-6 space-y-6">
-                    {/* Applicant Information */}
-                    <div>
-                        <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            Applicant Information
-                        </h4>
-                        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">Name: </span>
-                                <span className="text-sm text-gray-900">
-                                    {developer.first_name} {developer.last_name}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">Email: </span>
-                                <span className="text-sm text-gray-900">{developer.email}</span>
-                            </div>
-                            {developer.skills && developer.skills.length > 0 && (
-                                <div>
-                                    <span className="text-sm font-medium text-gray-700">Skills: </span>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                        {developer.skills.map((skill, index) => (
-                                            <span
-                                                key={index}
-                                                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                                            >
-                                                {skill}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            {developer.bio && (
-                                <div>
-                                    <span className="text-sm font-medium text-gray-700">Bio: </span>
-                                    <p className="text-sm text-gray-900 mt-1">{developer.bio}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Cover Letter */}
-                    <div>
-                        <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            Cover Letter
-                        </h4>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            {formData.cover_letter ? (
-                                <div className="prose prose-sm max-w-none">
-                                    <p className="text-gray-900 whitespace-pre-line">{formData.cover_letter}</p>
-                                </div>
-                            ) : (
-                                <p className="text-gray-500 italic">No cover letter provided</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Portfolio Links */}
-                    {formData.portfolio_links.length > 0 && (
-                        <div>
-                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center gap-2">
-                                <LinkIcon className="w-4 h-4" />
-                                Portfolio Links
-                            </h4>
-                            <div className="space-y-2">
-                                {formData.portfolio_links.map((link, index) => (
-                                    <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
-                                        <div>
-                                            <p className="font-medium text-gray-900">{link.title}</p>
-                                            <p className="text-sm text-gray-600">{link.url}</p>
-                                        </div>
-                                        <ExternalLink className="w-4 h-4 text-gray-400" />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                    ) : (
+                        <p className="text-gray-500 italic">No cover letter provided</p>
                     )}
                 </div>
+
+                {/* Portfolio Links */}
+                {formData.portfolio_links.length > 0 && (
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <h4 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <LinkIcon className="w-4 h-4" />
+                            Portfolio Links
+                        </h4>
+                        <div className="space-y-3">
+                            {formData.portfolio_links.map((link, index) => (
+                                <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium text-gray-900">{link.title}</p>
+                                        <p className="text-sm text-blue-600 hover:text-blue-700">
+                                            <a href={link.url} target="_blank" rel="noopener noreferrer">
+                                                {link.url}
+                                            </a>
+                                        </p>
+                                    </div>
+                                    <ExternalLink className="w-4 h-4 text-gray-400" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-4 mt-6">
+            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
                 <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
                     Cancel
                 </Button>
-                <Button onClick={onSubmit} disabled={isSubmitting} className="flex items-center gap-2">
-                    {isSubmitting ? (
-                        <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Submitting...
-                        </>
-                    ) : (
-                        <>
-                            <Send className="w-4 h-4" />
-                            Submit Application
-                        </>
-                    )}
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" onClick={onEdit} disabled={isSubmitting}>
+                        <Edit3 className="w-4 h-4 mr-2" />
+                        Edit Application
+                    </Button>
+                    <Button onClick={onSubmit} disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            <>
+                                <Send className="w-4 h-4 mr-2" />
+                                Submit Application
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
         </div>
     )
@@ -289,21 +290,24 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
         }
     }
 
+    // Success state
     if (success) {
         return (
-            <div className="max-w-md mx-auto text-center py-8">
+            <div className="text-center py-12">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Application Submitted!</h2>
-                <p className="text-gray-600 mb-4">
-                    Your application has been sent to the organization. You'll hear back from them soon.
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Application Submitted!</h3>
+                <p className="text-gray-600 mb-6">
+                    Your application has been sent to the organization.
+                    You'll hear back from them soon.
                 </p>
                 <Button onClick={onSubmit}>Done</Button>
             </div>
         )
     }
 
+    // Preview step
     if (step === 'preview') {
         return (
             <ApplicationPreview
@@ -324,146 +328,166 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
         )
     }
 
+    // Form step
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                        <Send className="w-5 h-5 text-primary-600" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Apply to Project</h2>
-                        <p className="text-sm text-gray-600">{project.title}</p>
-                    </div>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Apply to Project</h3>
+                    <p className="text-sm text-gray-600">{project.title}</p>
                 </div>
-                <Button variant="outline" onClick={onCancel}>
-                    <X className="w-4 h-4" />
-                </Button>
             </div>
 
+            {/* Error message */}
             {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                     <div>
-                        <h3 className="text-sm font-medium text-red-800">Application Error</h3>
+                        <h4 className="text-sm font-medium text-red-800">Application Error</h4>
                         <p className="text-sm text-red-700 mt-1">{error}</p>
                     </div>
                 </div>
             )}
 
             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-                {/* Cover Letter */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cover Letter
-                        <span className="text-gray-500 font-normal ml-1">(Optional)</span>
-                    </label>
-                    <Textarea
-                        {...register('cover_letter')}
-                        placeholder="Tell the organization why you're interested in this project and what you can bring to it..."
-                        rows={8}
-                        className="min-h-[200px]"
-                    />
-                    <p className="text-sm text-gray-500 mt-2">
-                        Tip: Mention specific aspects of the project that interest you and highlight relevant experience.
-                    </p>
+                {/* Cover Letter Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                        <h4 className="text-base font-semibold text-gray-900">Cover Letter</h4>
+                        <span className="text-sm text-gray-500">(Optional)</span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        <Textarea
+                            {...register('cover_letter')}
+                            placeholder="Tell the organization why you're interested in this project and what you can bring to it..."
+                            rows={8}
+                            className="min-h-[200px] resize-none"
+                        />
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-sm text-blue-800">
+                                <strong>Tip:</strong> Mention specific aspects of the project that interest you and highlight relevant experience or skills.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Portfolio Links */}
-                <div>
+                {/* Portfolio Links Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Portfolio Links
-                            <span className="text-gray-500 font-normal ml-1">(Optional)</span>
-                        </label>
+                        <div className="flex items-center gap-2">
+                            <LinkIcon className="w-5 h-5 text-blue-600" />
+                            <h4 className="text-base font-semibold text-gray-900">Portfolio Links</h4>
+                            <span className="text-sm text-gray-500">(Optional)</span>
+                        </div>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={addPortfolioLink}
-                            className="flex items-center gap-1"
                         >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-4 h-4 mr-2" />
                             Add Link
                         </Button>
                     </div>
 
                     {fields.length === 0 ? (
-                        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-                            <LinkIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                            <p className="text-sm text-gray-500">No portfolio links added yet</p>
-                            <p className="text-xs text-gray-400 mt-1">
-                                Add links to your projects, GitHub repos, or portfolio
-                            </p>
+                        <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                            <LinkIcon className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                            <p className="text-sm text-gray-600 mb-3">No portfolio links added yet</p>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={addPortfolioLink}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Your First Link
+                            </Button>
                         </div>
                     ) : (
                         <div className="space-y-4">
                             {fields.map((field, index) => (
-                                <div key={field.id} className="border border-gray-200 rounded-lg p-4">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <h4 className="text-sm font-medium text-gray-900">Link {index + 1}</h4>
+                                <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h5 className="text-sm font-medium text-gray-900">
+                                            Portfolio Link {index + 1}
+                                        </h5>
                                         <Button
                                             type="button"
-                                            variant="ghost"
+                                            variant="outline"
                                             size="sm"
                                             onClick={() => removePortfolioLink(index)}
                                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </div>
-
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <FormField
-                                            label="Title"
-                                            error={errors.portfolio_links?.[index]?.title?.message}
-                                        >
-                                            <input
-                                                {...register(`portfolio_links.${index}.title` as const, {
-                                                    required: fields[index]?.url ? 'Title is required when URL is provided' : false
+                                    
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Title <span className="text-red-500">*</span>
+                                            </label>
+                                            <Input
+                                                {...register(`portfolio_links.${index}.title`, {
+                                                    required: 'Title is required'
                                                 })}
-                                                type="text"
-                                                placeholder="e.g., Personal Portfolio, GitHub Project"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                                                placeholder="e.g., My React Portfolio"
+                                                error={errors.portfolio_links?.[index]?.title?.message}
                                             />
-                                        </FormField>
-
-                                        <FormField
-                                            label="URL"
-                                            error={errors.portfolio_links?.[index]?.url?.message}
-                                        >
-                                            <input
-                                                {...register(`portfolio_links.${index}.url` as const, {
-                                                    required: fields[index]?.title ? 'URL is required when title is provided' : false,
-                                                    validate: (value) => !value || validateUrl(value)
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                URL <span className="text-red-500">*</span>
+                                            </label>
+                                            <Input
+                                                {...register(`portfolio_links.${index}.url`, {
+                                                    required: 'URL is required',
+                                                    validate: validateUrl
                                                 })}
-                                                type="url"
-                                                placeholder="https://..."
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                                                placeholder="https://your-portfolio.com"
+                                                error={errors.portfolio_links?.[index]?.url?.message}
                                             />
-                                        </FormField>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
+                            
+                            <div className="text-center">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addPortfolioLink}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Another Link
+                                </Button>
+                            </div>
                         </div>
                     )}
 
-                    <p className="text-sm text-gray-500 mt-2">
-                        Share relevant projects or repositories that showcase your skills for this project.
-                    </p>
+                    <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <p className="text-sm text-gray-700">
+                            <strong>Suggestions:</strong> Include links to your GitHub repositories, live projects, personal website, or other relevant work samples.
+                        </p>
+                    </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-                    <Button type="button" variant="outline" onClick={onCancel}>
+                {/* Form Actions */}
+                <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <Button variant="outline" onClick={onCancel}>
                         Cancel
                     </Button>
-                    <Button type="submit" disabled={!isValid}>
-                        Review Application
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <Button type="submit">
+                            <Eye className="w-4 h-4 mr-2" />
+                            Preview Application
+                        </Button>
+                    </div>
                 </div>
             </form>
         </div>
     )
-} 
+}
