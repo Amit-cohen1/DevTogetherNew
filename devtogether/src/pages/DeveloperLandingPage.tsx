@@ -217,8 +217,8 @@ const DeveloperLandingPage: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-green-400 rounded-lg flex items-center justify-center">
                                                 <CheckCircle className="w-5 h-5 text-green-900" />
-                                            </div>
-                                            <div>
+                            </div>
+                            <div>
                                                 <div className="text-2xl font-bold text-white">{platformStats.successRate}</div>
                                                 <div className="text-blue-200 text-sm">Success Rate</div>
                                             </div>
@@ -260,7 +260,7 @@ const DeveloperLandingPage: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                         <Trophy className="w-4 h-4" />
                                         <span>Verified Achievements</span>
-                                    </div>
+                            </div>
                                 </div>
                             </div>
 
@@ -495,7 +495,7 @@ const DeveloperLandingPage: React.FC = () => {
                                                 }`} />
                                             </div>
                                         </div>
-                                    </div>
+                                </div>
                                 );
                             })}
                         </div>
@@ -504,28 +504,28 @@ const DeveloperLandingPage: React.FC = () => {
 
                 {/* Testimonials Section */}
                 <section className="py-16 lg:py-24 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="text-center mb-16">
                             <h2 className="text-3xl lg:text-4xl font-bold mb-4">
                                 Success Stories from <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">Real Developers</span>
-                            </h2>
+                                </h2>
                             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
                                 Hear from developers who built their careers through meaningful projects
-                            </p>
-                        </div>
+                                </p>
+                            </div>
 
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {testimonials.map((testimonial, index) => (
+                            <div className="grid md:grid-cols-3 gap-8">
+                                {testimonials.map((testimonial, index) => (
                                 <div key={index} className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
                                             {testimonial.name.split(' ').map(n => n[0]).join('')}
-                                        </div>
-                                        <div>
+                                            </div>
+                                            <div>
                                             <div className="font-semibold text-white">{testimonial.name}</div>
                                             <div className="text-gray-300 text-sm">{testimonial.role}</div>
                                         </div>
-                                    </div>
+                                            </div>
 
                                     <div className="flex items-center gap-4 mb-4">
                                         <div className="flex items-center gap-1">
@@ -541,11 +541,11 @@ const DeveloperLandingPage: React.FC = () => {
                                     <p className="text-gray-200 leading-relaxed italic">
                                         "{testimonial.quote}"
                                     </p>
-                                </div>
-                            ))}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
                 {/* CTA Section */}
                 <section className="py-16 lg:py-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white">

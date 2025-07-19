@@ -115,7 +115,6 @@ export default function ProjectDetailsPage() {
     const handleApplicationSubmit = () => {
         setShowApplicationModal(false)
         setHasApplied(true)
-        toastService.success('Application submitted successfully!')
     }
 
     const handleResubmit = async () => {
@@ -259,6 +258,9 @@ export default function ProjectDetailsPage() {
         const isTeamMember = userApp?.status === 'accepted';
         const isPending = userApp?.status === 'pending';
         const isRejected = userApp?.status === 'rejected';
+        const isRemoved = userApp?.status === 'removed';
+        // Allow reapplication if project is open and user is not currently a team member or pending
+        // Removed developers can reapply to open projects (not blocked like rejected)
         const canApply = project.status === 'open' && !isTeamMember && !isPending && !isRejected;
         const canView =
             (project.status === 'open') ||
@@ -288,6 +290,7 @@ export default function ProjectDetailsPage() {
         if (isPending) statusBadge = <span className="ml-3 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">Application Pending</span>;
         if (isTeamMember) statusBadge = <span className="ml-3 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">Team Member</span>;
         if (isRejected) statusBadge = <span className="ml-3 px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">Application Rejected</span>;
+        if (isRemoved) statusBadge = <span className="ml-3 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-sm font-medium">Removed from Team • Can Reapply</span>;
 
         const isCompleted = project.status === 'completed';
         const showWorkspace = isTeamMember && project.status !== 'rejected';

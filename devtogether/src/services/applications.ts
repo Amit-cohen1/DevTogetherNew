@@ -72,8 +72,6 @@ class ApplicationService {
             if (error) throw error
             if (!data) throw new Error('Failed to create application')
 
-            toastService.success('Application submitted successfully.');
-
             // Send notification to organization about new application
             try {
                 if (data.project && data.project.organization) {
@@ -97,7 +95,6 @@ class ApplicationService {
             return data
         } catch (error) {
             console.error('Error submitting application:', error)
-            toastService.error('Failed to submit application.');
             throw error
         }
     }

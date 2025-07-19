@@ -18,7 +18,8 @@ import {
     CheckCircle,
     Crown,
     Shield,
-    ExternalLink
+    ExternalLink,
+    X
 } from 'lucide-react'
 import { DIFFICULTY_LEVELS, APPLICATION_TYPES } from '../../utils/constants'
 import { projectService } from '../../services/projects'
@@ -283,48 +284,59 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
 
                 {/* Add after status row, only for org owner */}
                 {user?.id === project.organization_id && project.admin_workspace_access_requested?.valueOf() && !project.admin_workspace_access_granted?.valueOf() && (
-                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-800 text-xs flex flex-col gap-2">
-                        <div>
-                            <b>Admin requested access to this workspace.</b>
-                            <br />Approve to allow admin to enter the workspace for this project.
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                            <button
-                                className="px-3 py-1 rounded bg-green-600 text-white text-xs font-medium hover:bg-green-700"
-                                onClick={async (e) => {
-                                    e.stopPropagation();
-                                    try {
-                                        const success = await projectService.grantWorkspaceAccess(project.id);
-                                        if (success) {
-                                            window.location.reload();
-                                        } else {
-                                            alert('Failed to approve admin access. Please try again or contact support.');
-                                        }
-                                    } catch (err: any) {
-                                        alert('An error occurred: ' + (err?.message || err));
-                                    }
-                                }}
-                            >
-                                Approve
-                            </button>
-                            <button
-                                className="px-3 py-1 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700"
-                                onClick={async (e) => {
-                                    e.stopPropagation();
-                                    try {
-                                        const success = await projectService.denyWorkspaceAccess(project.id);
-                                        if (success) {
-                                            window.location.reload();
-                                        } else {
-                                            alert('Failed to deny admin access. Please try again or contact support.');
-                                        }
-                                    } catch (err: any) {
-                                        alert('An error occurred: ' + (err?.message || err));
-                                    }
-                                }}
-                            >
-                                Deny
-                            </button>
+                    <div className="mt-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 rounded-lg shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                                <Shield className="w-4 h-4 text-amber-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-medium text-amber-800 mb-1">
+                                    🔐 Admin Workspace Access Request
+                                </h4>
+                                <p className="text-sm text-amber-700 mb-3">
+                                    An administrator has requested access to this project's workspace for monitoring and support purposes.
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <button
+                                        className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            try {
+                                                const success = await projectService.grantWorkspaceAccess(project.id);
+                                                if (success) {
+                                                    window.location.reload();
+                                                } else {
+                                                    alert('Failed to approve admin access. Please try again or contact support.');
+                                                }
+                                            } catch (err: any) {
+                                                alert('An error occurred: ' + (err?.message || err));
+                                            }
+                                        }}
+                                    >
+                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                        Approve Access
+                                    </button>
+                                    <button
+                                        className="inline-flex items-center justify-center px-4 py-2 bg-white text-red-600 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            try {
+                                                const success = await projectService.denyWorkspaceAccess(project.id);
+                                                if (success) {
+                                                    window.location.reload();
+                                                } else {
+                                                    alert('Failed to deny admin access. Please try again or contact support.');
+                                                }
+                                            } catch (err: any) {
+                                                alert('An error occurred: ' + (err?.message || err));
+                                            }
+                                        }}
+                                    >
+                                        <X className="w-4 h-4 mr-2" />
+                                        Deny Access
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

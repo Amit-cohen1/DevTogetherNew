@@ -200,7 +200,7 @@ const OrganizationLandingPage: React.FC = () => {
             color: "purple"
         },
         {
-            step: "3",
+            step: "3", 
             title: "Get Matched with Developers",
             description: "Once approved, your project becomes visible to our network of skilled developers who can apply to join your team.",
             icon: Users,
@@ -271,8 +271,8 @@ const OrganizationLandingPage: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-purple-400 rounded-lg flex items-center justify-center">
                                                 <BarChart3 className="w-5 h-5 text-purple-900" />
-                                            </div>
-                                            <div>
+                            </div>
+                            <div>
                                                 <div className="text-2xl font-bold text-white">{platformStats.avgCostSavings}</div>
                                                 <div className="text-blue-200 text-sm">Cost Savings</div>
                                             </div>
@@ -314,7 +314,7 @@ const OrganizationLandingPage: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                         <Award className="w-4 h-4" />
                                         <span>Quality Guaranteed</span>
-                                    </div>
+                            </div>
                                 </div>
                             </div>
 
@@ -506,15 +506,15 @@ const OrganizationLandingPage: React.FC = () => {
                                                 <p className="text-gray-600">{type.description}</p>
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            {type.examples.map((example, exampleIndex) => (
-                                                <div key={exampleIndex} className="flex items-center gap-2">
+                                    <div className="space-y-2">
+                                        {type.examples.map((example, exampleIndex) => (
+                                            <div key={exampleIndex} className="flex items-center gap-2">
                                                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                                     <span className="text-gray-700 text-sm">{example}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
                                 );
                             })}
                         </div>
@@ -523,15 +523,15 @@ const OrganizationLandingPage: React.FC = () => {
 
                 {/* How It Works Section */}
                 <section className="py-16 lg:py-24 bg-gray-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="text-center mb-16">
                             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
                                 Your Organization's Journey in <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">5 Simple Steps</span>
-                            </h2>
-                            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                                </h2>
+                                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                                 From idea to launch - here's how we'll help you build amazing software solutions
-                            </p>
-                        </div>
+                                </p>
+                            </div>
 
                         <div className="space-y-8">
                             {howItWorks.map((step, index) => {
@@ -550,7 +550,7 @@ const OrganizationLandingPage: React.FC = () => {
                                                     'from-yellow-500 to-yellow-600'
                                                 } rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
                                                     {step.step}
-                                                </div>
+                                                    </div>
                                                 <h3 className={`text-2xl font-bold text-gray-900 ${!isEven ? 'lg:text-right' : ''}`}>{step.title}</h3>
                                             </div>
                                             <p className={`text-gray-600 text-lg leading-relaxed ${!isEven ? 'lg:text-right' : ''}`}>
@@ -628,11 +628,11 @@ const OrganizationLandingPage: React.FC = () => {
                                     <p className="text-gray-200 leading-relaxed italic">
                                         "{testimonial.quote}"
                                     </p>
-                                </div>
-                            ))}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
                 {/* CTA Section */}
                 <section className="py-16 lg:py-24 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
