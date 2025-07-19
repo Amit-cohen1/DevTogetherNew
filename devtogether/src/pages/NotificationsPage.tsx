@@ -19,7 +19,8 @@ import {
   Eye,
   Shield,
   MessageCircle,
-  Activity
+  Activity,
+  Star
 } from 'lucide-react'
 import type { Notification as NotificationType } from '../services/notificationService'
 import { useAuth } from '../contexts/AuthContext'
@@ -41,6 +42,8 @@ interface NotificationStats {
   moderation: number
   chat: number
   status_change: number
+  feedback: number
+  promotion: number
 }
 
 export default function NotificationsPage() {
@@ -67,7 +70,9 @@ export default function NotificationsPage() {
     system: 0,
     moderation: 0,
     chat: 0,
-    status_change: 0
+    status_change: 0,
+    feedback: 0,
+    promotion: 0
   })
 
   const [filters, setFilters] = useState<FilterOptions>({
@@ -88,7 +93,9 @@ export default function NotificationsPage() {
       system: notifications.filter(n => n.type === 'system').length,
       moderation: notifications.filter(n => n.type === 'moderation').length,
       chat: notifications.filter(n => n.type === 'chat').length,
-      status_change: notifications.filter(n => n.type === 'status_change').length
+      status_change: notifications.filter(n => n.type === 'status_change').length,
+      feedback: notifications.filter(n => n.type === 'feedback').length,
+      promotion: notifications.filter(n => n.type === 'promotion').length
     }
     setStats(newStats)
   }, [notifications])
@@ -144,6 +151,10 @@ export default function NotificationsPage() {
         return <MessageCircle className="w-5 h-5 text-indigo-600" />
       case 'status_change':
         return <Activity className="w-5 h-5 text-orange-600" />
+      case 'feedback':
+        return <Star className="w-5 h-5 text-amber-600" />
+      case 'promotion':
+        return <Trophy className="w-5 h-5 text-purple-600" />
       default:
         return <Bell className="w-5 h-5 text-gray-600" />
     }
@@ -155,12 +166,28 @@ export default function NotificationsPage() {
       case 'moderation':
         return data.actionUrl || '/admin'
       case 'application':
-        return data.projectId ? `/projects/${data.projectId}` : '/my-applications'
+        if (data.projectId) {
+          return data.applicationId 
+            ? `/projects/${data.projectId}?highlight=application-${data.applicationId}`
+            : `/projects/${data.projectId}`
+        }
+        return '/my-applications'
       case 'project':
+        return data.projectId ? `/projects/${data.projectId}` : '/dashboard'
       case 'team':
         return data.projectId ? `/workspace/${data.projectId}` : '/dashboard'
+      case 'chat':
+        return data.projectId ? `/workspace/${data.projectId}?tab=chat` : '/dashboard'
+      case 'feedback':
+        return data.feedbackId ? `/profile?highlight=feedback-${data.feedbackId}` : '/profile'
+      case 'promotion':
+        return data.projectId ? `/workspace/${data.projectId}` : '/dashboard'
+      case 'status_change':
+        return data.projectId ? `/projects/${data.projectId}` : '/dashboard'
       case 'achievement':
-        return '/profile'
+        return '/profile?tab=achievements'
+      case 'system':
+        return data.actionUrl || '/dashboard'
       default:
         return '/dashboard'
     }
@@ -213,19 +240,40 @@ export default function NotificationsPage() {
     <Layout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-              <p className="text-gray-600 mt-2">Stay updated with your projects and applications</p>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Notifications</h1>
+              <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Stay updated with your projects and applications</p>
+              {unreadCount > 0 && (
+                <div className="flex items-center gap-2 mt-2 sm:mt-3">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-blue-600">
+                    {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={handleRefresh} icon={<RefreshCw className="w-4 h-4" />}>
-                Refresh
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefresh} 
+                icon={<RefreshCw className="w-4 h-4" />}
+                className="text-xs sm:text-sm"
+              >
+                <span className="hidden sm:inline">Refresh</span>
+                <span className="sm:hidden">↻</span>
               </Button>
               {unreadCount > 0 && (
-                <Button size="sm" onClick={markAllAsRead} icon={<CheckCircle className="w-4 h-4" />}>
-                  Mark all read
+                <Button 
+                  size="sm" 
+                  onClick={markAllAsRead} 
+                  icon={<CheckCircle className="w-4 h-4" />}
+                  className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+                >
+                  <span className="hidden sm:inline">Mark all read</span>
+                  <span className="sm:hidden">Mark read</span>
                 </Button>
               )}
             </div>
@@ -233,7 +281,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <StatCard label="Total" value={stats.total} color="text-gray-900" />
           <StatCard label="Unread" value={stats.unread} color="text-blue-600" bg="bg-blue-50" border="border-blue-200" />
           <StatCard label="Applications" value={stats.application} color="text-blue-600" />
@@ -241,14 +289,17 @@ export default function NotificationsPage() {
           <StatCard label="Team" value={stats.team} color="text-purple-600" />
           <StatCard label="Achievements" value={stats.achievement} color="text-yellow-600" />
           <StatCard label="System" value={stats.system} color="text-gray-600" />
-          <StatCard label="Admin" value={stats.moderation} color="text-red-600" border="border-red-200" />
+          {profile?.role === 'admin' && (
+            <StatCard label="Admin" value={stats.moderation} color="text-red-600" border="border-red-200" />
+          )}
           <StatCard label="Chat" value={stats.chat} color="text-indigo-600" border="border-indigo-200" />
-          <StatCard label="Status Change" value={stats.status_change} color="text-orange-600" border="border-orange-200" />
+          <StatCard label="Status" value={stats.status_change} color="text-orange-600" border="border-orange-200" />
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6">
+          <h3 className="text-sm font-medium text-gray-900 mb-3 sm:mb-4">Filter Notifications</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {/* Search */}
             <FormField label="">
               <div className="relative">
@@ -258,30 +309,84 @@ export default function NotificationsPage() {
                   placeholder="Search notifications..."
                   value={filters.searchQuery}
                   onChange={e => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </FormField>
 
             {/* Type filter */}
-            <Select value={filters.type} onChange={e => setFilters(prev => ({ ...prev, type: e.target.value }))}>
+            <Select 
+              value={filters.type} 
+              onChange={e => setFilters(prev => ({ ...prev, type: e.target.value }))}
+              className="text-sm"
+            >
               <option value="all">All Types</option>
               <option value="application">Applications</option>
               <option value="project">Projects</option>
               <option value="team">Team</option>
               <option value="achievement">Achievements</option>
               <option value="system">System</option>
-              <option value="moderation">Admin</option>
+              {profile?.role === 'admin' && <option value="moderation">Admin</option>}
               <option value="chat">Chat</option>
               <option value="status_change">Status Change</option>
+              <option value="feedback">Feedback</option>
+              <option value="promotion">Promotions</option>
             </Select>
 
             {/* Status filter */}
-            <Select value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
+            <Select 
+              value={filters.status} 
+              onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}
+              className="text-sm"
+            >
               <option value="all">All Status</option>
-              <option value="unread">Unread</option>
-              <option value="read">Read</option>
+              <option value="unread">Unread Only</option>
+              <option value="read">Read Only</option>
             </Select>
+          </div>
+          
+          {/* Quick Filter Chips */}
+          <div className="flex flex-wrap gap-2 mt-3 sm:mt-4">
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, status: 'unread' }))}
+              className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors ${
+                filters.status === 'unread'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Unread ({stats.unread})
+            </button>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, type: 'application' }))}
+              className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors ${
+                filters.type === 'application'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Applications ({stats.application})
+            </button>
+            {profile?.role === 'admin' && stats.moderation > 0 && (
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, type: 'moderation' }))}
+                className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors ${
+                  filters.type === 'moderation'
+                    ? 'bg-red-100 text-red-800 border border-red-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Admin ({stats.moderation})
+              </button>
+            )}
+            {(filters.searchQuery || filters.type !== 'all' || filters.status !== 'all') && (
+              <button
+                onClick={() => setFilters({ type: 'all', status: 'all', searchQuery: '' })}
+                className="px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+              >
+                Clear All
+              </button>
+            )}
           </div>
         </div>
 
@@ -403,30 +508,33 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3 sm:mt-4">
           <Link
             to={getLink(notification)}
             onClick={() => !notification.read && onMarkAsRead(notification.id)}
-            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md font-medium transition-colors"
           >
             <ExternalLink className="w-3 h-3" />
-            View Details
+            <span className="hidden sm:inline">View Details</span>
+            <span className="sm:hidden">View</span>
           </Link>
           {!notification.read && (
             <button
               onClick={() => onMarkAsRead(notification.id)}
-              className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-700"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
             >
               <Eye className="w-3 h-3" />
-              Mark as read
+              <span className="hidden sm:inline">Mark as read</span>
+              <span className="sm:hidden">Read</span>
             </button>
           )}
           <button
             onClick={() => onDelete(notification.id)}
-            className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-700"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
           >
             <Trash2 className="w-3 h-3" />
-            Delete
+            <span className="hidden sm:inline">Delete</span>
+            <span className="sm:hidden">Del</span>
           </button>
         </div>
       </div>

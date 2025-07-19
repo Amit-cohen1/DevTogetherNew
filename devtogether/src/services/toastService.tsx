@@ -264,7 +264,7 @@ class ToastService {
   };
 
   project = {
-    created: () => this.success('Project created successfully! 🎉'),
+    created: () => this.info('🎉 Project submitted for admin review! You\'ll be notified once it\'s approved and visible to developers.'),
     updated: () => this.success('Project updated successfully.'),
     deleted: () => this.info('Project deleted successfully.'),
     joined: () => this.success('You have joined the project.'),
