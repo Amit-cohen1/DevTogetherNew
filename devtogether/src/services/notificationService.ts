@@ -5,7 +5,7 @@ export interface Notification {
     user_id: string;
     title: string;
     message: string;
-    type: 'application' | 'project' | 'team' | 'system' | 'achievement' | 'moderation' | 'chat' | 'status_change';
+    type: 'application' | 'project' | 'team' | 'system' | 'achievement' | 'moderation' | 'chat' | 'status_change' | 'feedback' | 'promotion';
     data?: Record<string, any>;
     read: boolean;
     created_at: string;
@@ -15,7 +15,7 @@ export interface NotificationCreateData {
     user_id: string;
     title: string;
     message: string;
-    type: 'application' | 'project' | 'team' | 'system' | 'achievement' | 'moderation' | 'chat' | 'status_change';
+    type: 'application' | 'project' | 'team' | 'system' | 'achievement' | 'moderation' | 'chat' | 'status_change' | 'feedback' | 'promotion';
     data?: Record<string, any>;
 }
 

@@ -298,8 +298,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
     return (
         <div
             ref={dropdownRef}
-            className={`absolute left-1/2 top-12 transform -translate-x-1/2 w-full max-w-xs md:w-96 md:max-w-none bg-white rounded-xl shadow-xl z-50 border border-gray-200 ${isOpen ? '' : 'hidden'}`}
-            style={{ minWidth: '18rem' }}
+            className={`absolute left-1/2 top-12 transform -translate-x-1/2 w-full max-w-xs sm:max-w-sm md:w-96 md:max-w-none bg-white rounded-xl shadow-xl z-50 border border-gray-200 ${isOpen ? '' : 'hidden'}`}
+            style={{ minWidth: '18rem', maxHeight: '90vh' }}
         >
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
