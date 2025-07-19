@@ -481,7 +481,7 @@ export const ShareProfile: React.FC<ShareProfileProps> = ({
                             <h3 className="font-medium text-gray-900">
                                 {isPublic ? 'Share URL' : 'Private Share URL'}
                             </h3>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <input
                                     type="text"
                                     value={shareData.shareUrl}
@@ -490,17 +490,19 @@ export const ShareProfile: React.FC<ShareProfileProps> = ({
                                 />
                                 <button
                                     onClick={copyToClipboard}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
                                 >
                                     {copiedUrl ? (
                                         <>
                                             <Check className="w-4 h-4" />
-                                            Copied!
+                                            <span className="hidden sm:inline">Copied!</span>
+                                            <span className="sm:hidden">✓</span>
                                         </>
                                     ) : (
                                         <>
                                             <Copy className="w-4 h-4" />
-                                            Copy
+                                            <span className="hidden sm:inline">Copy</span>
+                                            <span className="sm:hidden">Copy</span>
                                         </>
                                     )}
                                 </button>
