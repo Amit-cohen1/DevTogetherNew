@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { projectService } from '../../services/projects';
 import { Button } from '../ui/Button';
-import { CheckCircle, XCircle, AlertTriangle, Eye, Folder, Users, Building, Clock, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Eye, Folder, Users, Building, Clock, FileText, Shield, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminTabHeader from './AdminTabHeader';
+import { AdminDeletionButton } from './AdminDeletionButton';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 const statusOptions = [
   { value: 'open', label: 'Active', color: 'bg-green-100 text-green-800', badge: 'bg-green-500' },
@@ -101,6 +103,15 @@ const ProjectDetailsModal: React.FC<{
                 Go to Workspace
               </Button>
             )}
+            
+            <AdminDeletionButton
+              targetId={project.id}
+              targetType="project"
+              targetName={project.title}
+              onDeleteSuccess={() => window.location.reload()}
+              size="sm"
+              className="text-xs sm:text-sm"
+            />
           </div>
         </div>
         {/* Body */}
@@ -177,12 +188,13 @@ const ProjectDetailsModal: React.FC<{
 const ProjectsManagement: React.FC = () => {
   const { profile } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
-  const [filter, setFilter] = useState('active'); // Default to Active
+  const [filter, setFilter] = useState('all'); // Default to All with smart ordering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{type: string, id: string, name: string} | null>(null);
 
   useEffect(() => {
     loadProjects();
@@ -207,6 +219,7 @@ const ProjectsManagement: React.FC = () => {
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.organization?.organization_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     let matchesFilter = true;
+    
     if (filter === 'active') {
       matchesFilter = ['open', 'in_progress'].includes(p.status);
     } else if (filter === 'pending') {
@@ -215,8 +228,32 @@ const ProjectsManagement: React.FC = () => {
       matchesFilter = p.status === 'rejected';
     } else if (filter === 'cancelled') {
       matchesFilter = p.status === 'cancelled';
+    } else if (filter === 'completed') {
+      matchesFilter = p.status === 'completed';
     }
+    // filter === 'all' shows everything
+    
     return matchesSearch && matchesFilter;
+  }).sort((a, b) => {
+    // Smart ordering: pending first, then active, rejected, cancelled, completed last
+    const statusPriority = {
+      'pending': 1,
+      'open': 2,
+      'in_progress': 2,
+      'rejected': 3,
+      'cancelled': 4,
+      'completed': 5
+    };
+    
+    const aPriority = statusPriority[a.status as keyof typeof statusPriority] || 6;
+    const bPriority = statusPriority[b.status as keyof typeof statusPriority] || 6;
+    
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+    
+    // Secondary sort by creation date (newest first for same status)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   const stats = {
@@ -225,6 +262,7 @@ const ProjectsManagement: React.FC = () => {
     pending: projects.filter(p => p.status === 'pending').length,
     rejected: projects.filter(p => p.status === 'rejected').length,
     cancelled: projects.filter(p => p.status === 'cancelled').length,
+    completed: projects.filter(p => p.status === 'completed').length,
   };
 
   const statArray = [
@@ -233,6 +271,7 @@ const ProjectsManagement: React.FC = () => {
     { label: 'Pending', value: stats.pending, color: 'bg-yellow-100 border border-yellow-300 shadow-lg' },
     { label: 'Rejected', value: stats.rejected, color: 'bg-red-50' },
     { label: 'Cancelled', value: stats.cancelled, color: 'bg-gray-100' },
+    { label: 'Completed', value: stats.completed, color: 'bg-purple-50' },
   ];
 
   const handleSearch = (value: string) => {
@@ -328,20 +367,37 @@ const ProjectsManagement: React.FC = () => {
         onSearch={handleSearch}
         stats={statArray}
       >
-        <div className="flex gap-1 mt-2 sm:mt-0">
-          {['all', 'active', 'pending', 'rejected', 'cancelled'].map((f) => (
-            <button
-              key={f}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-150 ${
-                filter === f
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50'
-              }`}
-              onClick={() => setFilter(f)}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          {[
+            { value: 'all', label: 'All', color: 'bg-blue-50', badge: 'bg-blue-500' },
+            { value: 'active', label: 'Active', color: 'bg-green-50', badge: 'bg-green-500' },
+            { value: 'pending', label: 'Pending', color: 'bg-yellow-50', badge: 'bg-yellow-500' },
+            { value: 'rejected', label: 'Rejected', color: 'bg-red-50', badge: 'bg-red-500' },
+            { value: 'cancelled', label: 'Cancelled', color: 'bg-gray-50', badge: 'bg-gray-500' },
+            { value: 'completed', label: 'Completed', color: 'bg-purple-50', badge: 'bg-purple-500' }
+          ].map((filterOption) => {
+            const count = filterOption.value === 'all' ? stats.total :
+                         filterOption.value === 'active' ? stats.active :
+                         filterOption.value === 'pending' ? stats.pending :
+                         filterOption.value === 'rejected' ? stats.rejected :
+                         filterOption.value === 'cancelled' ? stats.cancelled :
+                         filterOption.value === 'completed' ? stats.completed : 0;
+            const isActive = filter === filterOption.value;
+            return (
+              <button
+                key={filterOption.value}
+                onClick={() => setFilter(filterOption.value)}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive 
+                    ? filterOption.color + ' ring-2 ring-blue-500 ring-opacity-30' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full mr-2 ${filterOption.badge}`}></span>
+                {filterOption.label} ({count})
+              </button>
+            );
+          })}
         </div>
       </AdminTabHeader>
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -389,8 +445,78 @@ const ProjectsManagement: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-row sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-6 w-full sm:w-auto">
-                      <Button size="sm" variant="secondary" onClick={e => { e.stopPropagation(); setSelectedProject(project); }}><Eye className="w-4 h-4 mr-1" />View Details</Button>
+                    <div className="flex flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-4 w-full sm:w-auto">
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); setSelectedProject(project); }}
+                        variant="secondary"
+                        size="sm"
+                        className="w-full sm:w-auto text-xs sm:text-sm border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
+                      >
+                        <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        View Details
+                      </Button>
+
+                      {/* Action Buttons Based on Status */}
+                      {project.status === 'pending' && (
+                        <>
+                          <Button
+                            onClick={(e) => { e.stopPropagation(); handleApprove(project); }}
+                            disabled={actionLoading}
+                            className="w-full sm:w-auto text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white border-0"
+                            size="sm"
+                          >
+                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                            {actionLoading ? 'Approving...' : 'Approve'}
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProject(project);
+                              // We'll trigger reject modal from the details modal
+                            }}
+                            className="w-full sm:w-auto text-xs sm:text-sm bg-red-600 hover:bg-red-700 text-white border-0"
+                            size="sm"
+                          >
+                            <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+
+                      {(project.status === 'open' || project.status === 'in_progress') && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProject(project);
+                            // Block action will be handled in modal
+                          }}
+                          className="w-full sm:w-auto text-xs sm:text-sm bg-amber-500 hover:bg-amber-600 text-white border-0"
+                          size="sm"
+                        >
+                          <Shield className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                          Block
+                        </Button>
+                      )}
+
+                      {project.status === 'rejected' && project.can_resubmit && (
+                        <div className="text-xs text-blue-600 font-medium">
+                          Can Resubmit
+                        </div>
+                      )}
+
+                      {/* Delete Button (Always Available for Admin) */}
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Open deletion modal
+                          setDeleteTarget({ type: 'project', id: project.id, name: project.title });
+                        }}
+                        className="w-full sm:w-auto text-xs sm:text-sm bg-red-600 hover:bg-red-700 text-white border-0"
+                        size="sm"
+                      >
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -413,6 +539,23 @@ const ProjectsManagement: React.FC = () => {
           adminWorkspaceAccessRequested={!!selectedProject.admin_workspace_access_requested}
           adminWorkspaceAccessGranted={!!selectedProject.admin_workspace_access_granted}
           actionLoading={actionLoading}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <DeleteConfirmationModal
+          isOpen={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          targetId={deleteTarget.id}
+          targetType={deleteTarget.type as 'project'}
+          targetName={deleteTarget.name}
+          onDeleteComplete={(result) => {
+            setDeleteTarget(null);
+            if (result.success) {
+              loadProjects();
+            }
+          }}
         />
       )}
     </div>

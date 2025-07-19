@@ -354,7 +354,7 @@ class MessageService {
             // Check if user is admin with workspace access granted
             const { data: userProfile, error: userError } = await supabase
                 .from('profiles')
-                .select('is_admin, role')
+                .select('role')
                 .eq('id', userId)
                 .single();
 
@@ -362,8 +362,8 @@ class MessageService {
                 return false;
             }
 
-            // Check if user is admin (either by is_admin flag or role)
-            const isAdmin = userProfile.is_admin === true || userProfile.role === 'admin';
+            // Check if user is admin
+            const isAdmin = userProfile.role === 'admin';
             
             if (isAdmin && project.admin_workspace_access_granted === true) {
                 return true;

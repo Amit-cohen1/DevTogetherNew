@@ -275,7 +275,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const isDeveloper = ['developer', 'admin'].includes((profile?.role as unknown as string) ?? '')
     const isOrganization = (profile?.role as unknown as string) === 'organization'
     // Admin can be flagged either via dedicated role (future) or legacy boolean flag
-    const isAdmin = (profile?.role as unknown as string) === 'admin' || profile?.is_admin === true
+    const isAdmin = (profile?.role as unknown as string) === 'admin'
 
     const value: AuthContextType = {
         // State

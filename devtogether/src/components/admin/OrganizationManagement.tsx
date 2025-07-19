@@ -21,10 +21,19 @@ import type { Profile } from '../../types/database';
 import { organizationDashboardService } from '../../services/organizationDashboardService';
 import { projectService } from '../../services/projects';
 import AdminTabHeader from './AdminTabHeader';
+import { AdminDeletionButton } from './AdminDeletionButton';
 
 interface OrganizationManagementProps {}
 
-type FilterStatus = 'all' | 'pending' | 'verified' | 'rejected'
+type FilterStatus = 'all' | 'pending' | 'verified' | 'rejected' | 'blocked'
+
+const organizationStatusOptions = [
+  { value: 'all', label: 'All', color: 'bg-gray-100 text-gray-800', badge: 'bg-gray-500' },
+  { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800', badge: 'bg-yellow-500' },
+  { value: 'verified', label: 'Verified', color: 'bg-green-100 text-green-800', badge: 'bg-green-500' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800', badge: 'bg-red-500' },
+  { value: 'blocked', label: 'Blocked', color: 'bg-amber-100 text-amber-800', badge: 'bg-amber-500' },
+];
 
 // If PendingOrganization already exists, extend it with moderation fields:
 // type PendingOrganization = Profile & {
@@ -57,11 +66,16 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
 
     // Apply status filter
     if (filterStatus === 'pending') {
-      filtered = filtered.filter(org => (org as Profile).organization_status === 'pending')
+      filtered = filtered.filter(org => {
+        const status = (org as Profile).organization_status;
+        return status === 'pending' || status === null;
+      });
     } else if (filterStatus === 'verified') {
       filtered = filtered.filter(org => (org as Profile).organization_status === 'approved')
     } else if (filterStatus === 'rejected') {
       filtered = filtered.filter(org => (org as Profile).organization_status === 'rejected')
+    } else if (filterStatus === 'blocked') {
+      filtered = filtered.filter(org => (org as Profile).organization_status === 'blocked')
     }
 
     // Apply search filter
@@ -72,6 +86,34 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
         org.email.toLowerCase().includes(term) ||
         org.bio?.toLowerCase().includes(term)
       )
+    }
+
+    // Apply smart ordering ONLY for 'all' filter
+    if (filterStatus === 'all') {
+      filtered.sort((a, b) => {
+        const aStatus = (a as Profile).organization_status || 'pending';
+        const bStatus = (b as Profile).organization_status || 'pending';
+        
+        const statusPriority = {
+          'pending': 1,
+          'approved': 2, 
+          'rejected': 3,
+          'blocked': 4
+        };
+        
+        const aPriority = statusPriority[aStatus as keyof typeof statusPriority] || 5;
+        const bPriority = statusPriority[bStatus as keyof typeof statusPriority] || 5;
+        
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // Secondary sort by creation date (newest first for same status)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    } else {
+      // For specific filters, just sort by creation date (newest first)
+      filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
     setFilteredOrganizations(filtered)
@@ -214,9 +256,13 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
   const getFilterCounts = () => {
     return {
       all: organizations.length,
-      pending: organizations.filter(org => (org as Profile).organization_status === 'pending').length,
+      pending: organizations.filter(org => {
+        const status = (org as Profile).organization_status;
+        return status === 'pending' || status === null;
+      }).length,
       verified: organizations.filter(org => (org as Profile).organization_status === 'approved').length,
-      rejected: organizations.filter(org => (org as Profile).organization_status === 'rejected').length
+      rejected: organizations.filter(org => (org as Profile).organization_status === 'rejected').length,
+      blocked: organizations.filter(org => (org as Profile).organization_status === 'blocked').length
     }
   }
 
@@ -227,6 +273,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
     { label: 'Pending', value: filterCounts.pending, color: 'bg-yellow-50' },
     { label: 'Verified', value: filterCounts.verified, color: 'bg-green-50' },
     { label: 'Rejected', value: filterCounts.rejected, color: 'bg-red-50' },
+    { label: 'Blocked', value: filterCounts.blocked, color: 'bg-amber-50' },
   ];
 
   const handleSearch = (value: string) => {
@@ -281,17 +328,25 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
         onSearch={handleSearch}
         stats={statArray}
       >
-        <div className="flex items-center space-x-2 w-full sm:w-auto mt-2 sm:mt-0">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-auto text-sm sm:text-base"
-          >
-            <option value="all">All ({filterCounts.all})</option>
-            <option value="pending">Pending ({filterCounts.pending})</option>
-            <option value="verified">Verified ({filterCounts.verified})</option>
-            <option value="rejected">Rejected ({filterCounts.rejected})</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          {organizationStatusOptions.map((status) => {
+            const count = filterCounts[status.value as keyof typeof filterCounts] || 0;
+            const isActive = filterStatus === status.value;
+            return (
+              <button
+                key={status.value}
+                onClick={() => setFilterStatus(status.value as FilterStatus)}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive 
+                    ? status.color + ' ring-2 ring-blue-500 ring-opacity-30' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full mr-2 ${status.badge}`}></span>
+                {status.label} ({count})
+              </button>
+            );
+          })}
         </div>
       </AdminTabHeader>
 
@@ -380,12 +435,12 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                     )}
                   </div>
 
-                  <div className="flex flex-row sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-6 w-full sm:w-auto">
+                  <div className="flex flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-4 w-full sm:w-auto">
                     <Button
                       onClick={() => setSelectedOrganization(org)}
                       variant="secondary"
                       size="sm"
-                      className="w-full sm:w-auto text-xs sm:text-sm"
+                      className="w-full sm:w-auto text-xs sm:text-sm border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
                     >
                       <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                       View Details
@@ -396,7 +451,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                         <Button
                           onClick={() => handleApprove(org.id)}
                           disabled={actionLoading === org.id}
-                          className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-xs sm:text-sm"
+                          className="w-full sm:w-auto text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white border-0"
                           size="sm"
                         >
                           <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -407,8 +462,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                             setSelectedOrganization(org)
                             setShowRejectModal(true)
                           }}
-                          variant="secondary"
-                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto text-xs sm:text-sm"
+                          className="w-full sm:w-auto text-xs sm:text-sm bg-red-600 hover:bg-red-700 text-white border-0"
                           size="sm"
                         >
                           <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -416,6 +470,41 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                         </Button>
                       </>
                     )}
+                    
+                    {/* Block/Unblock Button */}
+                    {((org as Profile).organization_status !== 'blocked') ? (
+                      <Button
+                        onClick={() => {
+                          setSelectedOrganization(org)
+                          setShowBlockModal(true)
+                        }}
+                        className="w-full sm:w-auto text-xs sm:text-sm bg-amber-500 hover:bg-amber-600 text-white border-0"
+                        size="sm"
+                        disabled={actionLoading === org.id}
+                      >
+                        <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        Block
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleUnblock(org.id)}
+                        className="w-full sm:w-auto text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white border-0"
+                        size="sm"
+                        disabled={actionLoading === org.id}
+                      >
+                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        {actionLoading === org.id ? 'Unblocking...' : 'Unblock'}
+                      </Button>
+                    )}
+                    
+                    <AdminDeletionButton
+                      targetId={org.id}
+                      targetType="organization"
+                      targetName={org.organization_name || 'Unnamed Organization'}
+                      onDeleteSuccess={loadOrganizations}
+                      size="sm"
+                      className="w-full sm:w-auto"
+                    />
                   </div>
                 </div>
               </div>

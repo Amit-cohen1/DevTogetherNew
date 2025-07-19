@@ -23,6 +23,13 @@ interface PartnerApplicationManagementProps {}
 
 type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected'
 
+const partnerApplicationStatusOptions = [
+  { value: 'all', label: 'All', color: 'bg-gray-100 text-gray-800', badge: 'bg-gray-500' },
+  { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800', badge: 'bg-yellow-500' },
+  { value: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800', badge: 'bg-green-500' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800', badge: 'bg-red-500' },
+];
+
 const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> = () => {
   const { profile } = useAuth()
   const [applications, setApplications] = useState<PartnerApplication[]>([])
@@ -56,6 +63,30 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
         app.industry.toLowerCase().includes(term) ||
         app.why_partner.toLowerCase().includes(term)
       )
+    }
+
+    // Apply smart ordering ONLY for 'all' filter
+    if (filterStatus === 'all') {
+      filtered.sort((a, b) => {
+        const statusPriority = {
+          'pending': 1,
+          'approved': 2,
+          'rejected': 3
+        };
+        
+        const aPriority = statusPriority[a.status as keyof typeof statusPriority] || 4;
+        const bPriority = statusPriority[b.status as keyof typeof statusPriority] || 4;
+        
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // Secondary sort by creation date (newest first for same status)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    } else {
+      // For specific filters, just sort by creation date (newest first)
+      filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
     setFilteredApplications(filtered)
@@ -218,17 +249,25 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
         onSearch={handleSearch}
         stats={statArray}
       >
-        <div className="flex items-center space-x-2 w-full sm:w-auto mt-2 sm:mt-0">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-auto text-sm sm:text-base"
-          >
-            <option value="all">All ({filterCounts.all})</option>
-            <option value="pending">Pending ({filterCounts.pending})</option>
-            <option value="approved">Approved ({filterCounts.approved})</option>
-            <option value="rejected">Rejected ({filterCounts.rejected})</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          {partnerApplicationStatusOptions.map((status) => {
+            const count = filterCounts[status.value as keyof typeof filterCounts] || 0;
+            const isActive = filterStatus === status.value;
+            return (
+              <button
+                key={status.value}
+                onClick={() => setFilterStatus(status.value as FilterStatus)}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive 
+                    ? status.color + ' ring-2 ring-blue-500 ring-opacity-30' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full mr-2 ${status.badge}`}></span>
+                {status.label} ({count})
+              </button>
+            );
+          })}
         </div>
       </AdminTabHeader>
 
@@ -311,12 +350,12 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                     </div>
                   </div>
 
-                  <div className="flex flex-row sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-6 w-full sm:w-auto">
+                  <div className="flex flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-4 w-full sm:w-auto">
                     <Button
                       onClick={() => setSelectedApplication(app)}
                       variant="secondary"
                       size="sm"
-                      className="w-full sm:w-auto text-xs sm:text-sm"
+                      className="w-full sm:w-auto text-xs sm:text-sm border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
                     >
                       <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                       View Details
@@ -327,7 +366,7 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                         <Button
                           onClick={() => handleApprove(app.id)}
                           disabled={actionLoading === app.id}
-                          className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-xs sm:text-sm"
+                          className="w-full sm:w-auto text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white border-0"
                           size="sm"
                         >
                           <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -336,8 +375,7 @@ const PartnerApplicationManagement: React.FC<PartnerApplicationManagementProps> 
                         <Button
                           onClick={() => handleReject(app.id)}
                           disabled={actionLoading === app.id}
-                          variant="secondary"
-                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 w-full sm:w-auto text-xs sm:text-sm"
+                          className="w-full sm:w-auto text-xs sm:text-sm bg-red-600 hover:bg-red-700 text-white border-0"
                           size="sm"
                         >
                           <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />

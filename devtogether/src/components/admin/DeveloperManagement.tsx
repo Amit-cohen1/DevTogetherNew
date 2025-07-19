@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import type { Profile } from '../../types/database';
 import AdminTabHeader from './AdminTabHeader';
+import { AdminDeletionButton } from './AdminDeletionButton';
 
 const DeveloperManagement: React.FC = () => {
   const { profile } = useAuth();
@@ -15,6 +16,7 @@ const DeveloperManagement: React.FC = () => {
   const [blockReason, setBlockReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'blocked'>('all');
 
   useEffect(() => {
     loadDevelopers();
@@ -65,11 +67,21 @@ const DeveloperManagement: React.FC = () => {
     }
   };
 
-  const filteredDevelopers = developers.filter(dev =>
-    (dev.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (dev.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dev.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDevelopers = developers.filter(dev => {
+    const matchesSearch = (dev.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (dev.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dev.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let matchesStatus = true;
+    if (statusFilter === 'active') {
+      matchesStatus = !dev.blocked;
+    } else if (statusFilter === 'blocked') {
+      matchesStatus = !!dev.blocked;
+    }
+    // statusFilter === 'all' shows everything
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const stats = {
     total: developers.length,
@@ -101,7 +113,32 @@ const DeveloperManagement: React.FC = () => {
         searchPlaceholder="Search developers..."
         onSearch={handleSearch}
         stats={statArray}
-      />
+      >
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          {[
+            { value: 'all', label: 'All', color: 'bg-gray-100 text-gray-800' },
+            { value: 'active', label: 'Active', color: 'bg-green-100 text-green-800' },
+            { value: 'blocked', label: 'Blocked', color: 'bg-red-100 text-red-800' }
+          ].map((status) => {
+            const count = status.value === 'all' ? stats.total : 
+                         status.value === 'active' ? stats.active : stats.blocked;
+            const isActive = statusFilter === status.value;
+            return (
+              <button
+                key={status.value}
+                onClick={() => setStatusFilter(status.value as 'all' | 'active' | 'blocked')}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive 
+                    ? status.color + ' ring-2 ring-blue-500 ring-opacity-30' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {status.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </AdminTabHeader>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
@@ -125,11 +162,34 @@ const DeveloperManagement: React.FC = () => {
                   )}
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
-                  {dev.blocked ? (
-                    <Button onClick={() => handleUnblock(dev.id)} size="sm" disabled={isProcessing}>Unblock</Button>
-                  ) : (
-                    <Button onClick={() => { setSelectedDeveloper(dev); setShowBlockModal(true); }} size="sm" disabled={isProcessing}>Block</Button>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {dev.blocked ? (
+                      <Button 
+                        onClick={() => handleUnblock(dev.id)} 
+                        size="sm" 
+                        disabled={isProcessing}
+                        className="bg-green-600 hover:bg-green-700 text-white border-0"
+                      >
+                        Unblock
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => { setSelectedDeveloper(dev); setShowBlockModal(true); }} 
+                        size="sm" 
+                        disabled={isProcessing}
+                        className="bg-amber-500 hover:bg-amber-600 text-white border-0"
+                      >
+                        Block
+                      </Button>
+                    )}
+                    <AdminDeletionButton
+                      targetId={dev.id}
+                      targetType="developer"
+                      targetName={`${dev.first_name || ''} ${dev.last_name || ''}`.trim() || dev.email}
+                      onDeleteSuccess={loadDevelopers}
+                      size="sm"
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -153,21 +213,21 @@ const DeveloperManagement: React.FC = () => {
               />
             </div>
             <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <div className="flex justify-end gap-3">
-                <Button
-                  onClick={handleBlock}
-                  className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
-                  disabled={!blockReason.trim() || isProcessing}
-                >
-                  Confirm Block
-                </Button>
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                 <Button
                   onClick={() => setShowBlockModal(false)}
                   variant="secondary"
                   disabled={isProcessing}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto order-2 sm:order-1 border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
                 >
                   Cancel
+                </Button>
+                <Button
+                  onClick={handleBlock}
+                  className="w-full sm:w-auto order-1 sm:order-2 bg-amber-500 hover:bg-amber-600 text-white border-0"
+                  disabled={!blockReason.trim() || isProcessing}
+                >
+                  Confirm Block
                 </Button>
               </div>
             </div>

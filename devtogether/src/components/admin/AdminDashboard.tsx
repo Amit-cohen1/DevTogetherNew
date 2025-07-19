@@ -182,20 +182,64 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               <div className="text-xs font-medium text-gray-500">Partner Applications</div>
               <div className="text-lg font-bold text-gray-900">{stats.totalPartnerApplications}</div>
             </div>
-            <div className="bg-yellow-100 border border-yellow-300 shadow-lg rounded-xl p-4 flex flex-col items-center justify-center min-h-[90px] col-span-2 md:col-span-1">
-              <Clock className="h-5 w-5 text-yellow-600 mb-1 animate-pulse" />
-              <div className="text-xs font-medium text-yellow-700">Pending Projects</div>
-              <div className="text-lg font-bold text-yellow-800">{stats.pendingProjects}</div>
+          </div>
+
+          {/* Quick Review Panel - Enhanced */}
+          <div className="col-span-full bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-200 rounded-xl p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg mr-3">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-yellow-900">Pending Reviews</h3>
+                  <p className="text-sm text-yellow-700">Quick access to items requiring attention</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-yellow-800">
+                {(stats.pendingOrganizations + stats.pendingProjects + stats.pendingPartnerApplications)}
+              </div>
             </div>
-            <div className="bg-yellow-100 border border-yellow-300 shadow-lg rounded-xl p-4 flex flex-col items-center justify-center min-h-[90px] col-span-2 md:col-span-1">
-              <Clock className="h-5 w-5 text-yellow-600 mb-1 animate-pulse" />
-              <div className="text-xs font-medium text-yellow-700">Pending Organizations</div>
-              <div className="text-lg font-bold text-yellow-800">{stats.pendingOrganizations}</div>
-            </div>
-            <div className="bg-yellow-100 border border-yellow-300 shadow-lg rounded-xl p-4 flex flex-col items-center justify-center min-h-[90px] col-span-2 md:col-span-1">
-              <Clock className="h-5 w-5 text-yellow-600 mb-1 animate-pulse" />
-              <div className="text-xs font-medium text-yellow-700">Pending Partner Apps</div>
-              <div className="text-lg font-bold text-yellow-800">{stats.pendingPartnerApplications}</div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Pending Organizations Quick Access */}
+              <button
+                onClick={() => setActiveTab('organizations')}
+                className="group bg-white border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-yellow-300 text-left"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <Building className="h-5 w-5 text-yellow-600 group-hover:text-yellow-700" />
+                  <span className="text-lg font-bold text-yellow-800">{stats.pendingOrganizations}</span>
+                </div>
+                <div className="text-sm font-medium text-gray-900">Organizations</div>
+                <div className="text-xs text-gray-600">Pending verification</div>
+              </button>
+
+              {/* Pending Projects Quick Access */}
+              <button
+                onClick={() => setActiveTab('projects')}
+                className="group bg-white border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-yellow-300 text-left"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <FileText className="h-5 w-5 text-yellow-600 group-hover:text-yellow-700" />
+                  <span className="text-lg font-bold text-yellow-800">{stats.pendingProjects}</span>
+                </div>
+                <div className="text-sm font-medium text-gray-900">Projects</div>
+                <div className="text-xs text-gray-600">Awaiting approval</div>
+              </button>
+
+              {/* Pending Partner Applications Quick Access */}
+              <button
+                onClick={() => setActiveTab('partners')}
+                className="group bg-white border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-yellow-300 text-left"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <UserCheck className="h-5 w-5 text-yellow-600 group-hover:text-yellow-700" />
+                  <span className="text-lg font-bold text-yellow-800">{stats.pendingPartnerApplications}</span>
+                </div>
+                                 <div className="text-sm font-medium text-gray-900">Partner Apps</div>
+                 <div className="text-xs text-gray-600">Pending review</div>
+               </button>
             </div>
           </div>
         </>
