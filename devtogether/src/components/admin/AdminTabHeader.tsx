@@ -44,16 +44,16 @@ const AdminTabHeader: React.FC<AdminTabHeaderProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white shadow-sm"
           />
         </div>
-        <div className="flex flex-row flex-wrap sm:flex-nowrap gap-2 sm:ml-4 justify-start sm:justify-end mt-2 sm:mt-0">
+        <div className="flex flex-row flex-wrap gap-2 sm:ml-4 justify-start sm:justify-end mt-2 sm:mt-0">
           {stats.map((stat, idx) => (
             <div
               key={stat.label}
-              className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[90px] border border-gray-200 shadow-md bg-gradient-to-br ${
+              className={`flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-xl min-w-[80px] sm:min-w-[90px] border border-gray-200 shadow-md bg-gradient-to-br ${
                 stat.color || 'from-gray-50 to-white'
               } hover:shadow-lg transition-shadow duration-150`}
               style={{ fontSize: 13 }}
             >
-              <span className="font-bold text-base sm:text-lg text-gray-900 drop-shadow-sm">{stat.value}</span>
+              <span className="font-bold text-sm sm:text-base lg:text-lg text-gray-900 drop-shadow-sm">{stat.value}</span>
               <span className="text-xs text-gray-500 font-medium tracking-wide">{stat.label}</span>
             </div>
           ))}

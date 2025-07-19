@@ -87,7 +87,7 @@ class WorkspaceService {
                     is_public: null,
                     share_token: null,
                     profile_views: null,
-                    is_admin: null,
+              
                     organization_verified: null,
                     organization_verified_at: null,
                     organization_verified_by: null,
@@ -141,7 +141,7 @@ class WorkspaceService {
             // Check if user is admin
             const { data: userProfile, error } = await supabase
                 .from('profiles')
-                .select('is_admin, role')
+                .select('role')
                 .eq('id', userId)
                 .single();
 
@@ -149,8 +149,8 @@ class WorkspaceService {
                 return false;
             }
 
-            // Check if user is admin (either by is_admin flag or role)
-            const isAdmin = userProfile.is_admin === true || userProfile.role === 'admin';
+            // Check if user is admin
+            const isAdmin = userProfile.role === 'admin';
             
             if (!isAdmin) {
                 return false;

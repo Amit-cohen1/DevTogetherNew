@@ -50,10 +50,10 @@ class AdminService {
   // Get admin statistics
   async getAdminStats(): Promise<AdminStats> {
     try {
-      // Get organization stats
+      // Get organization stats using organization_status (fixed)
       const { data: orgStats } = await supabase
         .from('profiles')
-        .select('organization_verified, organization_rejection_reason')
+        .select('organization_status, organization_verified')
         .eq('role', 'organization')
 
       // Get partner application stats
@@ -79,9 +79,9 @@ class AdminService {
         .eq('role', 'developer')
 
       const totalOrganizations = orgStats?.length || 0
-      const verifiedOrganizations = orgStats?.filter((org: any) => org.organization_verified === true).length || 0
-      const pendingOrganizations = orgStats?.filter((org: any) => org.organization_verified === false).length || 0
-      const rejectedOrganizations = orgStats?.filter((org: any) => org.organization_rejection_reason !== null).length || 0
+      const verifiedOrganizations = orgStats?.filter((org: any) => org.organization_status === 'approved').length || 0
+      const pendingOrganizations = orgStats?.filter((org: any) => (org.organization_status === 'pending' || org.organization_status === null)).length || 0
+      const rejectedOrganizations = orgStats?.filter((org: any) => org.organization_status === 'rejected').length || 0
 
       const totalPartnerApplications = partnerStats?.length || 0
       const pendingPartnerApplications = partnerStats?.filter((app: any) => app.status === 'pending').length || 0
@@ -248,12 +248,12 @@ class AdminService {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('role')
         .eq('id', userId)
         .single()
 
       if (error) throw error
-      return data?.is_admin || false
+      return data?.role === 'admin'
     } catch (error) {
       console.error('Error checking admin status:', error)
       return false
@@ -265,7 +265,7 @@ class AdminService {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_admin: true })
+        .update({ role: 'admin' })
         .eq('id', userId)
 
       if (error) throw error
@@ -280,7 +280,7 @@ class AdminService {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_admin: false })
+        .update({ role: 'developer' })
         .eq('id', userId)
 
       if (error) throw error

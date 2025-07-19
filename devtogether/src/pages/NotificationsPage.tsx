@@ -98,7 +98,7 @@ export default function NotificationsPage() {
     let filtered = [...notifications]
 
     // Hide moderation notifications for non-admins
-    if (!profile?.is_admin && profile?.role !== 'admin') {
+    if (profile?.role !== 'admin') {
       filtered = filtered.filter(n => n.type !== 'moderation')
     }
 

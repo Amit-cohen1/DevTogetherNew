@@ -28,7 +28,6 @@ export interface Database {
                     is_public: boolean | null
                     share_token: string | null
                     profile_views: number | null
-                    is_admin: boolean | null
                     organization_verified: boolean | null
                     organization_verified_at: string | null
                     organization_verified_by: string | null
@@ -55,7 +54,6 @@ export interface Database {
                     is_public?: boolean | null
                     share_token?: string | null
                     profile_views?: number | null
-                    is_admin?: boolean | null
                     organization_verified?: boolean | null
                     organization_verified_at?: string | null
                     organization_verified_by?: string | null
@@ -82,7 +80,6 @@ export interface Database {
                     is_public?: boolean | null
                     share_token?: string | null
                     profile_views?: number | null
-                    is_admin?: boolean | null
                     organization_verified?: boolean | null
                     organization_verified_at?: string | null
                     organization_verified_by?: string | null
@@ -563,7 +560,6 @@ export interface Profile {
     is_public: boolean | null
     share_token: string | null
     profile_views: number | null
-    is_admin: boolean | null
     /**
      * @deprecated Use organization_status instead
      */
