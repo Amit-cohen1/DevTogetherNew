@@ -86,8 +86,12 @@ class WorkspaceService {
                     avatar_url: member.profile.avatar_url,
                     is_public: null,
                     share_token: null,
+                    security_string: null,
+                    security_string_updated_at: null,
                     profile_views: null,
-              
+                    current_rating: null,
+                    total_stars_earned: null,
+                    spotlight_enabled: null,
                     organization_verified: null,
                     organization_verified_at: null,
                     organization_verified_by: null,

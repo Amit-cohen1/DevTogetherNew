@@ -61,26 +61,31 @@ class NotificationService {
 
             console.log('✅ Session check passed for user:', session.user.id);
 
-            const { data: notification, error } = await supabase
+            // Use safe notification creation function to handle RLS properly
+            const { data: notificationId, error } = await supabase.rpc('create_notification_safe', {
+                p_user_id: data.user_id,
+                p_type: data.type,
+                p_title: data.title,
+                p_message: data.message,
+                p_data: data.data || {}
+            });
+
+            if (error || !notificationId) {
+                console.error('❌ Failed to create notification via RPC:', error);
+                return null;
+            }
+
+            // Fetch the created notification to return it
+            const { data: notification, error: fetchError } = await supabase
                 .from('notifications')
-                .insert([{
-                    user_id: data.user_id,
-                    title: data.title,
-                    message: data.message,
-                    type: data.type,
-                    data: data.data || {},
-                    read: false
-                }])
-                .select()
+                .select('*')
+                .eq('id', notificationId)
                 .single();
 
-            if (error) {
-                console.error('❌ Database error creating notification:', {
-                    error: error,
-                    code: error.code,
-                    message: error.message,
-                    details: error.details,
-                    hint: error.hint
+            if (fetchError) {
+                console.error('❌ Database error fetching created notification:', {
+                    error: fetchError,
+                    notificationId: notificationId
                 });
                 return null;
             }

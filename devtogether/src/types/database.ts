@@ -27,12 +27,17 @@ export interface Database {
                     avatar_url: string | null
                     is_public: boolean | null
                     share_token: string | null
+                    security_string: string | null
+                    security_string_updated_at: string | null
                     profile_views: number | null
                     organization_verified: boolean | null
                     organization_verified_at: string | null
                     organization_verified_by: string | null
                     organization_rejection_reason: string | null
                     onboarding_complete: boolean | null
+                    current_rating: number | null
+                    total_stars_earned: number | null
+                    spotlight_enabled: boolean | null
                     created_at: string
                     updated_at: string
                 }
@@ -53,12 +58,17 @@ export interface Database {
                     avatar_url?: string | null
                     is_public?: boolean | null
                     share_token?: string | null
+                    security_string?: string | null
+                    security_string_updated_at?: string | null
                     profile_views?: number | null
                     organization_verified?: boolean | null
                     organization_verified_at?: string | null
                     organization_verified_by?: string | null
                     organization_rejection_reason?: string | null
                     onboarding_complete?: boolean | null
+                    current_rating?: number | null
+                    total_stars_earned?: number | null
+                    spotlight_enabled?: boolean | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -79,12 +89,17 @@ export interface Database {
                     avatar_url?: string | null
                     is_public?: boolean | null
                     share_token?: string | null
+                    security_string?: string | null
+                    security_string_updated_at?: string | null
                     profile_views?: number | null
                     organization_verified?: boolean | null
                     organization_verified_at?: string | null
                     organization_verified_by?: string | null
                     organization_rejection_reason?: string | null
                     onboarding_complete?: boolean | null
+                    current_rating?: number | null
+                    total_stars_earned?: number | null
+                    spotlight_enabled?: boolean | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -648,10 +663,15 @@ export interface TeamMember {
         organization_name?: string | null
         avatar_url: string | null
         email?: string
+        is_public?: boolean | null
+        security_string?: string | null
+        skills?: string[] | null
     }
     role: 'owner' | 'member' | 'status_manager'
     application?: Application // Only present for developers
     joined_at?: string
+    status?: 'active' | 'inactive'
+    status_manager?: boolean
 }
 
 export interface ProjectWithTeamMembers extends Project {

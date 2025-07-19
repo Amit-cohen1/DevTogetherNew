@@ -86,20 +86,20 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
             }`}>
             <div className="p-6">
                 {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                    <div className="flex items-start gap-4 min-w-0 flex-1">
                         {/* Selection Checkbox */}
                         {onSelect && (
                             <input
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={(e) => onSelect(application.id, e.target.checked)}
-                                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded flex-shrink-0"
                             />
                         )}
 
                         {/* Avatar */}
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                             {developer.avatar_url ? (
                                 <img
                                     src={developer.avatar_url}
@@ -112,29 +112,29 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                         </div>
 
                         {/* Developer Info */}
-                        <div>
-                            <h3 className="font-semibold text-gray-900">
+                        <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-gray-900 truncate">
                                 {developerName}
                             </h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                                 <div className="flex items-center gap-1">
-                                    <Mail className="w-4 h-4" />
-                                    <span>{developer.email}</span>
+                                    <Mail className="w-4 h-4 flex-shrink-0" />
+                                    <span className="truncate">{developer.email}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>{formatDate(application.created_at)}</span>
+                                    <Calendar className="w-4 h-4 flex-shrink-0" />
+                                    <span className="whitespace-nowrap">{formatDate(application.created_at)}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    <span>{getTimeSinceApplication()}</span>
+                                    <Clock className="w-4 h-4 flex-shrink-0" />
+                                    <span className="whitespace-nowrap">{getTimeSinceApplication()}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Status and Actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(application.status)}`}>
                             {application.status.toUpperCase()}
                         </span>
@@ -142,7 +142,7 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={() => onReview(application)}
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-1 w-full sm:w-auto justify-center"
                         >
                             <Eye className="w-4 h-4" />
                             Review
@@ -180,15 +180,15 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                 )}
 
                 {/* Profile Links */}
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                     {developer.portfolio && (
                         <a
                             href={developer.portfolio}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 whitespace-nowrap"
                         >
-                            <Globe className="w-4 h-4" />
+                            <Globe className="w-4 h-4 flex-shrink-0" />
                             Portfolio
                         </a>
                     )}
@@ -197,9 +197,9 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                             href={developer.github}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 whitespace-nowrap"
                         >
-                            <Github className="w-4 h-4" />
+                            <Github className="w-4 h-4 flex-shrink-0" />
                             GitHub
                         </a>
                     )}
@@ -208,15 +208,15 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                             href={developer.linkedin}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 whitespace-nowrap"
                         >
-                            <Linkedin className="w-4 h-4" />
+                            <Linkedin className="w-4 h-4 flex-shrink-0" />
                             LinkedIn
                         </a>
                     )}
                     {hasPortfolioLinks && (
-                        <span className="text-sm text-gray-600 flex items-center gap-1">
-                            <ExternalLink className="w-4 h-4" />
+                        <span className="text-sm text-gray-600 flex items-center gap-1 whitespace-nowrap">
+                            <ExternalLink className="w-4 h-4 flex-shrink-0" />
                             {application.portfolio_links!.length} portfolio link{application.portfolio_links!.length > 1 ? 's' : ''}
                         </span>
                     )}

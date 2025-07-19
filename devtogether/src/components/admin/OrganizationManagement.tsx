@@ -438,11 +438,11 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = () => {
                   <div className="flex flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-4 w-full sm:w-auto">
                     <Button
                       onClick={() => setSelectedOrganization(org)}
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
-                      className="w-full sm:w-auto text-xs sm:text-sm border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
+                      className="w-full sm:w-auto text-xs sm:text-sm !text-gray-700 hover:!text-gray-900 border-gray-300 hover:border-gray-400"
                     >
-                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 text-gray-500" />
                       View Details
                     </Button>
 

@@ -47,7 +47,8 @@ export const searchService = {
             }
 
             // Get projects with proper team member composition using enhanced filters
-            const allProjects = await projectService.getProjectsWithTeamMembers(projectFilters);
+            // For public search, do NOT include private profiles for privacy protection
+            const allProjects = await projectService.getProjectsWithTeamMembers(projectFilters, false, false);
 
             // Filter projects based on search query
             let filteredProjects = allProjects

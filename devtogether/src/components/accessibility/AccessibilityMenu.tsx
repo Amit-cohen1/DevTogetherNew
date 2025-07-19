@@ -40,24 +40,23 @@ export const AccessibilityMenu: React.FC = () => {
         <>
             {/* Trigger Button or Hidden Tab */}
             {!triggerHidden ? (
-                <button
-                    aria-label="Accessibility menu"
-                    onClick={() => setMenuOpen(!menuOpen)}
-                    className="fixed bottom-4 right-4 z-50 rounded-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white w-14 h-14 flex items-center justify-center shadow-xl focus:outline-none focus:ring-4 focus:ring-primary-300 transition-transform active:scale-95"
-                >
-                    <AccessibilityIcon className="w-6 h-6" aria-hidden="true" />
-                    {/* hide arrow */}
+                <div className="fixed bottom-4 right-4 z-50">
+                    <button
+                        aria-label="Accessibility menu"
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="relative rounded-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white w-14 h-14 flex items-center justify-center shadow-xl focus:outline-none focus:ring-4 focus:ring-primary-300 transition-transform active:scale-95"
+                    >
+                        <AccessibilityIcon className="w-6 h-6" aria-hidden="true" />
+                    </button>
+                    {/* hide arrow - separate button */}
                     <button
                         aria-label="Hide accessibility button"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            toggleTriggerHidden()
-                        }}
-                        className="absolute -right-3 top-1/2 -translate-y-1/2 bg-primary-600 hover:bg-primary-700 w-5 h-5 flex items-center justify-center rounded-full shadow"
+                        onClick={toggleTriggerHidden}
+                        className="absolute -right-3 top-1/2 -translate-y-1/2 bg-primary-600 hover:bg-primary-700 w-5 h-5 flex items-center justify-center rounded-full shadow z-10"
                     >
                         <ChevronRight className="w-3 h-3" />
                     </button>
-                </button>
+                </div>
             ) : (
                 <button
                     onClick={toggleTriggerHidden}

@@ -16,7 +16,9 @@ import {
     Award,
     ArrowRight,
     CheckCircle,
-    Crown
+    Crown,
+    Shield,
+    ExternalLink
 } from 'lucide-react'
 import { DIFFICULTY_LEVELS, APPLICATION_TYPES } from '../../utils/constants'
 import { projectService } from '../../services/projects'
@@ -164,6 +166,74 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
         const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         return daysUntilDeadline <= 7 && daysUntilDeadline > 0
     }
+
+    // Enhanced team member display function with privacy support
+    const renderTeamMemberAvatar = (member: TeamMember) => {
+        const displayName = member.type === 'organization'
+            ? member.profile.organization_name || 'Organization'
+            : `${member.profile.first_name || ''} ${member.profile.last_name || ''}`.trim() || 'Unknown User';
+
+        const initials = member.type === 'organization'
+            ? (member.profile.organization_name?.[0] || 'O').toUpperCase()
+            : `${member.profile.first_name?.[0] || ''}${member.profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
+
+        // Enhanced privacy indicator
+        const isPrivateProfile = member.profile.is_public === false;
+
+        return (
+            <div
+                key={member.id}
+                className={`w-7 h-7 rounded-full bg-white border-2 flex items-center justify-center overflow-hidden shadow-sm relative ${
+                    member.role === 'owner' ? 'border-yellow-300' : 
+                    member.role === 'status_manager' ? 'border-blue-300' :
+                    'border-blue-200'
+                }`}
+                title={`${displayName}${
+                    member.role === 'owner' ? ' (Owner)' : 
+                    member.role === 'status_manager' ? ' (Status Manager)' : ''
+                }${isPrivateProfile ? ' (Private Profile)' : ''}`}
+                onClick={() => {
+                    // Use security string URL if available
+                    const profileUrl = member.profile.security_string
+                        ? `/profile/${member.profile.id}-${member.profile.security_string}`
+                        : `/profile/${member.profile.id}`;
+                    window.open(profileUrl, '_blank');
+                }}
+                style={{ cursor: 'pointer' }}
+            >
+                {member.profile.avatar_url ? (
+                    <img
+                        src={member.profile.avatar_url}
+                        alt={displayName}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <span className={`text-xs font-medium ${
+                        member.role === 'owner' ? 'text-yellow-700' : 
+                        member.role === 'status_manager' ? 'text-blue-700' :
+                        'text-blue-700'
+                    }`}>
+                        {initials}
+                    </span>
+                )}
+                
+                {/* Role indicators */}
+                {member.role === 'owner' && (
+                    <Crown className="w-2.5 h-2.5 text-yellow-600 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
+                )}
+                {member.role === 'status_manager' && (
+                    <Shield className="w-2.5 h-2.5 text-blue-600 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
+                )}
+                
+                {/* Privacy indicator */}
+                {isPrivateProfile && (
+                    <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-purple-500 rounded-full border border-white flex items-center justify-center">
+                        <Shield className="w-1.5 h-1.5 text-white" />
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div className={getCardClasses()}>
@@ -315,43 +385,7 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
                             </div>
                             <div className="flex items-center">
                                 <div className="flex -space-x-2 mr-3">
-                                    {project.team_members.slice(0, 3).map((member: TeamMember) => {
-                                        const displayName = member.type === 'organization'
-                                            ? member.profile.organization_name || 'Organization'
-                                            : `${member.profile.first_name || ''} ${member.profile.last_name || ''}`.trim() || 'Unknown User';
-
-                                        const initials = member.type === 'organization'
-                                            ? (member.profile.organization_name?.[0] || 'O').toUpperCase()
-                                            : `${member.profile.first_name?.[0] || ''}${member.profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
-
-                                        return (
-                                            <div
-                                                key={member.id}
-                                                className={`w-7 h-7 rounded-full bg-white border-2 flex items-center justify-center overflow-hidden shadow-sm relative ${member.role === 'owner' ? 'border-yellow-300' : 'border-blue-200'
-                                                    }`}
-                                                title={`${displayName}${member.role === 'owner' ? ' (Owner)' : member.role === 'status_manager' ? ' (Status Manager)' : ''}`}
-                                            >
-                                                {member.profile.avatar_url ? (
-                                                    <img
-                                                        src={member.profile.avatar_url}
-                                                        alt={displayName}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <span className={`text-xs font-medium ${member.role === 'owner' ? 'text-yellow-700' : 'text-blue-700'
-                                                        }`}>
-                                                        {initials}
-                                                    </span>
-                                                )}
-                                                {member.role === 'owner' && (
-                                                    <Crown className="w-2.5 h-2.5 text-yellow-600 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
-                                                )}
-                                                {member.role === 'status_manager' && (
-                                                    <Star className="w-2.5 h-2.5 text-blue-600 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                                    {project.team_members.slice(0, 3).map(renderTeamMemberAvatar)}
                                     {project.team_members.length > 3 && (
                                         <div className="w-7 h-7 rounded-full bg-blue-200 border-2 border-blue-200 flex items-center justify-center shadow-sm">
                                             <span className="text-xs text-blue-800 font-medium">
@@ -365,6 +399,16 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
                                 </span>
                             </div>
                         </div>
+                        
+                        {/* Privacy notice for team members */}
+                        {project.team_members.some(member => member.profile.is_public === false) && (
+                            <div className="mt-2 pt-2 border-t border-blue-200">
+                                <p className="text-xs text-blue-700 flex items-center gap-1">
+                                    <Shield className="w-3 h-3" />
+                                    Some team members have private profiles
+                                </p>
+                            </div>
+                        )}
                     </div>
                 )}
 

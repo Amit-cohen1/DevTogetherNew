@@ -102,29 +102,29 @@ export const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                 />
 
                 {/* Modal panel */}
-                <div className="inline-block w-full max-w-4xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
+                <div className="inline-block w-full max-w-4xl my-2 sm:my-8 mx-2 sm:mx-auto overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg max-h-[95vh] overflow-y-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                                 <User className="w-5 h-5 text-primary-600" />
                             </div>
-                            <div>
-                                <h2 className="text-xl font-semibold text-gray-900">
+                            <div className="min-w-0 flex-1">
+                                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
                                     Application Review
                                 </h2>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 truncate">
                                     {application.project.title}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-between sm:gap-4">
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
                                 {application.status.toUpperCase()}
                             </span>
                             <button
                                 onClick={onClose}
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-gray-400 hover:text-gray-600 p-1"
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -315,11 +315,12 @@ export const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
 
                     {/* Actions */}
                     {application.status === 'pending' && (
-                        <div className="flex items-center justify-end gap-4 px-6 py-4 border-t border-gray-200 bg-gray-50">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 sm:gap-4 px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
                             <Button
                                 variant="outline"
                                 onClick={onClose}
                                 disabled={isUpdating}
+                                className="w-full sm:w-auto order-3 sm:order-1"
                             >
                                 Close
                             </Button>
@@ -327,7 +328,7 @@ export const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                                 variant="outline"
                                 onClick={() => handleStatusUpdate('rejected')}
                                 disabled={isUpdating}
-                                className="text-red-600 border-red-300 hover:bg-red-50"
+                                className="w-full sm:w-auto text-red-600 border-red-300 hover:bg-red-50 order-2"
                             >
                                 {isUpdating ? (
                                     <>
@@ -344,7 +345,7 @@ export const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({
                             <Button
                                 onClick={() => handleStatusUpdate('accepted')}
                                 disabled={isUpdating}
-                                className="bg-green-600 text-white hover:bg-green-700"
+                                className="w-full sm:w-auto bg-green-600 text-white hover:bg-green-700 order-1 sm:order-3"
                             >
                                 {isUpdating ? (
                                     <>

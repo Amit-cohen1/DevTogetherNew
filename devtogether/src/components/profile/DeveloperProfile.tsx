@@ -6,7 +6,6 @@ import {
     Globe,
     ExternalLink,
     Github,
-    
     Linkedin,
     Loader2
 } from 'lucide-react';
@@ -19,6 +18,8 @@ import { SkillsShowcase } from './SkillsShowcase';
 import { AchievementDisplay } from './AchievementDisplay';
 import { ProjectPortfolio } from './ProjectPortfolio';
 import { ShareProfile } from './ShareProfile';
+import { DeveloperRatingDisplay } from './DeveloperRatingDisplay';
+import DeveloperFeedbackControls from './DeveloperFeedbackControls';
 
 interface DeveloperProfileProps {
     profile: User;
@@ -42,7 +43,7 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
         try {
             setIsLoading(true);
 
-            // Track profile view if not own profile
+            // Track profile view if not own profile (using enhanced team context)
             if (!isOwnProfile) {
                 await profileService.trackProfileView(profile.id);
             }
@@ -102,7 +103,14 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
                 </div>
             )}
 
-            {/* Project Portfolio - Core Benefit, moved to top priority */}
+            {/* Developer Rating Display - High Priority for Developer Profiles */}
+            <DeveloperRatingDisplay 
+                userId={profile.id} 
+                showDetails={true}
+                className="order-1"
+            />
+
+            {/* Project Portfolio - Core Benefit, moved to high priority */}
             <ProjectPortfolio projects={projectPortfolio} userId={profile.id} />
 
             {/* Enhanced Skills Showcase */}
@@ -114,44 +122,30 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
             )}
 
             {/* Portfolio Section (Original) */}
-            {profile.portfolio && (
+            {(profile.portfolio || profile.github || profile.linkedin || profile.website) && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-blue-600" />
-                        External Portfolio
+                        <Globe className="w-5 h-5 text-green-600" />
+                        Links & Portfolio
                     </h2>
-                    <div className="space-y-4">
-                        <a
-                            href={profile.portfolio}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group"
-                        >
-                            <div className="flex-shrink-0">
-                                <Globe className="w-6 h-6 text-gray-400 group-hover:text-blue-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 group-hover:text-blue-800">
-                                    Portfolio Website
-                                </p>
-                                <p className="text-sm text-gray-500 truncate">
-                                    {profile.portfolio}
-                                </p>
-                            </div>
-                            <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                        </a>
-                    </div>
-                </div>
-            )}
 
-            {/* Social Links Section */}
-            {(profile.github || profile.linkedin || profile.website) && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Globe className="w-5 h-5 text-blue-600" />
-                        Links & Social
-                    </h2>
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {profile.portfolio && (
+                            <a
+                                href={profile.portfolio}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group"
+                            >
+                                <Globe className="w-5 h-5 text-blue-600 group-hover:text-blue-700" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900">Portfolio</p>
+                                    <p className="text-sm text-gray-500 truncate">{profile.portfolio}</p>
+                                </div>
+                                <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                            </a>
+                        )}
+
                         {profile.github && (
                             <a
                                 href={profile.github}
@@ -159,7 +153,7 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors group"
                             >
-                                <Github className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                                <Github className="w-5 h-5 text-gray-700 group-hover:text-gray-900" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-gray-900">GitHub</p>
                                     <p className="text-sm text-gray-500 truncate">{profile.github}</p>
@@ -206,6 +200,11 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
             {/* Share Profile (Only for own profile) */}
             {isOwnProfile && (
                 <ShareProfile userId={profile.id} />
+            )}
+
+            {/* Organization Feedback Controls - Only for own profile */}
+            {isOwnProfile && (
+                <DeveloperFeedbackControls />
             )}
 
             {/* Empty State for Own Profile */}
