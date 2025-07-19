@@ -19,6 +19,7 @@ import { AchievementDisplay } from './AchievementDisplay';
 import { ProjectPortfolio } from './ProjectPortfolio';
 import { ShareProfile } from './ShareProfile';
 import { DeveloperRatingDisplay } from './DeveloperRatingDisplay';
+import { PublicFeedbackDisplay } from './PublicFeedbackDisplay';
 import DeveloperFeedbackControls from './DeveloperFeedbackControls';
 
 interface DeveloperProfileProps {
@@ -115,6 +116,11 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
 
             {/* Enhanced Skills Showcase */}
             <SkillsShowcase skills={skillProficiency} />
+
+            {/* Public Feedback Display - Only for non-owners (guests and other users) */}
+            {!isOwnProfile && (
+                <PublicFeedbackDisplay userId={profile.id} />
+            )}
 
             {/* Achievement Display */}
             {achievements.length > 0 && (

@@ -9,6 +9,7 @@ import { Layout } from '../components/layout'
 import { ProfileHeader } from '../components/profile'
 import EditProfileInline from '../components/profile/EditProfileInline'
 import { DeveloperRatingDisplay } from '../components/profile/DeveloperRatingDisplay'
+import { PublicFeedbackDisplay } from '../components/profile/PublicFeedbackDisplay'
 import { DeveloperFeedbackControls } from '../components/profile/DeveloperFeedbackControls'
 import { ShareProfile } from '../components/profile/ShareProfile'
 import { User, ProjectWithTeamMembers } from '../types/database'
@@ -1006,6 +1007,11 @@ const ProfilePage: React.FC = () => {
                                             showDetails={true}
                                             className="transform hover:scale-[1.02] transition-transform"
                                         />
+                                    )}
+
+                                    {/* VISITOR MODE: Public Feedback Display */}
+                                    {(profile.role === 'developer' || profile.role === 'admin') && !isOwnProfile && (
+                                        <PublicFeedbackDisplay userId={profile.id} />
                                     )}
 
                                     {/* VISITOR MODE: Project Showcase */}
