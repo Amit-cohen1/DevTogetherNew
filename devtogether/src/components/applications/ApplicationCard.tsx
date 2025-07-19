@@ -82,152 +82,173 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
     const developerName = `${developer.first_name || ''} ${developer.last_name || ''}`.trim() || 'Unknown User'
 
     return (
-        <div className={`bg-white rounded-lg border-2 transition-all hover:shadow-md ${isSelected ? 'border-primary-500 shadow-lg' : 'border-gray-200'
-            }`}>
-            <div className="p-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                    <div className="flex items-start gap-4 min-w-0 flex-1">
-                        {/* Selection Checkbox */}
+        <div className={`bg-white rounded-lg border-2 transition-all hover:shadow-md ${isSelected ? 'border-primary-500 shadow-lg' : 'border-gray-200'}`}>
+            <div className="p-4 sm:p-6">
+                {/* Header - Mobile Enhanced */}
+                <div className="flex flex-col gap-4 mb-4">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                        {/* Selection Checkbox - Better Mobile Position */}
                         {onSelect && (
                             <input
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={(e) => onSelect(application.id, e.target.checked)}
-                                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded flex-shrink-0"
+                                className="mt-1 h-5 w-5 sm:h-4 sm:w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded flex-shrink-0"
                             />
                         )}
 
                         {/* Avatar */}
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 sm:w-12 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                             {developer.avatar_url ? (
                                 <img
                                     src={developer.avatar_url}
                                     alt={developerName}
-                                    className="w-12 h-12 rounded-full object-cover"
+                                    className="w-12 h-12 sm:w-12 sm:h-12 rounded-full object-cover"
                                 />
                             ) : (
                                 <User className="w-6 h-6 text-gray-400" />
                             )}
                         </div>
 
-                        {/* Developer Info */}
-                        <div className="min-w-0 flex-1">
-                            <h3 className="font-semibold text-gray-900 truncate">
+                        {/* Developer Info - Mobile Optimized */}
+                        <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 line-clamp-1 sm:line-clamp-2 text-base sm:text-lg">
                                 {developerName}
                             </h3>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
+                            <div className="flex flex-col gap-1 sm:gap-2 text-sm text-gray-600 mt-1">
                                 <div className="flex items-center gap-1">
                                     <Mail className="w-4 h-4 flex-shrink-0" />
                                     <span className="truncate">{developer.email}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4 flex-shrink-0" />
-                                    <span className="whitespace-nowrap">{formatDate(application.created_at)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4 flex-shrink-0" />
-                                    <span className="whitespace-nowrap">{getTimeSinceApplication()}</span>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm">
+                                    <div className="flex items-center gap-1">
+                                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                                        <span className="whitespace-nowrap">{formatDate(application.created_at)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                                        <span className="whitespace-nowrap">{getTimeSinceApplication()}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Status and Actions */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(application.status)}`}>
+                    {/* Status and Actions - Mobile Layout */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <span className={`inline-flex items-center px-3 py-2 sm:py-1 rounded-full text-sm font-medium border self-start ${getStatusColor(application.status)}`}>
                             {application.status.toUpperCase()}
                         </span>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onReview(application)}
-                            className="flex items-center gap-1 w-full sm:w-auto justify-center"
+                            className="flex items-center justify-center gap-1 w-full sm:w-auto py-2.5 sm:py-2"
                         >
                             <Eye className="w-4 h-4" />
-                            Review
+                            <span>Review Application</span>
                         </Button>
                     </div>
                 </div>
 
-                {/* Bio */}
+                {/* Bio - Mobile Optimized */}
                 {developer.bio && (
-                    <div className="mb-4">
-                        <p className="text-gray-700 text-sm line-clamp-2">{developer.bio}</p>
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-gray-700 text-sm line-clamp-3 sm:line-clamp-2">{developer.bio}</p>
                     </div>
                 )}
 
-                {/* Skills */}
+                {/* Skills - Mobile Grid */}
                 {hasSkills && (
                     <div className="mb-4">
-                        <div className="flex flex-wrap gap-1">
-                            {developer.skills!.slice(0, 5).map((skill, index) => (
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">Skills</h4>
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                            {developer.skills?.slice(0, 6).map((skill, index) => (
                                 <span
                                     key={index}
-                                    className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                                 >
-                                    <Star className="w-3 h-3 mr-1" />
                                     {skill}
                                 </span>
                             ))}
-                            {developer.skills!.length > 5 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                                    +{developer.skills!.length - 5} more
+                            {developer.skills && developer.skills.length > 6 && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                    +{developer.skills.length - 6} more
                                 </span>
                             )}
                         </div>
                     </div>
                 )}
 
-                {/* Profile Links */}
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                    {developer.portfolio && (
-                        <a
-                            href={developer.portfolio}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 whitespace-nowrap"
-                        >
-                            <Globe className="w-4 h-4 flex-shrink-0" />
-                            Portfolio
-                        </a>
-                    )}
-                    {developer.github && (
-                        <a
-                            href={developer.github}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 whitespace-nowrap"
-                        >
-                            <Github className="w-4 h-4 flex-shrink-0" />
-                            GitHub
-                        </a>
-                    )}
-                    {developer.linkedin && (
-                        <a
-                            href={developer.linkedin}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 whitespace-nowrap"
-                        >
-                            <Linkedin className="w-4 h-4 flex-shrink-0" />
-                            LinkedIn
-                        </a>
-                    )}
-                    {hasPortfolioLinks && (
-                        <span className="text-sm text-gray-600 flex items-center gap-1 whitespace-nowrap">
-                            <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                            {application.portfolio_links!.length} portfolio link{application.portfolio_links!.length > 1 ? 's' : ''}
-                        </span>
-                    )}
-                </div>
+                {/* Portfolio Links - Mobile Responsive */}
+                {hasPortfolioLinks && (
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">Portfolio</h4>
+                        <div className="flex flex-wrap gap-2">
+                            {application.portfolio_links?.slice(0, 3).map((link, index) => {
+                                const parts = link.split(': ')
+                                const title = parts[0] || 'Portfolio Link'
+                                const url = parts[1] || link
+                                return (
+                                    <a
+                                        key={index}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 bg-primary-50 px-2 py-1 rounded-md border border-primary-200 hover:border-primary-300 transition-colors"
+                                    >
+                                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                        <span className="truncate max-w-[120px] sm:max-w-none">{title}</span>
+                                    </a>
+                                )
+                            })}
+                            {application.portfolio_links && application.portfolio_links.length > 3 && (
+                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                                    +{application.portfolio_links.length - 3} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
 
-                {/* Cover Letter Preview */}
-                {application.cover_letter && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                        <div className="text-sm text-gray-600">
-                            <span className="font-medium">Cover Letter:</span>
-                            <p className="mt-1 line-clamp-2">{application.cover_letter}</p>
+                {/* Social Links - Mobile Layout */}
+                {(developer.portfolio || developer.github || developer.linkedin) && (
+                    <div className="border-t border-gray-200 pt-4">
+                        <h4 className="text-sm font-medium text-gray-900 mb-3">Links</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {developer.portfolio && (
+                                <a
+                                    href={developer.portfolio}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 p-2 hover:bg-primary-50 rounded-lg transition-colors"
+                                >
+                                    <Globe className="w-4 h-4 flex-shrink-0" />
+                                    <span className="truncate">Portfolio</span>
+                                </a>
+                            )}
+                            {developer.github && (
+                                <a
+                                    href={developer.github}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 p-2 hover:bg-primary-50 rounded-lg transition-colors"
+                                >
+                                    <Github className="w-4 h-4 flex-shrink-0" />
+                                    <span className="truncate">GitHub</span>
+                                </a>
+                            )}
+                            {developer.linkedin && (
+                                <a
+                                    href={developer.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 p-2 hover:bg-primary-50 rounded-lg transition-colors"
+                                >
+                                    <Linkedin className="w-4 h-4 flex-shrink-0" />
+                                    <span className="truncate">LinkedIn</span>
+                                </a>
+                            )}
                         </div>
                     </div>
                 )}

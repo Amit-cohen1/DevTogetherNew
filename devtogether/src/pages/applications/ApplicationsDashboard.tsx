@@ -23,7 +23,8 @@ import {
     CheckCircle,
     XCircle,
     Archive,
-    MoreHorizontal
+    MoreHorizontal,
+    RefreshCw
 } from 'lucide-react'
 import { Project } from '../../types/database'
 
@@ -323,68 +324,88 @@ export default function ApplicationsDashboard() {
     return (
         <Layout>
             <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900">Applications Dashboard</h1>
-                        <p className="text-gray-600 mt-2">Manage applications for your projects</p>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+                    {/* Header - Mobile Optimized */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Applications Dashboard</h1>
+                            <p className="text-gray-600 mt-1 sm:mt-2">Manage applications for your projects</p>
+                        </div>
+                        <Button 
+                            onClick={loadData} 
+                            variant="outline" 
+                            className="flex items-center gap-2 w-full sm:w-auto justify-center"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Refresh</span>
+                        </Button>
                     </div>
 
-                    {/* Stats */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <div className="flex items-center">
-                                <Users className="h-8 w-8 text-gray-600" />
-                                <div className="ml-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">{stats.total}</h3>
-                                    <p className="text-sm text-gray-600">Total Applications</p>
+                    {/* Stats - Enhanced Mobile Grid */}
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                <div className="p-2 bg-gray-100 rounded-lg w-fit mx-auto sm:mx-0">
+                                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.total}</h3>
+                                    <p className="text-xs sm:text-sm text-gray-600">Total</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <div className="flex items-center">
-                                <Clock className="h-8 w-8 text-yellow-600" />
-                                <div className="ml-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">{stats.pending}</h3>
-                                    <p className="text-sm text-gray-600">Pending Review</p>
+                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                <div className="p-2 bg-yellow-100 rounded-lg w-fit mx-auto sm:mx-0">
+                                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.pending}</h3>
+                                    <p className="text-xs sm:text-sm text-gray-600">Pending</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <div className="flex items-center">
-                                <CheckCircle className="h-8 w-8 text-green-600" />
-                                <div className="ml-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">{stats.accepted}</h3>
-                                    <p className="text-sm text-gray-600">Accepted</p>
+                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                <div className="p-2 bg-green-100 rounded-lg w-fit mx-auto sm:mx-0">
+                                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.accepted}</h3>
+                                    <p className="text-xs sm:text-sm text-gray-600">Accepted</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <div className="flex items-center">
-                                <XCircle className="h-8 w-8 text-red-600" />
-                                <div className="ml-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">{stats.rejected}</h3>
-                                    <p className="text-sm text-gray-600">Rejected</p>
+                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                <div className="p-2 bg-red-100 rounded-lg w-fit mx-auto sm:mx-0">
+                                    <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.rejected}</h3>
+                                    <p className="text-xs sm:text-sm text-gray-600">Rejected</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                            <div className="flex items-center">
-                                <Archive className="h-8 w-8 text-gray-600" />
-                                <div className="ml-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">{stats.withdrawn}</h3>
-                                    <p className="text-sm text-gray-600">Withdrawn</p>
+                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                <div className="p-2 bg-gray-100 rounded-lg w-fit mx-auto sm:mx-0">
+                                    <Archive className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.withdrawn}</h3>
+                                    <p className="text-xs sm:text-sm text-gray-600">Withdrawn</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Filters and Actions */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-8">
+                    {/* Filters and Controls - Mobile Enhanced */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                             {/* Search */}
                             <FormField label="Search">
@@ -395,7 +416,7 @@ export default function ApplicationsDashboard() {
                                         placeholder="Search applications..."
                                         value={filters.searchQuery}
                                         onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                                        className="w-full pl-10 pr-3 py-3 sm:py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-base sm:text-sm"
                                     />
                                 </div>
                             </FormField>
@@ -405,6 +426,7 @@ export default function ApplicationsDashboard() {
                                 <Select
                                     value={filters.status}
                                     onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                                    className="py-3 sm:py-2 text-base sm:text-sm"
                                 >
                                     <option value="all">All Statuses</option>
                                     <option value="pending">Pending</option>
@@ -419,6 +441,7 @@ export default function ApplicationsDashboard() {
                                 <Select
                                     value={filters.project}
                                     onChange={(e) => setFilters(prev => ({ ...prev, project: e.target.value }))}
+                                    className="py-3 sm:py-2 text-base sm:text-sm"
                                 >
                                     <option value="all">All Projects</option>
                                     {userProjects.map(project => (
@@ -434,6 +457,7 @@ export default function ApplicationsDashboard() {
                                 <Select
                                     value={filters.dateRange}
                                     onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+                                    className="py-3 sm:py-2 text-base sm:text-sm"
                                 >
                                     <option value="all">All Time</option>
                                     <option value="today">Today</option>
@@ -443,75 +467,85 @@ export default function ApplicationsDashboard() {
                             </FormField>
                         </div>
 
-                        {/* Sort and Bulk Actions */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        {/* Sort and Bulk Actions - Mobile Optimized */}
+                        <div className="border-t border-gray-200 pt-4">
+                            <div className="flex flex-col gap-4">
                                 {/* Sort */}
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort by:</span>
-                                    <Select
-                                        value={`${sort.field}-${sort.direction}`}
-                                        onChange={(e) => {
-                                            const [field, direction] = e.target.value.split('-') as [typeof sort.field, typeof sort.direction]
-                                            setSort({ field, direction })
-                                        }}
-                                        className="w-full sm:w-auto"
-                                    >
-                                        <option value="created_at-desc">Newest First</option>
-                                        <option value="created_at-asc">Oldest First</option>
-                                        <option value="developer_name-asc">Name A-Z</option>
-                                        <option value="developer_name-desc">Name Z-A</option>
-                                        <option value="status-asc">Status A-Z</option>
-                                    </Select>
-                                </div>
-
-                                {/* Select All */}
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedApplications.size === filteredApplications.length && filteredApplications.length > 0}
-                                        onChange={handleSelectAll}
-                                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                    />
-                                    <span className="text-sm text-gray-700 whitespace-nowrap">Select All ({filteredApplications.length})</span>
-                                </div>
-                            </div>
-
-                            {/* Bulk Actions */}
-                            {showBulkActions && (
-                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                                    <span className="text-sm text-gray-700 text-center sm:text-left">{selectedApplications.size} selected</span>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleBulkAction('accept')}
-                                            className="flex-1 sm:flex-none text-green-600 border-green-300 hover:bg-green-50"
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
+                                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort by:</span>
+                                        <Select
+                                            value={`${sort.field}-${sort.direction}`}
+                                            onChange={(e) => {
+                                                const [field, direction] = e.target.value.split('-') as [typeof sort.field, typeof sort.direction]
+                                                setSort({ field, direction })
+                                            }}
+                                            className="w-full sm:w-auto py-2 text-sm"
                                         >
-                                            <Check className="w-4 h-4 mr-1" />
-                                            Accept
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleBulkAction('reject')}
-                                            className="flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
-                                        >
-                                            <X className="w-4 h-4 mr-1" />
-                                            Reject
-                                        </Button>
+                                            <option value="created_at-desc">Newest First</option>
+                                            <option value="created_at-asc">Oldest First</option>
+                                            <option value="developer_name-asc">Name A-Z</option>
+                                            <option value="developer_name-desc">Name Z-A</option>
+                                            <option value="status-asc">Status A-Z</option>
+                                        </Select>
+                                    </div>
+
+                                    {/* Select All - Mobile Friendly */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedApplications.size === filteredApplications.length && filteredApplications.length > 0}
+                                                onChange={handleSelectAll}
+                                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                            />
+                                            <span className="whitespace-nowrap">
+                                                Select All ({filteredApplications.length})
+                                            </span>
+                                        </label>
                                     </div>
                                 </div>
-                            )}
+
+                                {/* Bulk Actions - Mobile Enhanced */}
+                                {showBulkActions && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                            <span className="text-sm font-medium text-blue-900 text-center sm:text-left">
+                                                {selectedApplications.size} application{selectedApplications.size === 1 ? '' : 's'} selected
+                                            </span>
+                                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleBulkAction('accept')}
+                                                    className="flex-1 sm:flex-none text-green-600 border-green-300 hover:bg-green-50 justify-center"
+                                                >
+                                                    <Check className="w-4 h-4 mr-2" />
+                                                    Accept Selected
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleBulkAction('reject')}
+                                                    className="flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50 justify-center"
+                                                >
+                                                    <X className="w-4 h-4 mr-2" />
+                                                    Reject Selected
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Applications List */}
+                    {/* Applications List - Enhanced Mobile Layout */}
                     {filteredApplications.length === 0 ? (
-                        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                        <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center">
                             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-                            <p className="text-gray-600">
+                            <p className="text-gray-600 px-4">
                                 {applications.length === 0
                                     ? "You don't have any applications yet. Applications will appear here as developers apply to your projects."
                                     : "No applications match your current filters. Try adjusting your search criteria."
@@ -535,17 +569,12 @@ export default function ApplicationsDashboard() {
             </div>
 
             {/* Review Modal */}
-            {selectedApplication && (
-                <ApplicationReviewModal
-                    application={selectedApplication}
-                    isOpen={showReviewModal}
-                    onClose={() => {
-                        setShowReviewModal(false)
-                        setSelectedApplication(null)
-                    }}
-                    onStatusUpdate={handleStatusUpdate}
-                />
-            )}
+            <ApplicationReviewModal
+                application={selectedApplication!}
+                isOpen={showReviewModal}
+                onClose={() => setShowReviewModal(false)}
+                onStatusUpdate={handleStatusUpdate}
+            />
         </Layout>
     )
 } 

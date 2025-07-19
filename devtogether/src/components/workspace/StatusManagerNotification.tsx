@@ -1,106 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, X, CheckCircle, InfoIcon } from 'lucide-react';
+import React from 'react';
+import { Shield, Star, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface StatusManagerNotificationProps {
     userIsStatusManager: boolean;
-    projectId?: string;
-    onDismiss?: () => void;
+    projectId: string;
 }
 
-export default function StatusManagerNotification({ userIsStatusManager, projectId, onDismiss }: StatusManagerNotificationProps) {
-    const [isDismissed, setIsDismissed] = useState(false);
-
-    useEffect(() => {
-        // Check if notification was previously dismissed for this project
-        if (projectId) {
-            const storageKey = `status-manager-notification-dismissed-${projectId}`;
-            const wasDismissed = localStorage.getItem(storageKey) === 'true';
-            setIsDismissed(wasDismissed);
-        }
-    }, [projectId]);
-
-    // Only show if user is a status manager and hasn't dismissed
-    if (!userIsStatusManager || isDismissed) {
+export default function StatusManagerNotification({ userIsStatusManager, projectId }: StatusManagerNotificationProps) {
+    if (!userIsStatusManager) {
         return null;
     }
 
-    const handleDismiss = () => {
-        setIsDismissed(true);
-
-        // Persist dismissal state
-        if (projectId) {
-            const storageKey = `status-manager-notification-dismissed-${projectId}`;
-            localStorage.setItem(storageKey, 'true');
-        }
-
-        onDismiss?.();
-    };
-
     return (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
-            <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Shield className="w-5 h-5 text-blue-600" />
-                        </div>
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 sm:p-3 bg-green-100 rounded-xl">
+                        <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                     </div>
-
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                You're now a Status Manager!
-                            </h3>
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                        </div>
-
-                        <p className="text-gray-700 mb-4">
-                            Congratulations! The organization has promoted you to <strong>Status Manager</strong> for this project.
-                            This means you now have additional responsibilities and permissions.
+                    <div>
+                        <h3 className="text-lg sm:text-xl font-bold text-green-900 flex items-center gap-2">
+                            <Star className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                            Status Manager Privileges
+                        </h3>
+                        <p className="text-green-700 text-sm sm:text-base">
+                            You have been promoted to Status Manager for this project
                         </p>
-
-                        <div className="bg-white rounded-lg p-4 border border-blue-100">
-                            <div className="flex items-center gap-2 mb-3">
-                                <InfoIcon className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium text-gray-900">Your new permissions include:</span>
-                            </div>
-
-                            <ul className="space-y-2 text-sm text-gray-700">
-                                <li className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                                    <span>Update project status and progress</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                                    <span>Set project milestones and deadlines</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                                    <span>Add progress notes and updates</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                                    <span>Help coordinate team activities</span>
-                                </li>
-                            </ul>
-
-                            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                                <p className="text-sm text-blue-800">
-                                    <strong>💡 Tip:</strong> You can update the project status by navigating to the "Status" tab.
-                                    This helps keep the team and organization informed about project progress.
-                                </p>
-                            </div>
-                        </div>
                     </div>
                 </div>
+            </div>
 
-                <button
-                    onClick={handleDismiss}
-                    className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Dismiss notification"
-                >
-                    <X className="w-5 h-5" />
-                </button>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-white/60 border border-green-200 rounded-lg p-3 sm:p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Settings className="w-4 h-4 text-green-600" />
+                        <h4 className="font-semibold text-green-900 text-sm sm:text-base">Project Status</h4>
+                    </div>
+                    <p className="text-green-700 text-xs sm:text-sm">
+                        Change project status from 'open' to 'in_progress' and manage project updates
+                    </p>
+                </div>
+
+                <div className="bg-white/60 border border-green-200 rounded-lg p-3 sm:p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <h4 className="font-semibold text-green-900 text-sm sm:text-base">Team Progress</h4>
+                    </div>
+                    <p className="text-green-700 text-xs sm:text-sm">
+                        Monitor team activity and coordinate development progress
+                    </p>
+                </div>
+
+                <div className="bg-white/60 border border-orange-200 rounded-lg p-3 sm:p-4 sm:col-span-2 lg:col-span-1">
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-4 h-4 text-orange-600" />
+                        <h4 className="font-semibold text-orange-900 text-sm sm:text-base">Limitation</h4>
+                    </div>
+                    <p className="text-orange-700 text-xs sm:text-sm">
+                        Only organization owners can set status to 'completed' to award stars
+                    </p>
+                </div>
+            </div>
+
+            <div className="mt-4 bg-green-100 border border-green-300 rounded-lg p-3">
+                <p className="text-green-800 text-xs sm:text-sm font-medium">
+                    💡 <strong>Pro Tip:</strong> Use the 'Status' tab to manage project progression and keep the team updated on milestones.
+                </p>
             </div>
         </div>
     );
