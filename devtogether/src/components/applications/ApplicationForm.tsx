@@ -179,16 +179,16 @@ const ApplicationPreview: React.FC<ApplicationPreviewProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 pt-6 border-t border-gray-200">
+                <Button variant="outline" onClick={onCancel} disabled={isSubmitting} className="w-full sm:w-auto">
                     Cancel
                 </Button>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" onClick={onEdit} disabled={isSubmitting}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <Button variant="outline" onClick={onEdit} disabled={isSubmitting} className="w-full sm:w-auto">
                         <Edit3 className="w-4 h-4 mr-2" />
                         Edit Application
                     </Button>
-                    <Button onClick={onSubmit} disabled={isSubmitting}>
+                    <Button onClick={onSubmit} disabled={isSubmitting} className="w-full sm:w-auto">
                         {isSubmitting ? (
                             <>
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -476,12 +476,12 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
                 </div>
 
                 {/* Form Actions */}
-                <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                    <Button variant="outline" onClick={onCancel}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 pt-6 border-t border-gray-200">
+                    <Button variant="outline" onClick={onCancel} className="w-full sm:w-auto">
                         Cancel
                     </Button>
-                    <div className="flex items-center gap-3">
-                        <Button type="submit">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <Button type="submit" className="w-full sm:w-auto">
                             <Eye className="w-4 h-4 mr-2" />
                             Preview Application
                         </Button>

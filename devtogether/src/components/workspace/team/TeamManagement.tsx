@@ -224,49 +224,52 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
 
                 <div className="divide-y divide-gray-200">
                     {teamMembers.map((member) => (
-                        <div key={member.id} className="p-6 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div key={member.id} className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                                 {/* Avatar */}
                                 {member.user.avatar_url ? (
                                     <img
                                         src={member.user.avatar_url}
                                         alt={getDisplayName(member)}
-                                        className="w-12 h-12 rounded-full object-cover"
+                                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover flex-shrink-0"
                                     />
                                 ) : (
-                                    <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                                        <Users className="w-6 h-6 text-gray-500" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                        <Users className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500" />
                                     </div>
                                 )}
 
                                 {/* Member Info */}
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-medium text-gray-900">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
+                                        <h4 className="font-medium text-gray-900 truncate">
                                             {getDisplayName(member)}
                                         </h4>
-                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${member.role === 'owner'
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-blue-100 text-blue-800'
-                                            }`}>
-                                            {member.role === 'owner' ? 'Owner' : 'Member'}
-                                        </span>
-                                        {member.status_manager && member.role !== 'owner' && (
-                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center gap-1">
-                                                <Shield className="w-3 h-3" />
-                                                Status Manager
+                                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${member.role === 'owner'
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : 'bg-blue-100 text-blue-800'
+                                                }`}>
+                                                {member.role === 'owner' ? 'Owner' : 'Member'}
                                             </span>
-                                        )}
+                                            {member.status_manager && member.role !== 'owner' && (
+                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center gap-1">
+                                                    <Shield className="w-3 h-3" />
+                                                    <span className="hidden sm:inline">Status Manager</span>
+                                                    <span className="sm:hidden">Manager</span>
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 truncate">
                                         {member.user.email}
                                     </p>
-                                    <div className="flex items-center gap-4 mt-1">
-                                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-xs text-gray-500">
+                                        <span className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
                                             Joined {formatJoinDate(member.joined_at)}
                                         </span>
-                                        <span className={`text-xs px-2 py-1 rounded-full ${member.status === 'active'
+                                        <span className={`text-xs px-2 py-1 rounded-full w-fit ${member.status === 'active'
                                             ? 'bg-green-100 text-green-800'
                                             : 'bg-gray-100 text-gray-800'
                                             }`}>
@@ -276,67 +279,55 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
                                 </div>
                             </div>
 
-                            {/* Actions */}
-                            <div className="flex items-center gap-2">
+                            {/* Actions - Mobile Responsive */}
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:ml-4">
                                 {isOwner && member.role !== 'owner' && (
                                     <>
-                                        {/* Give Feedback button - only for developers */}
-                                        {member.user.role === 'developer' && (
-                                            <button
-                                                onClick={() => setFeedbackMember({
-                                                    id: member.user_id,
-                                                    name: getDisplayName(member)
-                                                })}
-                                                className="flex items-center gap-2 px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                title="Give feedback to this developer"
-                                            >
-                                                <Star className="w-4 h-4" />
-                                                Feedback
-                                            </button>
-                                        )}
-                                        
-                                        {/* Promotion/Demotion button */}
-                                        {member.status_manager ? (
-                                            <button
-                                                onClick={() => handleDemoteDeveloper(member.id, member.user_id)}
-                                                disabled={promotingMemberId === member.id}
-                                                className="flex items-center gap-2 px-3 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
-                                                title="Remove status manager permissions"
-                                            >
-                                                <ShieldOff className="w-4 h-4" />
-                                                {promotingMemberId === member.id ? 'Updating...' : 'Demote'}
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handlePromoteDeveloper(member.id, member.user_id)}
-                                                disabled={promotingMemberId === member.id}
-                                                className="flex items-center gap-2 px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                                                title="Promote to status manager"
-                                            >
-                                                <Shield className="w-4 h-4" />
-                                                {promotingMemberId === member.id ? 'Updating...' : 'Promote'}
-                                            </button>
-                                        )}
+                                        {/* Status Manager Toggle */}
+                                        <div className="flex flex-col sm:flex-row gap-2">
+                                            {!member.status_manager ? (
+                                                <button
+                                                    onClick={() => handlePromoteDeveloper(member.id, member.user_id)}
+                                                    disabled={promotingMemberId === member.id}
+                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 text-sm"
+                                                >
+                                                    <Shield className="w-4 h-4" />
+                                                    <span className="hidden sm:inline">Promote to Status Manager</span>
+                                                    <span className="sm:hidden">Promote</span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleDemoteDeveloper(member.id, member.user_id)}
+                                                    disabled={promotingMemberId === member.id}
+                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50 text-sm"
+                                                >
+                                                    <ShieldOff className="w-4 h-4" />
+                                                    <span className="hidden sm:inline">Remove Status Manager</span>
+                                                    <span className="sm:hidden">Demote</span>
+                                                </button>
+                                            )}
 
-                                        {/* Remove member button */}
-                                        <button
-                                            onClick={() => handleRemoveMember(member.id, member.user_id)}
-                                            disabled={removingMemberId === member.id}
-                                            className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                                        >
-                                            <UserMinus className="w-4 h-4" />
-                                            {removingMemberId === member.id ? 'Removing...' : 'Remove'}
-                                        </button>
+                                            {/* Remove Member */}
+                                            <button
+                                                onClick={() => handleRemoveMember(member.id, member.user_id)}
+                                                disabled={removingMemberId === member.id}
+                                                className="flex items-center justify-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 text-sm"
+                                            >
+                                                <UserMinus className="w-4 h-4" />
+                                                <span className="hidden sm:inline">{removingMemberId === member.id ? 'Removing...' : 'Remove'}</span>
+                                                <span className="sm:hidden">{removingMemberId === member.id ? '...' : 'Remove'}</span>
+                                            </button>
+                                        </div>
                                     </>
                                 )}
 
                                 {!isOwner && member.user_id === user?.id && (
                                     <button
                                         onClick={handleLeaveProject}
-                                        className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="flex items-center justify-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
                                     >
                                         <UserMinus className="w-4 h-4" />
-                                        Leave Project
+                                        <span>Leave Project</span>
                                     </button>
                                 )}
                             </div>
