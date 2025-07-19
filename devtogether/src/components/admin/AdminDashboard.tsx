@@ -100,11 +100,67 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       {/* Mobile-Responsive Tab Navigation */}
       <div className="mb-8">
         <div className="border-b border-gray-200">
-          <div className="overflow-x-auto overflow-y-hidden scrollbar-hide">
-            <nav className="-mb-px flex space-x-2 sm:space-x-8 min-w-max px-2 sm:px-0 whitespace-nowrap">
+          {/* Mobile: Stack tabs vertically, Desktop: Horizontal */}
+          <nav className="-mb-px">
+            {/* Mobile tabs - 2x3 grid */}
+            <div className="grid grid-cols-2 gap-1 sm:hidden">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
+                className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
+                  activeTab === 'overview'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('organizations')}
+                className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
+                  activeTab === 'organizations'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Organizations
+              </button>
+              <button
+                onClick={() => setActiveTab('partners')}
+                className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
+                  activeTab === 'partners'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Partners
+              </button>
+              <button
+                onClick={() => setActiveTab('projects')}
+                className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
+                  activeTab === 'projects'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Projects
+              </button>
+              <button
+                onClick={() => setActiveTab('developers')}
+                className={`py-3 px-2 border-b-2 font-medium text-xs text-center col-span-2 ${
+                  activeTab === 'developers'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Developers
+              </button>
+            </div>
+
+            {/* Desktop tabs - horizontal */}
+            <div className="hidden sm:flex space-x-8">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'overview'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -114,7 +170,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </button>
               <button
                 onClick={() => setActiveTab('organizations')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
+                className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'organizations'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -124,7 +180,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </button>
               <button
                 onClick={() => setActiveTab('partners')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
+                className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'partners'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -134,7 +190,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </button>
               <button
                 onClick={() => setActiveTab('projects')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
+                className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'projects'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -144,7 +200,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </button>
               <button
                 onClick={() => setActiveTab('developers')}
-                className={`py-3 px-3 sm:px-1 border-b-2 font-medium text-xs sm:text-sm ${
+                className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'developers'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -152,8 +208,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               >
                 Developers
               </button>
-            </nav>
-          </div>
+            </div>
+          </nav>
         </div>
       </div>
 
