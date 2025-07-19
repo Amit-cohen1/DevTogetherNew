@@ -8,6 +8,7 @@ import {
     ApplicationSummary
 } from '../../services/organizationDashboardService';
 import { projectService } from '../../services/projects';
+import { toastService } from '../../services/toastService';
 import { Button } from '../ui/Button';
 import {
     Building2,
@@ -22,7 +23,9 @@ import {
     TrendingUp,
     MessageSquare,
     FolderOpen,
-    Award
+    Award,
+    Shield,
+    X
 } from 'lucide-react';
 import type { Profile } from '../../types/database';
 import { ResubmitProjectModal } from '../projects/ResubmitProjectModal';
@@ -218,6 +221,8 @@ const OrganizationDashboard: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+
 
                 {/* Recent Projects - Consistent Card */}
                 <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">

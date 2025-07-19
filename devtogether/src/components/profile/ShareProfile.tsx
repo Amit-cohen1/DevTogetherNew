@@ -342,51 +342,63 @@ export const ShareProfile: React.FC<ShareProfileProps> = ({
 
                 {/* Enhanced Security String Section */}
                 {!migrationNeeded && shareData && (
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-5">
-                        <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-4 sm:p-5">
+                        <div className="space-y-4 mb-4">
+                            {/* Header section with icon and title */}
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 rounded-lg">
-                                    <Shield className="w-6 h-6 text-blue-600" />
+                                <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold text-blue-900">Secure Profile URL</h3>
-                                    <p className="text-sm text-blue-700">Enhanced privacy protection</p>
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold text-blue-900 text-sm sm:text-lg">Secure Profile URL</h3>
+                                    <p className="text-xs sm:text-sm text-blue-700">Enhanced privacy protection</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={regenerateSecurityString}
-                                disabled={regeneratingSecurityString}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Regenerate security string (will invalidate current links)"
-                            >
-                                <RefreshCw className={`w-4 h-4 ${regeneratingSecurityString ? 'animate-spin' : ''}`} />
-                                {regeneratingSecurityString ? 'Regenerating...' : 'Regenerate'}
-                            </button>
+                            
+                            {/* Button positioned below the header */}
+                            <div className="flex justify-start">
+                                <button
+                                    onClick={regenerateSecurityString}
+                                    disabled={regeneratingSecurityString}
+                                    className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                    title="Regenerate security string (will invalidate current links)"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${regeneratingSecurityString ? 'animate-spin' : ''} flex-shrink-0`} />
+                                    <span>
+                                        {regeneratingSecurityString ? 'Regenerating...' : 'Regenerate'}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                         
-                        <div className="space-y-3">
-                            <div className="bg-white/50 rounded-lg p-3 border border-blue-200">
+                        <div className="space-y-3 sm:space-y-4">
+                            <div className="bg-white/50 rounded-lg p-3 sm:p-4 border border-blue-200">
                                 <p className="text-sm text-blue-800 mb-2">
-                                    <strong>Security ID:</strong> <code className="bg-blue-100 px-2 py-1 rounded font-mono text-xs">{shareData.securityString}</code>
+                                    <strong>Security ID:</strong> 
+                                    <code className="bg-blue-100 px-2 py-1 rounded font-mono text-xs ml-2 break-all">{shareData.securityString}</code>
                                 </p>
-                                <p className="text-xs text-blue-700">
+                                <p className="text-xs sm:text-sm text-blue-700">
                                     This unique identifier ensures only people with the exact link can access your profile.
                                 </p>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div className="bg-white/50 rounded-lg p-3 border border-blue-200">
-                                    <p className="text-xs font-medium text-blue-800 mb-1">🔒 Privacy Features:</p>
-                                    <ul className="text-xs text-blue-700 space-y-1">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="bg-white/50 rounded-lg p-3 sm:p-4 border border-blue-200">
+                                    <p className="text-xs sm:text-sm font-medium text-blue-800 mb-2 flex items-center gap-1">
+                                        🔒 Privacy Features:
+                                    </p>
+                                    <ul className="text-xs sm:text-sm text-blue-700 space-y-1.5">
                                         <li>• Unguessable URL structure</li>
                                         <li>• No profile discovery without link</li>
                                         <li>• Regenerate anytime for full reset</li>
                                     </ul>
                                 </div>
                                 
-                                <div className="bg-white/50 rounded-lg p-3 border border-blue-200">
-                                    <p className="text-xs font-medium text-blue-800 mb-1">⚠️ Important Notes:</p>
-                                    <ul className="text-xs text-blue-700 space-y-1">
+                                <div className="bg-white/50 rounded-lg p-3 sm:p-4 border border-blue-200">
+                                    <p className="text-xs sm:text-sm font-medium text-blue-800 mb-2 flex items-center gap-1">
+                                        ⚠️ Important Notes:
+                                    </p>
+                                    <ul className="text-xs sm:text-sm text-blue-700 space-y-1.5">
                                         <li>• Regenerating breaks existing links</li>
                                         <li>• Share new links after regeneration</li>
                                         <li>• Use for maximum privacy control</li>

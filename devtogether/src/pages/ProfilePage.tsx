@@ -47,8 +47,16 @@ const ProfilePage: React.FC = () => {
     const [ratingLoading, setRatingLoading] = useState(false)
 
     // Parse security string URL format: userId-securityString
+    // But handle UUIDs correctly (UUIDs are 36 chars with 4 dashes)
     const parseUserIdAndSecurity = (urlParam: string) => {
         if (!urlParam) return { userId: null, securityString: null }
+        
+        // Check if this looks like a complete UUID (36 characters with correct format)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        if (uuidRegex.test(urlParam)) {
+            // This is a complete UUID, treat as simple profile access
+            return { userId: urlParam, securityString: null }
+        }
         
         const lastDashIndex = urlParam.lastIndexOf('-')
         if (lastDashIndex === -1) {
@@ -58,7 +66,14 @@ const ProfilePage: React.FC = () => {
         
         const userId = urlParam.substring(0, lastDashIndex)
         const securityString = urlParam.substring(lastDashIndex + 1)
-        return { userId, securityString }
+        
+        // Double check that userId looks like a UUID
+        if (uuidRegex.test(userId)) {
+            return { userId, securityString }
+        } else {
+            // Fallback: treat entire string as userId
+            return { userId: urlParam, securityString: null }
+        }
     }
 
     const { userId, securityString } = parseUserIdAndSecurity(userIdWithSecurity || '')
@@ -101,10 +116,10 @@ const ProfilePage: React.FC = () => {
                     } else {
                         setError('Profile not found')
                     }
-                } else if (userId) {
+                                } else if (userId) {
                     // Viewing another user's profile
                     if (securityString) {
-                        // Security string URL - supports guest access
+                        // Security string URL - supports guest access for private profiles
                         try {
                             const userProfile = await profileService.getProfileBySecurityString(userId, securityString)
                             setProfile(userProfile)
@@ -112,22 +127,31 @@ const ProfilePage: React.FC = () => {
                         } catch (err) {
                             if (err instanceof Error && err.message.includes('not found')) {
                                 setError('Profile not found or link has expired')
-                } else {
+                            } else {
                                 setError('Unable to access this profile')
                             }
                         }
-                    } else if (currentUser) {
-                        // Legacy format for authenticated users only
-                        const { profile: userProfile, error: profileError } = await AuthService.getUserProfile(userId)
-                    if (profileError) {
-                        setError(profileError.message)
                     } else {
-                        setProfile(userProfile)
-                            setIsGuestAccess(false)
+                        // Simple profile access - try to get profile by ID
+                        // This works for organization profiles and public profiles
+                        try {
+                            const { profile: userProfile, error: profileError } = await AuthService.getUserProfile(userId)
+                            if (profileError) {
+                                setError(profileError.message)
+                            } else if (userProfile) {
+                                // Check if profile is accessible
+                                if (userProfile.role === 'organization' || userProfile.is_public || currentUser) {
+                                    setProfile(userProfile)
+                                    setIsGuestAccess(!currentUser)
+                                } else {
+                                    setError('This profile is private')
+                                }
+                            } else {
+                                setError('Profile not found')
+                            }
+                        } catch (err) {
+                            setError('Unable to access this profile')
                         }
-                    } else {
-                        // Guest trying to access profile without security string
-                        setError('Profile access requires a valid link')
                     }
                 } else {
                     setError('Profile not found')
@@ -162,8 +186,9 @@ const ProfilePage: React.FC = () => {
     // NEW: Load rating data and project portfolio for developers AND admins
     useEffect(() => {
         const loadRatingData = async () => {
-            if (profile && (profile.role === 'developer' || profile.role === 'admin')) {
-                console.log('🌟 Loading rating data for user:', profile.id, 'role:', profile.role, 'email:', profile.email)
+            // Only load rating data for developers and admins with valid profiles
+            if (profile && profile.id && (profile.role === 'developer' || profile.role === 'admin')) {
+                console.log('🌟 Loading rating data for user:', profile.id, 'role:', profile.role)
                 setRatingLoading(true)
                 try {
                     const [stats, portfolio] = await Promise.all([
@@ -190,12 +215,15 @@ const ProfilePage: React.FC = () => {
                 } finally {
                     setRatingLoading(false)
                 }
-            } else {
-                console.log('⏭️ Skipping rating data load for user:', profile?.id, 'role:', profile?.role)
             }
+            // Removed the unnecessary console.log for non-developer profiles
         }
-        loadRatingData()
-    }, [profile?.id]) // Only depend on profile.id to avoid infinite loops
+        
+        // Only run if we have a fully loaded profile
+        if (profile) {
+            loadRatingData()
+        }
+    }, [profile?.id, profile?.role]) // Depend on both ID and role
 
     // Reset form when entering edit mode or profile changes
     useEffect(() => {
@@ -1349,7 +1377,7 @@ const ProfilePage: React.FC = () => {
                                                     <div>
                                                         <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">Status</label>
                                                         <p className="text-green-600 font-medium flex items-center gap-2 text-lg mt-1">
-                                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                                            <span className="w-3 h-3 bg-green-500 rounded-full inline-block"></span>
                                                             Active Organization
                                                         </p>
                                                     </div>
