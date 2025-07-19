@@ -82,8 +82,12 @@ export const projectService = {
     },
 
     // Get all projects with team member data (for project discovery page) - updated with multi-select filter support
-    async getProjectsWithTeamMembers(filters?: FilterOptions, includeRejected: boolean = false): Promise<ProjectWithTeamMembers[]> {
-        console.log('🔍 ProjectService.getProjectsWithTeamMembers called with filters:', filters, 'includeRejected:', includeRejected)
+    async getProjectsWithTeamMembers(
+        filters?: FilterOptions, 
+        includeRejected: boolean = false,
+        includePrivateProfiles: boolean = false
+    ): Promise<ProjectWithTeamMembers[]> {
+        console.log('🔍 ProjectService.getProjectsWithTeamMembers called with filters:', filters, 'includeRejected:', includeRejected, 'includePrivateProfiles:', includePrivateProfiles)
 
         let query = supabase
             .from('projects')
@@ -110,7 +114,9 @@ export const projectService = {
                     last_name,
                     avatar_url,
                     email,
-                    blocked
+                    blocked,
+                    is_public,
+                    security_string
                 )
             )
         `)
@@ -200,7 +206,7 @@ export const projectService = {
                 console.log(`   ✅ Added organization owner:`, project.organization.organization_name || 'No Name');
             }
 
-            // 2. Add accepted developers as team members
+            // 2. Add accepted developers as team members (with privacy filtering)
             const acceptedApplications = project.applications?.filter((app: any) =>
                 app.status === 'accepted' && app.developer !== null
             ) || [];
@@ -208,6 +214,12 @@ export const projectService = {
             console.log(`   📨 Accepted applications: ${acceptedApplications.length}`);
 
             acceptedApplications.forEach((application: any) => {
+                // Privacy check: Skip private profiles in public contexts
+                if (!includePrivateProfiles && application.developer.is_public === false) {
+                    console.log(`   🔒 Skipping private developer:`, `${application.developer.first_name} ${application.developer.last_name}`, '(Private Profile)');
+                    return;
+                }
+
                 const devMember: TeamMember = {
                     id: application.developer.id,
                     type: 'developer',
@@ -217,7 +229,9 @@ export const projectService = {
                         last_name: application.developer.last_name,
                         organization_name: null,
                         avatar_url: application.developer.avatar_url,
-                        email: application.developer.email
+                        email: application.developer.email,
+                        is_public: application.developer.is_public,
+                        security_string: application.developer.security_string
                     },
                     role: application.status_manager === true ? 'status_manager' : 'member',
                     application: {
@@ -235,7 +249,7 @@ export const projectService = {
                 };
 
                 teamMembers.push(devMember);
-                console.log(`   ✅ Added developer:`, `${devMember.profile.first_name} ${devMember.profile.last_name}`, `(${devMember.role})`);
+                console.log(`   ✅ Added developer:`, `${devMember.profile.first_name} ${devMember.profile.last_name}`, `(${devMember.role})`, application.developer.is_public === false ? '(Private)' : '(Public)');
             });
 
             console.log(`   📊 Total team members for ${project.title}: ${teamMembers.length}`);
@@ -405,7 +419,8 @@ export const projectService = {
 
     // Get all projects for an organization with team and org info (for management page)
     async getOrganizationProjectsWithTeamMembers(organizationId: string): Promise<ProjectWithTeamMembers[]> {
-        return this.getProjectsWithTeamMembers({ organization_id: organizationId })
+        // Organization owners can see private team member profiles
+        return this.getProjectsWithTeamMembers({ organization_id: organizationId }, false, true)
     },
 
     // Get all projects for a developer (where they were accepted), with team members

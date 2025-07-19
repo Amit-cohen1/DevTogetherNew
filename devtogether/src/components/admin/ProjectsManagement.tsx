@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { projectService } from '../../services/projects';
+import { adminService } from '../../services/adminService';
 import { Button } from '../ui/Button';
 import { CheckCircle, XCircle, AlertTriangle, Eye, Folder, Users, Building, Clock, FileText, Shield, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -205,7 +206,8 @@ const ProjectsManagement: React.FC = () => {
     setError(null);
     try {
       // Fetch all projects with team/org info, including rejected
-      const data = await projectService.getProjectsWithTeamMembers(undefined, true);
+                  // Admin can see all profiles including private ones
+            const data = await projectService.getProjectsWithTeamMembers(undefined, true, true);
       setProjects(data);
     } catch (err) {
       setError('Failed to load projects');
@@ -283,9 +285,10 @@ const ProjectsManagement: React.FC = () => {
     if (!profile?.id) return;
     setActionLoading(true);
     try {
-      await projectService.approveProject(project.id, profile.id);
+      await adminService.approveProject(project.id, profile.id);
       await loadProjects();
     } catch (err) {
+      console.error('Failed to approve project:', err);
       alert('Failed to approve project');
     } finally {
       setActionLoading(false);
@@ -296,9 +299,10 @@ const ProjectsManagement: React.FC = () => {
     if (!profile?.id) return;
     setActionLoading(true);
     try {
-      await projectService.rejectProject(project.id, profile.id, reason, canResubmit);
+      await adminService.rejectProject(project.id, profile.id, reason);
       await loadProjects();
     } catch (err) {
+      console.error('Failed to reject project:', err);
       alert('Failed to reject project');
     } finally {
       setActionLoading(false);
@@ -308,9 +312,10 @@ const ProjectsManagement: React.FC = () => {
   const handleBlock = async (project: any, reason: string) => {
     setActionLoading(true);
     try {
-      await projectService.updateProject(project.id, { status: 'rejected', rejection_reason: reason });
+      await adminService.blockProject(project.id, reason);
       await loadProjects();
     } catch (err) {
+      console.error('Failed to block project:', err);
       alert('Failed to block project');
     } finally {
       setActionLoading(false);
@@ -320,9 +325,10 @@ const ProjectsManagement: React.FC = () => {
   const handleUnblock = async (project: any) => {
     setActionLoading(true);
     try {
-      await projectService.updateProject(project.id, { status: 'pending', rejection_reason: null });
+      await adminService.unblockProject(project.id);
       await loadProjects();
     } catch (err) {
+      console.error('Failed to unblock project:', err);
       alert('Failed to unblock project');
     } finally {
       setActionLoading(false);
@@ -448,11 +454,11 @@ const ProjectsManagement: React.FC = () => {
                     <div className="flex flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-4 w-full sm:w-auto">
                       <Button
                         onClick={(e) => { e.stopPropagation(); setSelectedProject(project); }}
-                        variant="secondary"
+                        variant="outline"
                         size="sm"
-                        className="w-full sm:w-auto text-xs sm:text-sm border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
+                        className="w-full sm:w-auto text-xs sm:text-sm !text-gray-700 hover:!text-gray-900 border-gray-300 hover:border-gray-400"
                       >
-                        <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 text-gray-500" />
                         View Details
                       </Button>
 

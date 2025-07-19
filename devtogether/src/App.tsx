@@ -227,16 +227,13 @@ function App() {
                   }
                 />
 
+                {/* Security String Profile Route (Public + Authenticated) */}
                 <Route
-                  path="/profile/:userId"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
+                  path="/profile/:userIdWithSecurity"
+                  element={<ProfilePage />}
                 />
 
-                {/* Shared Profile Route (Public) */}
+                {/* Legacy Shared Profile Route (Public) */}
                 <Route
                   path="/profile/shared/:shareToken"
                   element={<SharedProfilePage />}

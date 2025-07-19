@@ -267,10 +267,13 @@ class AdminService {
         .from('profiles')
         .update({ role: 'admin' })
         .eq('id', userId)
+        .eq('role', 'developer') // Only promote developers to admin
 
       if (error) throw error
+      toastService.success('Developer promoted to admin successfully. They now have full administrative access.');
     } catch (error) {
       console.error('Error granting admin access:', error)
+      toastService.error('Failed to promote user to admin.');
       throw error
     }
   }
@@ -282,10 +285,13 @@ class AdminService {
         .from('profiles')
         .update({ role: 'developer' })
         .eq('id', userId)
+        .eq('role', 'admin') // Only demote admins to developer
 
       if (error) throw error
+      toastService.info('User demoted from admin to developer.');
     } catch (error) {
       console.error('Error revoking admin access:', error)
+      toastService.error('Failed to demote user from admin.');
       throw error
     }
   }
@@ -358,13 +364,109 @@ class AdminService {
     // Optionally: send notification to org/team
   }
 
-  // Get all developers (excluding admins)
+  // Get all developers and admins for role management
   async getAllDevelopers() {
     const { data, error } = await supabase
       .from('profiles')
       .select('id, first_name, last_name, email, blocked, blocked_reason, role')
-      .eq('role', 'developer');
+      .in('role', ['developer', 'admin'])
+      .order('role', { ascending: true }) // Show developers first, then admins
+      .order('first_name', { ascending: true });
     return { data, error };
+  }
+
+  // ===== PROJECT APPROVAL FUNCTIONS =====
+
+  // Approve project
+  async approveProject(projectId: string, adminId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          status: 'open',
+          approved_by: adminId,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', projectId)
+
+      if (error) throw error
+      toastService.success('Project approved successfully.');
+    } catch (error) {
+      console.error('Error approving project:', error)
+      toastService.error('Failed to approve project.');
+      throw error
+    }
+  }
+
+  // Reject project
+  async rejectProject(projectId: string, adminId: string, reason?: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          status: 'rejected',
+          approved_by: adminId,
+          approved_at: new Date().toISOString(),
+          rejection_reason: reason || 'Project rejected by admin'
+        })
+        .eq('id', projectId)
+
+      if (error) throw error
+      toastService.info('Project rejected.');
+    } catch (error) {
+      console.error('Error rejecting project:', error)
+      toastService.error('Failed to reject project.');
+      throw error
+    }
+  }
+
+  // Get pending projects for admin review
+  async getPendingProjects() {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          organization:profiles!projects_organization_id_fkey(
+            id,
+            organization_name,
+            email,
+            avatar_url
+          )
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching pending projects:', error)
+      throw error
+    }
+  }
+
+  // Get all projects for admin management
+  async getAllProjects() {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          organization:profiles!projects_organization_id_fkey(
+            id,
+            organization_name,
+            email,
+            avatar_url
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching all projects:', error)
+      throw error
+    }
   }
 }
 

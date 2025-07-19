@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Briefcase, Users, Star, ArrowRight, Code, Building, CheckCircle, Github, Linkedin, ExternalLink } from 'lucide-react';
+import { Search, Briefcase, Users, Star, ArrowRight, Code, Building, CheckCircle, Github, Linkedin, ExternalLink, Award, Heart, Globe } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Layout } from '../components/layout/Layout';
+import { useAuth } from '../contexts/AuthContext';
+import { SpotlightDeveloper } from '../components/dashboard/SpotlightDeveloper';
 import type { Project, Profile, ProjectWithTeamMembers } from '../types/database';
 import { projectService } from '../services/projects';
 import { supabase } from '../utils/supabase';
@@ -211,6 +213,9 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer }) =>
 };
 
 const HomePage: React.FC = () => {
+    const { user } = useAuth();
+    const isGuest = !user;
+    
     const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
     const [featuredDeveloper, setFeaturedDeveloper] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -333,36 +338,95 @@ const HomePage: React.FC = () => {
                     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
                         <div className="grid lg:grid-cols-2 gap-8 items-center">
                             <div>
-                                <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
-                                    Code for Good.<br />
-                                    Grow Your Skills.<br />
-                                    <span className="text-yellow-400 drop-shadow-sm">Create Real-World Impact.</span>
-                                </h1>
-                                <p className="text-lg lg:text-xl text-blue-100 mb-6 leading-relaxed max-w-xl">
-                                    Team up with inspiring nonprofits, ship production-ready projects, and build a standout portfolio—all while changing the world.
-                                </p>
-                                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                                    <Link to="/for-developers">
-                                        <Button
-                                            size="lg"
-                                            variant="primary"
-                                            className="!bg-white !text-blue-700 !border-2 !border-white hover:!bg-gray-50 hover:!border-gray-100 font-semibold px-6 py-3 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
-                                        >
-                                            <Code className="w-4 h-4" />
-                                            Join as Developer
-                                        </Button>
-                                    </Link>
-                                    <Link to="/for-organizations">
-                                        <Button
-                                            size="lg"
-                                            variant="primary"
-                                            className="!bg-transparent !text-white !border-2 !border-white hover:!bg-white hover:!text-blue-700 font-semibold px-6 py-3 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95"
-                                        >
-                                            <Building className="w-4 h-4" />
-                                            Join as Organization
-                                        </Button>
-                                    </Link>
-                                </div>
+                                {isGuest ? (
+                                    <>
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="flex items-center gap-1">
+                                                <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                                                <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                                                <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                                                <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                                                <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                                            </div>
+                                            <span className="text-blue-100 text-sm font-medium">Trusted by {platformStats.totalDevelopers} developers</span>
+                                        </div>
+                                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+                                            Where <span className="text-yellow-400">Talented Developers</span><br />
+                                            Meet <span className="text-green-400">Meaningful Projects</span>
+                                        </h1>
+                                        <p className="text-lg lg:text-xl text-blue-100 mb-6 leading-relaxed max-w-xl">
+                                            Join {platformStats.totalDevelopers} developers building real-world solutions for nonprofits. 
+                                            Gain experience, build your portfolio, and make an impact that matters.
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-4 mb-6 max-w-md">
+                                            <div className="flex items-center gap-2">
+                                                <Award className="w-5 h-5 text-yellow-400" />
+                                                <span className="text-blue-100 text-sm font-medium">{platformStats.completionRate} Success Rate</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Heart className="w-5 h-5 text-red-400" />
+                                                <span className="text-blue-100 text-sm font-medium">{platformStats.activeProjects} Active Projects</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                                            <Link to="/auth/register?role=developer">
+                                                <Button
+                                                    size="lg"
+                                                    variant="primary"
+                                                    className="!bg-white !text-blue-700 !border-2 !border-white hover:!bg-gray-50 hover:!border-gray-100 font-semibold px-8 py-4 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg text-base"
+                                                >
+                                                    <Code className="w-5 h-5" />
+                                                    Start Coding for Good - Free
+                                                </Button>
+                                            </Link>
+                                            <Link to="/projects">
+                                                <Button
+                                                    size="lg"
+                                                    variant="primary"
+                                                    className="!bg-transparent !text-white !border-2 !border-white hover:!bg-white hover:!text-blue-700 font-semibold px-6 py-4 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 text-base"
+                                                >
+                                                    <Globe className="w-5 h-5" />
+                                                    Explore Projects
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                        <div className="text-blue-200 text-sm">
+                                            🎯 No commitment required • 🚀 Start building immediately • 💼 Portfolio-ready projects
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+                                            Welcome back!<br />
+                                            <span className="text-yellow-400 drop-shadow-sm">Ready to create impact?</span>
+                                        </h1>
+                                        <p className="text-lg lg:text-xl text-blue-100 mb-6 leading-relaxed max-w-xl">
+                                            Continue your journey building meaningful projects with nonprofits and growing your skills.
+                                        </p>
+                                        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                                            <Link to="/dashboard">
+                                                <Button
+                                                    size="lg"
+                                                    variant="primary"
+                                                    className="!bg-white !text-blue-700 !border-2 !border-white hover:!bg-gray-50 hover:!border-gray-100 font-semibold px-6 py-3 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
+                                                >
+                                                    <Briefcase className="w-4 h-4" />
+                                                    Go to Dashboard
+                                                </Button>
+                                            </Link>
+                                            <Link to="/projects">
+                                                <Button
+                                                    size="lg"
+                                                    variant="primary"
+                                                    className="!bg-transparent !text-white !border-2 !border-white hover:!bg-white hover:!text-blue-700 font-semibold px-6 py-3 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95"
+                                                >
+                                                    <Search className="w-4 h-4" />
+                                                    Browse Projects
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {/* Project Dashboard Mockup */}
@@ -542,11 +606,19 @@ const HomePage: React.FC = () => {
                                 <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Featured Projects</h2>
                                 <p className="text-lg text-gray-600">Hand-picked opportunities looking for talent this week</p>
                             </div>
-                            <Link to="/projects">
-                                <Button variant="outline" className="flex items-center gap-2 !text-blue-700 !bg-blue-50 hover:!bg-blue-100 !border-blue-200 hover:!border-blue-300 font-semibold text-sm">
-                                    View All <ArrowRight className="w-4 h-4" />
-                                </Button>
-                            </Link>
+                            {isGuest ? (
+                                <Link to="/auth/register?role=developer">
+                                    <Button variant="outline" className="flex items-center gap-2 !text-blue-700 !bg-blue-50 hover:!bg-blue-100 !border-blue-200 hover:!border-blue-300 font-semibold text-sm">
+                                        Join to See More <ArrowRight className="w-4 h-4" />
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Link to="/projects">
+                                    <Button variant="outline" className="flex items-center gap-2 !text-blue-700 !bg-blue-50 hover:!bg-blue-100 !border-blue-200 hover:!border-blue-300 font-semibold text-sm">
+                                        View All <ArrowRight className="w-4 h-4" />
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
 
                         {loading ? (
@@ -570,69 +642,126 @@ const HomePage: React.FC = () => {
                                 <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No Featured Projects</h3>
                                 <p className="text-gray-500 mb-4 text-sm">No featured projects available at the moment.</p>
-                                <Button variant="primary" className="!bg-blue-600 hover:!bg-blue-700 !text-white text-sm">
-                                    Browse All Projects
-                                </Button>
+                                {isGuest ? (
+                                    <Link to="/auth/register?role=developer">
+                                        <Button variant="primary" className="!bg-blue-600 hover:!bg-blue-700 !text-white text-sm">
+                                            Join to Browse Projects
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Link to="/projects">
+                                        <Button variant="primary" className="!bg-blue-600 hover:!bg-blue-700 !text-white text-sm">
+                                            Browse All Projects
+                                        </Button>
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </div>
                 </section>
 
-                {/* Developer Spotlight */}
+                {/* Developer Spotlight with Rating System */}
                 <section className="py-12 lg:py-16 bg-gradient-to-br from-gray-50 to-blue-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid lg:grid-cols-2 gap-8 items-center">
+                        <div className="text-center mb-10">
+                            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
+                                🌟 Developer Spotlight
+                            </h2>
+                            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                                Discover our top-rated developers who are making real impact through their contributions. 
+                                Our rating system recognizes excellence in project delivery and collaboration.
+                            </p>
+                        </div>
+                        
+                        <div className="grid lg:grid-cols-2 gap-8 items-start">
                             <div>
-                                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
-                                    Developer Spotlight
-                                </h2>
-                                <p className="text-lg text-gray-600 mb-6">
-                                    Meet the talented developers making an impact through their contributions
-                                </p>
-                                <div className="space-y-4">
-                                    <h3 className="text-base font-bold text-gray-900">Recent Projects</h3>
-                                    <div className="space-y-3">
-                                        {developerSpotlightProjects.length > 0 ? (
-                                            developerSpotlightProjects.map((project, index) => (
-                                                <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border ${
-                                                    project.status === 'Complete' 
-                                                        ? 'bg-emerald-50 border-emerald-200' 
-                                                        : 'bg-purple-50 border-purple-200'
-                                                }`}>
-                                                    <div className={`w-2 h-2 rounded-full ${
-                                                        project.status === 'Complete' ? 'bg-emerald-500' : 'bg-purple-500'
-                                                    }`}></div>
-                                                    <div className="flex-1">
-                                                        <span className={`font-semibold block text-sm ${
-                                                            project.status === 'Complete' ? 'text-emerald-800' : 'text-purple-800'
+                                {isGuest ? (
+                                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <Award className="w-6 h-6 text-yellow-500" />
+                                            Our Rating System
+                                        </h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                                <Star className="w-5 h-5 text-emerald-600 fill-current" />
+                                                <div>
+                                                    <span className="font-semibold text-emerald-800 block text-sm">Application Stars</span>
+                                                    <span className="text-emerald-600 text-xs">Earned when accepted to projects</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                <Star className="w-5 h-5 text-blue-600 fill-current" />
+                                                <Star className="w-5 h-5 text-blue-600 fill-current" />
+                                                <Star className="w-5 h-5 text-blue-600 fill-current" />
+                                                <div>
+                                                    <span className="font-semibold text-blue-800 block text-sm">Completion Stars</span>
+                                                    <span className="text-blue-600 text-xs">3 stars awarded for project completion</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                                <Award className="w-5 h-5 text-purple-600" />
+                                                <div>
+                                                    <span className="font-semibold text-purple-800 block text-sm">Organization Feedback</span>
+                                                    <span className="text-purple-600 text-xs">Testimonials from partner nonprofits</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-6 pt-4 border-t border-gray-200">
+                                            <Link to="/auth/register?role=developer">
+                                                <Button className="w-full !bg-blue-600 hover:!bg-blue-700 !text-white font-semibold py-3">
+                                                    Join & Start Earning Stars ⭐
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <h3 className="text-base font-bold text-gray-900">Platform Achievements</h3>
+                                        <div className="space-y-3">
+                                            {developerSpotlightProjects.length > 0 ? (
+                                                developerSpotlightProjects.map((project, index) => (
+                                                    <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border ${
+                                                        project.status === 'Complete' 
+                                                            ? 'bg-emerald-50 border-emerald-200' 
+                                                            : 'bg-purple-50 border-purple-200'
+                                                    }`}>
+                                                        <div className={`w-2 h-2 rounded-full ${
+                                                            project.status === 'Complete' ? 'bg-emerald-500' : 'bg-purple-500'
+                                                        }`}></div>
+                                                        <div className="flex-1">
+                                                            <span className={`font-semibold block text-sm ${
+                                                                project.status === 'Complete' ? 'text-emerald-800' : 'text-purple-800'
+                                                            }`}>
+                                                                {project.name}
+                                                            </span>
+                                                            <span className={`text-xs ${
+                                                                project.status === 'Complete' ? 'text-emerald-600' : 'text-purple-600'
+                                                            }`}>
+                                                                {project.organization}
+                                                            </span>
+                                                        </div>
+                                                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                                            project.status === 'Complete' 
+                                                                ? 'bg-emerald-100 text-emerald-700' 
+                                                                : 'bg-purple-100 text-purple-700'
                                                         }`}>
-                                                            {project.name}
-                                                        </span>
-                                                        <span className={`text-xs ${
-                                                            project.status === 'Complete' ? 'text-emerald-600' : 'text-purple-600'
-                                                        }`}>
-                                                            {project.organization}
+                                                            {project.status}
                                                         </span>
                                                     </div>
-                                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                                        project.status === 'Complete' 
-                                                            ? 'bg-emerald-100 text-emerald-700' 
-                                                            : 'bg-purple-100 text-purple-700'
-                                                    }`}>
-                                                        {project.status}
-                                                    </span>
+                                                ))
+                                            ) : (
+                                                <div className="text-gray-500 text-sm p-3 bg-gray-100 rounded-lg border border-gray-200">
+                                                    No recent projects to display
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="text-gray-500 text-sm p-3 bg-gray-100 rounded-lg border border-gray-200">
-                                                No recent projects to display
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
-                            <DeveloperSpotlight developer={featuredDeveloper} />
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                <SpotlightDeveloper compact={false} />
+                            </div>
                         </div>
                     </div>
                 </section>

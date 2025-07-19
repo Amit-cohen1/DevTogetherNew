@@ -331,7 +331,7 @@ export default function ApplicationsDashboard() {
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
                         <div className="bg-white rounded-lg border border-gray-200 p-6">
                             <div className="flex items-center">
                                 <Users className="h-8 w-8 text-gray-600" />
@@ -384,8 +384,8 @@ export default function ApplicationsDashboard() {
                     </div>
 
                     {/* Filters and Actions */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                             {/* Search */}
                             <FormField label="Search">
                                 <div className="relative">
@@ -444,17 +444,18 @@ export default function ApplicationsDashboard() {
                         </div>
 
                         {/* Sort and Bulk Actions */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                                 {/* Sort */}
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort by:</span>
                                     <Select
                                         value={`${sort.field}-${sort.direction}`}
                                         onChange={(e) => {
                                             const [field, direction] = e.target.value.split('-') as [typeof sort.field, typeof sort.direction]
                                             setSort({ field, direction })
                                         }}
+                                        className="w-full sm:w-auto"
                                     >
                                         <option value="created_at-desc">Newest First</option>
                                         <option value="created_at-asc">Oldest First</option>
@@ -472,32 +473,34 @@ export default function ApplicationsDashboard() {
                                         onChange={handleSelectAll}
                                         className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                                     />
-                                    <span className="text-sm text-gray-700">Select All ({filteredApplications.length})</span>
+                                    <span className="text-sm text-gray-700 whitespace-nowrap">Select All ({filteredApplications.length})</span>
                                 </div>
                             </div>
 
                             {/* Bulk Actions */}
                             {showBulkActions && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-700">{selectedApplications.size} selected</span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleBulkAction('accept')}
-                                        className="text-green-600 border-green-300 hover:bg-green-50"
-                                    >
-                                        <Check className="w-4 h-4 mr-1" />
-                                        Accept
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleBulkAction('reject')}
-                                        className="text-red-600 border-red-300 hover:bg-red-50"
-                                    >
-                                        <X className="w-4 h-4 mr-1" />
-                                        Reject
-                                    </Button>
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                    <span className="text-sm text-gray-700 text-center sm:text-left">{selectedApplications.size} selected</span>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleBulkAction('accept')}
+                                            className="flex-1 sm:flex-none text-green-600 border-green-300 hover:bg-green-50"
+                                        >
+                                            <Check className="w-4 h-4 mr-1" />
+                                            Accept
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleBulkAction('reject')}
+                                            className="flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50"
+                                        >
+                                            <X className="w-4 h-4 mr-1" />
+                                            Reject
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </div>

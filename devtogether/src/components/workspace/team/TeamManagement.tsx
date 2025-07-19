@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserMinus, UserPlus, Activity, TrendingUp, MessageSquare, Clock, Shield, ShieldOff } from 'lucide-react';
+import { Users, UserMinus, UserPlus, Activity, TrendingUp, MessageSquare, Clock, Shield, ShieldOff, Star } from 'lucide-react';
 import { TeamMember, TeamStats, teamService } from '../../../services/teamService';
 import { useAuth } from '../../../contexts/AuthContext';
 import TeamActivityFeed from '../../workspace/team/TeamActivityFeed';
 import InviteMemberModal from '../../workspace/team/InviteMemberModal';
+import OrganizationFeedbackForm from './OrganizationFeedbackForm';
 
 interface TeamManagementProps {
     projectId: string;
@@ -18,6 +19,7 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
     const [promotingMemberId, setPromotingMemberId] = useState<string | null>(null);
+    const [feedbackMember, setFeedbackMember] = useState<{ id: string; name: string } | null>(null);
 
     useEffect(() => {
         loadTeamData();
@@ -278,6 +280,21 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
                             <div className="flex items-center gap-2">
                                 {isOwner && member.role !== 'owner' && (
                                     <>
+                                        {/* Give Feedback button - only for developers */}
+                                        {member.user.role === 'developer' && (
+                                            <button
+                                                onClick={() => setFeedbackMember({
+                                                    id: member.user_id,
+                                                    name: getDisplayName(member)
+                                                })}
+                                                className="flex items-center gap-2 px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                title="Give feedback to this developer"
+                                            >
+                                                <Star className="w-4 h-4" />
+                                                Feedback
+                                            </button>
+                                        )}
+                                        
                                         {/* Promotion/Demotion button */}
                                         {member.status_manager ? (
                                             <button
@@ -339,6 +356,20 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
                     onInviteSent={() => {
                         setShowInviteModal(false);
                         loadTeamData();
+                    }}
+                />
+            )}
+
+            {/* Organization Feedback Modal */}
+            {feedbackMember && (
+                <OrganizationFeedbackForm
+                    projectId={projectId}
+                    developerId={feedbackMember.id}
+                    developerName={feedbackMember.name}
+                    onClose={() => setFeedbackMember(null)}
+                    onSuccess={() => {
+                        setFeedbackMember(null);
+                        // Optionally reload team data or show success message
                     }}
                 />
             )}

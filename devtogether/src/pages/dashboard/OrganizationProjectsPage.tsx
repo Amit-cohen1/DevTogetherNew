@@ -29,8 +29,9 @@ export default function OrganizationProjectsPage() {
     setLoading(true);
     setError(null);
     // Always include rejected projects for org dashboard
+    // Organization owners can see private team member profiles
     projectService
-      .getProjectsWithTeamMembers({ organization_id: profile.id }, true)
+      .getProjectsWithTeamMembers({ organization_id: profile.id }, true, true)
       .then(setProjects)
       .catch((err) => setError(err.message || 'Failed to load projects'))
       .finally(() => setLoading(false));
@@ -46,8 +47,9 @@ export default function OrganizationProjectsPage() {
     // Optionally reload projects
     if (profile?.id) {
       setLoading(true);
+      // Organization owners can see private team member profiles
       projectService
-        .getProjectsWithTeamMembers({ organization_id: profile.id }, true)
+        .getProjectsWithTeamMembers({ organization_id: profile.id }, true, true)
         .then(setProjects)
         .finally(() => setLoading(false));
     }

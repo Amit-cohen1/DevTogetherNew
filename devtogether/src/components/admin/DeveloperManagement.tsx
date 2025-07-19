@@ -5,7 +5,10 @@ import { Button } from '../ui/Button';
 import type { Profile } from '../../types/database';
 import AdminTabHeader from './AdminTabHeader';
 import { AdminDeletionButton } from './AdminDeletionButton';
+import { Crown, Shield, User } from 'lucide-react';
 
+// User Management Component - Manages developers and admin role promotions
+// Only hananel12345@gmail.com can promote developers to admin or demote admins
 const DeveloperManagement: React.FC = () => {
   const { profile } = useAuth();
   const [developers, setDevelopers] = useState<Profile[]>([]);
@@ -17,6 +20,7 @@ const DeveloperManagement: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'blocked'>('all');
+  const [promotingUserId, setPromotingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadDevelopers();
@@ -26,6 +30,7 @@ const DeveloperManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      // Get both developers and admins for role management
       const { data, error } = await adminService.getAllDevelopers();
       if (error) throw error;
       setDevelopers(data || []);
@@ -67,6 +72,82 @@ const DeveloperManagement: React.FC = () => {
     }
   };
 
+  // Role promotion handlers - only for hananel12345@gmail.com
+  const canPromoteUsers = profile?.email === 'hananel12345@gmail.com';
+
+  const handlePromoteToAdmin = async (userId: string) => {
+    if (!canPromoteUsers) {
+      setError('Only the main administrator can promote users to admin');
+      return;
+    }
+
+    const developer = developers.find(d => d.id === userId);
+    
+    // Only allow promoting developers to admin, not organizations
+    if (developer?.role !== 'developer') {
+      setError('Only developers can be promoted to admin');
+      return;
+    }
+
+    const userName = `${developer?.first_name || ''} ${developer?.last_name || ''}`.trim() || developer?.email;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to promote "${userName}" to Admin?\n\n` +
+      `This will give them full administrative access to the platform, including the ability to:\n` +
+      `• Approve/reject organizations and projects\n` +
+      `• Block/unblock users\n` +
+      `• Access all platform data\n\n` +
+      `This action should only be done for trusted users.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      setPromotingUserId(userId);
+      await adminService.grantAdminAccess(userId);
+      await loadDevelopers();
+    } catch (err) {
+      console.error('Error promoting to admin:', err);
+      setError('Failed to promote user to admin');
+    } finally {
+      setPromotingUserId(null);
+    }
+  };
+
+  const handleDemoteFromAdmin = async (userId: string) => {
+    if (!canPromoteUsers) {
+      setError('Only the main administrator can demote admin users');
+      return;
+    }
+
+    // Prevent demoting yourself
+    if (userId === profile?.id) {
+      setError('You cannot demote yourself from admin');
+      return;
+    }
+
+    const admin = developers.find(d => d.id === userId);
+    const userName = `${admin?.first_name || ''} ${admin?.last_name || ''}`.trim() || admin?.email;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to demote "${userName}" from Admin to Developer?\n\n` +
+      `This will remove their administrative access and they will only have developer permissions.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      setPromotingUserId(userId);
+      await adminService.revokeAdminAccess(userId);
+      await loadDevelopers();
+    } catch (err) {
+      console.error('Error demoting from admin:', err);
+      setError('Failed to demote user from admin');
+    } finally {
+      setPromotingUserId(null);
+    }
+  };
+
   const filteredDevelopers = developers.filter(dev => {
     const matchesSearch = (dev.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (dev.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,10 +168,14 @@ const DeveloperManagement: React.FC = () => {
     total: developers.length,
     active: developers.filter(d => !d.blocked).length,
     blocked: developers.filter(d => d.blocked).length,
+    developers: developers.filter(d => d.role === 'developer').length,
+    admins: developers.filter(d => d.role === 'admin').length,
   };
 
   const statArray = [
     { label: 'Total', value: stats.total, color: 'bg-blue-50' },
+    { label: 'Developers', value: stats.developers, color: 'bg-blue-50' },
+    { label: 'Admins', value: stats.admins, color: 'bg-purple-50' },
     { label: 'Active', value: stats.active, color: 'bg-green-50' },
     { label: 'Blocked', value: stats.blocked, color: 'bg-red-50' },
   ];
@@ -108,9 +193,24 @@ const DeveloperManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {!canPromoteUsers && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start">
+            <Crown className="h-5 w-5 text-blue-400 mt-0.5 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-blue-800">Admin Role Management</h3>
+              <p className="mt-1 text-sm text-blue-700">
+                Only the main administrator (hananel12345@gmail.com) can promote developers to admin or demote admins. 
+                You can still block/unblock and delete users.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <AdminTabHeader
-        title="Developers"
-        searchPlaceholder="Search developers..."
+        title={`User Management ${canPromoteUsers ? '👑' : ''}`}
+        searchPlaceholder="Search users..."
         onSearch={handleSearch}
         stats={statArray}
       >
@@ -145,6 +245,7 @@ const DeveloperManagement: React.FC = () => {
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
@@ -154,6 +255,67 @@ const DeveloperManagement: React.FC = () => {
               <tr key={dev.id} className={dev.blocked ? 'bg-red-50' : ''}>
                 <td className="px-4 py-2 whitespace-nowrap">{(dev.first_name || '')} {(dev.last_name || '')}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{dev.email}</td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  {canPromoteUsers ? (
+                    <div className="flex items-center gap-2">
+                      {dev.role === 'admin' ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <User className="w-3 h-3 mr-1" />
+                          Developer
+                        </span>
+                      )}
+                      {dev.id !== profile?.id && (
+                        <button
+                          onClick={() => dev.role === 'admin' ? handleDemoteFromAdmin(dev.id) : handlePromoteToAdmin(dev.id)}
+                          disabled={promotingUserId === dev.id}
+                          className={`text-xs px-2 py-1 rounded border transition-colors ${
+                            dev.role === 'admin' 
+                              ? 'text-orange-600 border-orange-200 hover:bg-orange-50' 
+                              : 'text-purple-600 border-purple-200 hover:bg-purple-50'
+                          }`}
+                          title={dev.role === 'admin' ? 'Demote from Admin' : 'Promote to Admin'}
+                        >
+                          {promotingUserId === dev.id ? (
+                            'Updating...'
+                          ) : dev.role === 'admin' ? (
+                            <>
+                              <Shield className="w-3 h-3 inline mr-1" />
+                              Demote
+                            </>
+                          ) : (
+                            <>
+                              <Crown className="w-3 h-3 inline mr-1" />
+                              Promote
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      dev.role === 'admin' 
+                        ? 'bg-purple-100 text-purple-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {dev.role === 'admin' ? (
+                        <>
+                          <Crown className="w-3 h-3 mr-1" />
+                          Admin
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-3 h-3 mr-1" />
+                          Developer
+                        </>
+                      )}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   {dev.blocked ? (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Blocked</span>
