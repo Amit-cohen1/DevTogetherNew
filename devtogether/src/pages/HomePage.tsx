@@ -369,24 +369,24 @@ const HomePage: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                                            <Link to="/auth/register?role=developer">
+                                            <Link to="/join/developer">
                                                 <Button
                                                     size="lg"
                                                     variant="primary"
                                                     className="!bg-white !text-blue-700 !border-2 !border-white hover:!bg-gray-50 hover:!border-gray-100 font-semibold px-8 py-4 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg text-base"
                                                 >
                                                     <Code className="w-5 h-5" />
-                                                    Start Coding for Good - Free
+                                                    Join as Developer
                                                 </Button>
                                             </Link>
-                                            <Link to="/projects">
+                                            <Link to="/join/organization">
                                                 <Button
                                                     size="lg"
                                                     variant="primary"
                                                     className="!bg-transparent !text-white !border-2 !border-white hover:!bg-white hover:!text-blue-700 font-semibold px-6 py-4 flex items-center gap-3 transform transition-all duration-200 hover:scale-105 active:scale-95 text-base"
                                                 >
-                                                    <Globe className="w-5 h-5" />
-                                                    Explore Projects
+                                                    <Building className="w-5 h-5" />
+                                                    Join as Organization
                                                 </Button>
                                             </Link>
                                         </div>

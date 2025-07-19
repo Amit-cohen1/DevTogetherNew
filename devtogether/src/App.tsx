@@ -129,13 +129,24 @@ function App() {
 
                 {/* Public Landing Pages */}
                 <Route
-                  path="/for-developers"
+                  path="/join/developer"
                   element={<DeveloperLandingPage />}
                 />
 
                 <Route
-                  path="/for-organizations"
+                  path="/join/organization"
                   element={<OrganizationLandingPage />}
+                />
+
+                {/* Legacy landing page redirects */}
+                <Route
+                  path="/for-developers"
+                  element={<Navigate to="/join/developer" replace />}
+                />
+
+                <Route
+                  path="/for-organizations"
+                  element={<Navigate to="/join/organization" replace />}
                 />
 
                 {/* Public Organizations Listing */}
