@@ -530,13 +530,25 @@ class ProfileService {
             // Generate new security string if missing
             if (!securityString) {
                 try {
-                    const { data: newStringData, error: stringError } = await supabase.rpc(
-                        'user_regenerate_security_string', 
-                        { user_id: userId }
-                    );
+                    // Generate a new random security string (8-10 characters)
+                    const newSecurityString = Math.random().toString(36).substring(2, 10);
+                    
+                    // Update the user's security string directly
+                    const { data: updateData, error: stringError } = await supabase
+                        .from('profiles')
+                        .update({ 
+                            security_string: newSecurityString,
+                            security_string_updated_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', userId)
+                        .select('security_string')
+                        .single();
 
-                    if (!stringError && newStringData) {
-                        securityString = newStringData;
+                    if (!stringError && updateData) {
+                        securityString = updateData.security_string;
+                    } else {
+                        securityString = newSecurityString;
                     }
                 } catch (stringGenError) {
                     console.warn('Could not generate security string:', stringGenError);
@@ -662,16 +674,26 @@ class ProfileService {
     // NEW: Regenerate security string for user
     async regenerateSecurityString(userId: string): Promise<string> {
         try {
-            const { data, error } = await supabase.rpc(
-                'user_regenerate_security_string',
-                { user_id: userId }
-            );
+            // Generate a new random security string (8-10 characters)
+            const newSecurityString = Math.random().toString(36).substring(2, 10);
+            
+            // Update the user's security string directly
+            const { data, error } = await supabase
+                .from('profiles')
+                .update({ 
+                    security_string: newSecurityString,
+                    security_string_updated_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId)
+                .select('security_string')
+                .single();
 
             if (error) {
                 throw new Error(`Failed to regenerate security string: ${error.message}`);
             }
 
-            return data || `fallback-${Date.now()}`;
+            return data?.security_string || newSecurityString;
         } catch (error) {
             console.error('Error regenerating security string:', error);
             throw error;

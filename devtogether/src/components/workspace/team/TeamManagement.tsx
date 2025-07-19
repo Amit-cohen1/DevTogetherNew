@@ -307,6 +307,21 @@ export default function TeamManagement({ projectId, isOwner }: TeamManagementPro
                                                 </button>
                                             )}
 
+                                            {/* Feedback Button - Only for developers */}
+                                            {member.user.role === 'developer' && (
+                                                <button
+                                                    onClick={() => setFeedbackMember({
+                                                        id: member.user_id,
+                                                        name: getDisplayName(member)
+                                                    })}
+                                                    className="flex items-center justify-center gap-2 px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
+                                                >
+                                                    <Star className="w-4 h-4" />
+                                                    <span className="hidden sm:inline">Give Feedback</span>
+                                                    <span className="sm:hidden">Feedback</span>
+                                                </button>
+                                            )}
+
                                             {/* Remove Member */}
                                             <button
                                                 onClick={() => handleRemoveMember(member.id, member.user_id)}

@@ -41,8 +41,19 @@ class AdminDeletionService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      const { data } = await supabase.rpc('is_admin_user', { user_id: user.id });
-      return data === true;
+      // Check if user has admin role by querying profiles table directly
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Admin verification failed:', error);
+        return false;
+      }
+
+      return profile?.role === 'admin';
     } catch (error) {
       console.error('Admin verification failed:', error);
       return false;
