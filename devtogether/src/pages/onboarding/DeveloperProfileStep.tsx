@@ -4,6 +4,7 @@ import { MapPin, Globe, Github, Linkedin, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { toastService } from '../../services/toastService'
 
 interface DeveloperProfileFormData {
     first_name: string
@@ -73,7 +74,7 @@ export const DeveloperProfileStep: React.FC<DeveloperProfileStepProps> = ({
 
     const onSubmit = async (data: DeveloperProfileFormData) => {
         if (!data.first_name || !data.last_name) {
-            alert('First and last name are required.')
+            toastService.error('First and last name are required.')
             return
         }
         try {
@@ -94,12 +95,13 @@ export const DeveloperProfileStep: React.FC<DeveloperProfileStepProps> = ({
             const { success, error } = await updateProfile(profileUpdates)
 
             if (success) {
+                toastService.success('Profile updated successfully!')
                 onNext()
             } else {
-                alert(error || 'Failed to update profile. Please try again.')
+                toastService.error(error || 'Failed to update profile. Please try again.')
             }
         } catch (error) {
-            alert('An unexpected error occurred. Please try again.')
+            toastService.error('An unexpected error occurred. Please try again.')
         } finally {
             setIsSubmitting(false)
         }

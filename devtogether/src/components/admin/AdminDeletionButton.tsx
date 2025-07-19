@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { DeletionResult } from '../../services/adminDeletionService';
-import toast from 'react-hot-toast';
+import { toastService } from '../../services/toastService';
 
 interface AdminDeletionButtonProps {
   targetId: string;
@@ -28,9 +28,7 @@ export const AdminDeletionButton: React.FC<AdminDeletionButtonProps> = ({
 
   const handleDeleteComplete = (result: DeletionResult) => {
     if (result.success) {
-      toast.success(result.message, {
-        duration: 4000,
-      });
+      toastService.success(result.message);
       
       // Close modal
       setIsModalOpen(false);
@@ -40,9 +38,7 @@ export const AdminDeletionButton: React.FC<AdminDeletionButtonProps> = ({
         onDeleteSuccess();
       }
     } else {
-      toast.error(result.message, {
-        duration: 6000,
-      });
+      toastService.error(result.message);
     }
   };
 

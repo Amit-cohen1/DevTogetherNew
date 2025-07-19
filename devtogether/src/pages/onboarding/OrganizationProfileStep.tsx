@@ -4,6 +4,7 @@ import { MapPin, Globe, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { toastService } from '../../services/toastService'
 
 interface OrganizationProfileFormData {
     organization_name: string;
@@ -49,12 +50,13 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
             }
             const { success, error } = await updateProfile(profileUpdates)
             if (success) {
+                toastService.success('Organization profile updated successfully!')
                 onNext()
             } else {
-                alert(error || 'Failed to update profile. Please try again.')
+                toastService.error(error || 'Failed to update profile. Please try again.')
             }
         } catch (error) {
-            alert('An unexpected error occurred. Please try again.')
+            toastService.error('An unexpected error occurred. Please try again.')
         } finally {
             setIsSubmitting(false)
         }

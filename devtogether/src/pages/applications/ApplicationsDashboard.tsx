@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { applicationService, ApplicationWithDetails } from '../../services/applications'
+import { toastService } from '../../services/toastService'
 import { projectService } from '../../services/projects'
 import { ApplicationCard } from '../../components/applications/ApplicationCard'
 import { ApplicationReviewModal } from '../../components/applications/ApplicationReviewModal'
@@ -285,8 +286,15 @@ export default function ApplicationsDashboard() {
             }
 
             setSelectedApplications(new Set())
+            
+            const count = pendingApplications.length
+            const actionText = action === 'accept' ? 'accepted' : 'rejected'
+            toastService.success(`${count} application${count === 1 ? '' : 's'} ${actionText} successfully`)
+            
         } catch (err) {
-            setError(err instanceof Error ? err.message : `Failed to ${action} applications`)
+            const errorMessage = err instanceof Error ? err.message : `Failed to ${action} applications`
+            setError(errorMessage)
+            toastService.error(errorMessage)
         }
     }
 

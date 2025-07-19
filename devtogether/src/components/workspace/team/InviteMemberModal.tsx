@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Send, AlertCircle } from 'lucide-react';
 import { teamService } from '../../../services/teamService';
+import { toastService } from '../../../services/toastService';
 
 interface InviteMemberModalProps {
     projectId: string;
@@ -31,7 +32,7 @@ export default function InviteMemberModal({ projectId, onClose, onInviteSent }: 
         try {
             setLoading(true);
             // For now, we'll show a coming soon message since this requires email integration
-            alert('Team invitations will be available in future updates! For now, developers can join by applying to the project directly.');
+            toastService.info('Team invitations will be available in future updates! For now, developers can join by applying to the project directly.');
             onInviteSent();
         } catch (error) {
             console.error('Error sending invitation:', error);

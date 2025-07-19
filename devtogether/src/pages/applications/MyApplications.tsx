@@ -6,6 +6,7 @@ import { applicationService, ApplicationWithDetails } from '../../services/appli
 import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { Select } from '../../components/ui/Select'
+import { toastService } from '../../services/toastService'
 import {
     Search,
     Calendar,
@@ -201,8 +202,12 @@ export default function MyApplications() {
                 withdrawn: prev.withdrawn + 1
             }))
 
+            toastService.success('Application withdrawn successfully')
+
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to withdraw application')
+            const errorMessage = err instanceof Error ? err.message : 'Failed to withdraw application'
+            setError(errorMessage)
+            toastService.error(errorMessage)
         }
     }
 
