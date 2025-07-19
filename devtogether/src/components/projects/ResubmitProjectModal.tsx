@@ -4,6 +4,7 @@ import { projectService } from '../../services/projects';
 import type { ProjectWithTeamMembers } from '../../types/database';
 import { TECHNOLOGY_STACK_OPTIONS, DIFFICULTY_LEVELS, APPLICATION_TYPES, ESTIMATED_DURATIONS } from '../../utils/constants';
 import { TechnologyStackSelector } from './TechnologyStackSelector';
+import { toastService } from '../../services/toastService';
 
 interface ResubmitProjectModalProps {
   open: boolean;
@@ -68,15 +69,19 @@ export function ResubmitProjectModal({ open, project, onClose, onSuccess }: Resu
       const ok = await projectService.resubmitProject(project.id);
       if (ok) {
         setSuccess(true);
+        toastService.success('Project resubmitted successfully! It will be reviewed by our admin team.');
         setTimeout(() => {
           setSuccess(false);
           onSuccess && onSuccess();
         }, 1000);
       } else {
         setError('Failed to resubmit project.');
+        toastService.error('Failed to resubmit project. Please try again.');
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to resubmit project.');
+      const errorMessage = err.message || 'Failed to resubmit project.';
+      setError(errorMessage);
+      toastService.error(errorMessage);
     } finally {
       setLoading(false);
     }

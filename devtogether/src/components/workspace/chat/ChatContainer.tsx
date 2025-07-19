@@ -4,6 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { messageService, MessageWithUser, TypingUser, ChatState } from '../../../services/messageService';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
+import { toastService } from '../../../services/toastService';
 
 interface ChatContainerProps {
     projectId: string;
@@ -125,6 +126,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
                 ...prev,
                 error: 'Failed to send message'
             }));
+            toastService.error('Failed to send message. Please try again.');
         }
     }, [projectId, user?.id]);
 
@@ -149,6 +151,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
                 ...prev,
                 error: 'Failed to edit message'
             }));
+            toastService.error('Failed to edit message. Please try again.');
         }
     }, [user?.id, loadMessages]);
 

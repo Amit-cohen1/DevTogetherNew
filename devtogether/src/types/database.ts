@@ -590,6 +590,12 @@ export interface Profile {
     can_resubmit?: boolean
     blocked?: boolean
     blocked_reason?: string | null
+    // Rating and spotlight fields
+    current_rating?: number | null
+    total_stars_earned?: number | null
+    spotlight_enabled?: boolean | null
+    security_string?: string | null
+    security_string_updated_at?: string | null
 }
 
 // Search related types

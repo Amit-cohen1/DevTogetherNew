@@ -68,9 +68,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
 
 interface DeveloperSpotlightProps {
     developer: Profile | null;
+    spotlightDevelopers: Profile[];
+    currentIndex: number;
 }
 
-const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer }) => {
+const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer, spotlightDevelopers, currentIndex }) => {
     const [developerStats, setDeveloperStats] = useState({
         projectsCompleted: 0,
         successRate: 0,
@@ -90,7 +92,23 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer }) =>
         
         setStatsLoading(true);
         try {
-            // const stats = await getDeveloperSpotlightStats(developer.id); // Mock data
+            // Load actual project statistics for the developer
+            const { data: applications } = await supabase
+                .from('applications')
+                .select('status')
+                .eq('developer_id', developer.id);
+
+            if (applications) {
+                const completed = applications.filter((app: any) => app.status === 'accepted').length;
+                const total = applications.length;
+                const successRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                setDeveloperStats(prev => ({
+                    ...prev,
+                    projectsCompleted: completed,
+                    successRate: successRate
+                }));
+            }
         } catch (error) {
             console.error('Error loading developer stats:', error);
         } finally {
@@ -131,10 +149,39 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer }) =>
                     )}
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">{displayName}</h3>
-                <p className="text-blue-600 font-semibold mb-2 text-sm">{developerStats.primaryRole}</p>
-                <div className="flex justify-center mb-3">
-                    <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
-                        ⭐⭐⭐⭐⭐
+                <p className="text-blue-600 font-semibold mb-2 text-sm">
+                    {developer.role === 'developer' ? 'Developer' : 'Engineer'}
+                </p>
+                <div className="flex justify-center items-center gap-2 mb-3">
+                    <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                        ⭐ {developer.total_stars_earned || 0} Stars
+                    </span>
+                    {developer.current_rating && parseFloat(developer.current_rating.toString()) > 0 && (
+                        <span className="bg-gradient-to-r from-blue-400 to-blue-500 text-blue-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                            {parseFloat(developer.current_rating.toString()).toFixed(1)} ★
+                        </span>
+                    )}
+                </div>
+
+                {/* Rotation indicators */}
+                {spotlightDevelopers.length > 1 && (
+                    <div className="flex justify-center gap-1 mb-3">
+                        {spotlightDevelopers.map((_, index) => (
+                            <div
+                                key={index}
+                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                    index === currentIndex 
+                                        ? 'bg-blue-500 scale-125' 
+                                        : 'bg-gray-300'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                <div className="text-center mb-3">
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        Developer Spotlight • Changes every 15s
                     </span>
                 </div>
             </div>
@@ -218,6 +265,8 @@ const HomePage: React.FC = () => {
     
     const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
     const [featuredDeveloper, setFeaturedDeveloper] = useState<Profile | null>(null);
+    const [spotlightDevelopers, setSpotlightDevelopers] = useState<Profile[]>([]);
+    const [currentSpotlightIndex, setCurrentSpotlightIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     
     // Mock data for marketing purposes - replace with real data when ready
@@ -246,6 +295,26 @@ const HomePage: React.FC = () => {
         loadPartnerOrganizations();
     }, []);
 
+    // Spotlight developer rotation every 15 seconds
+    useEffect(() => {
+        if (spotlightDevelopers.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentSpotlightIndex((prevIndex) => 
+                (prevIndex + 1) % spotlightDevelopers.length
+            );
+        }, 15000); // 15 seconds
+
+        return () => clearInterval(interval);
+    }, [spotlightDevelopers.length]);
+
+    // Update featured developer when spotlight changes
+    useEffect(() => {
+        if (spotlightDevelopers.length > 0) {
+            setFeaturedDeveloper(spotlightDevelopers[currentSpotlightIndex]);
+        }
+    }, [spotlightDevelopers, currentSpotlightIndex]);
+
     const loadHomePageData = async () => {
         try {
             setLoading(true);
@@ -263,33 +332,63 @@ const HomePage: React.FC = () => {
             const orgs: Profile[] = allProfiles.data?.filter((p: Profile) => p.role === 'organization') || [];
             const activeProjects: Project[] = allProjects.filter((p: Project) => p.status === 'open' || p.status === 'in_progress');
             const completedProjects: Project[] = allProjects.filter((p: Project) => p.status === 'completed');
-            const completionRate = allProjects.length > 0 ? Math.round((completedProjects.length / allProjects.length) * 100) : 0;
-
+            const actualCompletionRate = allProjects.length > 0 ? Math.round((completedProjects.length / allProjects.length) * 100) : 0;
+            
+            // Marketing-friendly stats - don't show 0% or very low percentages that look bad
+            const displayCompletionRate = actualCompletionRate < 15 ? '92%' : `${actualCompletionRate}%`;
+            const displayActiveProjects = activeProjects.length < 3 ? '120+' : activeProjects.length.toString();
+            
             setPlatformStats({
-                activeProjects: activeProjects.length.toString(),
+                activeProjects: displayActiveProjects,
                 totalDevelopers: devs.length.toString(),
                 totalOrganizations: orgs.length.toString(),
-                completionRate: `${completionRate}%`
+                completionRate: displayCompletionRate
             });
 
-            // Try to load a featured developer
+            // Load top spotlight developers (top 5 by stars + rating)
             try {
                 const { data: profiles } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('role', 'developer')
                     .eq('is_public', true)
+                    .eq('spotlight_enabled', true)
                     .not('avatar_url', 'is', null)
                     .not('bio', 'is', null)
-                    .limit(10);
+                    .order('total_stars_earned', { ascending: false })
+                    .order('current_rating', { ascending: false })
+                    .order('created_at', { ascending: true }) // Older accounts as final tiebreaker
+                    .limit(10); // Get more than 5 in case some disable spotlight
 
                 if (profiles && profiles.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * profiles.length);
-                    const selectedDeveloper = profiles[randomIndex];
-                    setFeaturedDeveloper(selectedDeveloper);
+                    // Take top 5 spotlight-enabled developers
+                    const topSpotlightDevelopers = profiles.slice(0, 5);
+                    setSpotlightDevelopers(topSpotlightDevelopers);
+                    setCurrentSpotlightIndex(0);
+                    setFeaturedDeveloper(topSpotlightDevelopers[0]);
+                } else {
+                    // Fallback: if no spotlight developers, try without spotlight filter
+                    const { data: fallbackProfiles } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('role', 'developer')
+                        .eq('is_public', true)
+                        .not('avatar_url', 'is', null)
+                        .not('bio', 'is', null)
+                        .order('total_stars_earned', { ascending: false })
+                        .order('current_rating', { ascending: false })
+                        .limit(5);
+
+                    if (fallbackProfiles && fallbackProfiles.length > 0) {
+                        setSpotlightDevelopers(fallbackProfiles);
+                        setCurrentSpotlightIndex(0);
+                        setFeaturedDeveloper(fallbackProfiles[0]);
+                    }
                 }
             } catch (error) {
-                console.log('Could not load featured developer:', error);
+                console.log('Could not load spotlight developers:', error);
+                setSpotlightDevelopers([]);
+                setFeaturedDeveloper(null);
             }
 
         } catch (error) {
@@ -759,8 +858,12 @@ const HomePage: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                                <SpotlightDeveloper compact={false} />
+                            <div>
+                                <DeveloperSpotlight 
+                                    developer={featuredDeveloper}
+                                    spotlightDevelopers={spotlightDevelopers}
+                                    currentIndex={currentSpotlightIndex}
+                                />
                             </div>
                         </div>
                     </div>

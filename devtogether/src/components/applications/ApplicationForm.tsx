@@ -22,6 +22,7 @@ import { Textarea } from '../ui/Textarea'
 import { Project } from '../../types/database'
 import { applicationService, ApplicationCreateData } from '../../services/applications'
 import { useAuth } from '../../contexts/AuthContext'
+import { toastService } from '../../services/toastService'
 
 interface ApplicationFormProps {
     project: Project
@@ -278,13 +279,16 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
 
             await applicationService.submitApplication(applicationData)
             setSuccess(true)
+            toastService.project.applicationSubmitted()
 
             // Show success message and close after delay
             setTimeout(() => {
                 onSubmit()
             }, 2000)
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to submit application')
+            const errorMessage = err instanceof Error ? err.message : 'Failed to submit application'
+            setError(errorMessage)
+            toastService.project.applicationError()
         } finally {
             setIsSubmitting(false)
         }

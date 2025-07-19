@@ -3,6 +3,7 @@ import { Star, MessageSquare, Send, X, Eye, EyeOff, Globe } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../ui/Button';
 import { supabase } from '../../../utils/supabase';
+import { toastService } from '../../../services/toastService';
 
 interface OrganizationFeedbackFormProps {
     projectId: string;
@@ -29,12 +30,12 @@ export const OrganizationFeedbackForm: React.FC<OrganizationFeedbackFormProps> =
         e.preventDefault();
         
         if (!feedbackText.trim()) {
-            alert('Please provide feedback text');
+            toastService.error('Please provide feedback text');
             return;
         }
 
         if (!user) {
-            alert('You must be logged in to submit feedback');
+            toastService.error('You must be logged in to submit feedback');
             return;
         }
 
@@ -56,16 +57,16 @@ export const OrganizationFeedbackForm: React.FC<OrganizationFeedbackFormProps> =
 
             if (error) {
                 console.error('Error submitting feedback:', error);
-                alert('Failed to submit feedback. Please try again.');
+                toastService.error('Failed to submit feedback. Please try again.');
                 return;
             }
 
-            alert('Feedback submitted successfully! The developer can choose to approve it for public display.');
+            toastService.success('Feedback submitted successfully! The developer can choose to approve it for public display.');
             onSuccess();
             onClose();
         } catch (error) {
             console.error('Error submitting feedback:', error);
-            alert('Failed to submit feedback. Please try again.');
+            toastService.error('Failed to submit feedback. Please try again.');
         } finally {
             setSubmitting(false);
         }
