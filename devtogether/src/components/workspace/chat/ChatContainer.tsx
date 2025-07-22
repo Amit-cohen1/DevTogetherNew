@@ -101,11 +101,11 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
     }, []);
 
     // Send message
-    const handleSendMessage = useCallback(async (content: string) => {
+    const handleSendMessage = useCallback(async (content: string, attachmentId?: string) => {
         if (!user) return;
 
         try {
-            const newMessage = await messageService.sendMessage(projectId, content, user.id);
+            const newMessage = await messageService.sendMessage(projectId, content, user.id, attachmentId);
             if (newMessage) {
                 // Optimistically add the message for immediate feedback
                 setChatState(prev => {
@@ -341,6 +341,7 @@ export default function ChatContainer({ projectId, teamMembers }: ChatContainerP
 
             {/* Message Input */}
             <MessageInput
+                projectId={projectId}
                 onSendMessage={handleSendMessage}
                 onTyping={handleTyping}
                 disabled={!connected || !!chatState.error}

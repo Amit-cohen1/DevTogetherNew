@@ -26,7 +26,7 @@ class MessageService {
     private typingCallbacks: Map<string, (typingUsers: TypingUser[]) => void> = new Map();
     private onlineCallbacks: Map<string, (onlineUsers: string[]) => void> = new Map();
 
-    async sendMessage(projectId: string, content: string, senderId: string): Promise<MessageWithUser | null> {
+    async sendMessage(projectId: string, content: string, senderId: string, attachmentId?: string): Promise<MessageWithUser | null> {
         try {
             // Insert message into database
             const { data: message, error } = await supabase
@@ -34,7 +34,8 @@ class MessageService {
                 .insert({
                     project_id: projectId,
                     sender_id: senderId,
-                    content: content.trim()
+                    content: content.trim(),
+                    attachment_id: attachmentId || null
                 })
                 .select(`
           *,

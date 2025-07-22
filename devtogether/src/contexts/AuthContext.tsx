@@ -17,6 +17,7 @@ interface AuthContextType {
     signInWithOAuth: (provider: OAuthProvider) => Promise<{ success: boolean; error: string | null }>
     signOut: () => Promise<{ success: boolean; error: string | null }>
     resetPassword: (data: PasswordResetData) => Promise<{ success: boolean; error: string | null }>
+    resendEmailVerification: (email: string) => Promise<{ success: boolean; error: string | null }>
     updatePassword: (newPassword: string) => Promise<{ success: boolean; error: string | null }>
     updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error: string | null }>
     refreshSession: () => Promise<void>
@@ -215,6 +216,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     }
 
+    // Resend email verification
+    const resendEmailVerification = async (email: string): Promise<{ success: boolean; error: string | null }> => {
+        try {
+            const { error } = await AuthService.resendEmailVerification(email)
+
+            if (error) {
+                return { success: false, error: error.message }
+            }
+
+            return { success: true, error: null }
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error occurred'
+            }
+        }
+    }
+
     // Update password
     const updatePassword = async (newPassword: string): Promise<{ success: boolean; error: string | null }> => {
         try {
@@ -290,6 +309,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         signInWithOAuth,
         signOut,
         resetPassword,
+        resendEmailVerification,
         updatePassword,
         updateProfile,
         refreshSession,

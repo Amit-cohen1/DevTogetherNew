@@ -43,6 +43,7 @@ export class AuthService {
                 email,
                 password,
                 options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                     data: {
                         role,
                         first_name: firstName,
@@ -133,6 +134,46 @@ export class AuthService {
 
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: `${window.location.origin}/auth/reset-password`
+            })
+
+            return { error }
+        } catch (error) {
+            return {
+                error: new AuthError(error instanceof Error ? error.message : 'Unknown error')
+            }
+        }
+    }
+
+    /**
+     * Resend email verification
+     */
+    static async resendEmailVerification(email: string): Promise<{ error: AuthError | null }> {
+        try {
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`
+                }
+            })
+
+            return { error }
+        } catch (error) {
+            return {
+                error: new AuthError(error instanceof Error ? error.message : 'Unknown error')
+            }
+        }
+    }
+
+    /**
+     * Verify email with token (called from callback)
+     */
+    static async verifyEmail(token: string, email: string): Promise<{ error: AuthError | null }> {
+        try {
+            const { error } = await supabase.auth.verifyOtp({
+                token_hash: token,
+                type: 'signup',
+                email: email
             })
 
             return { error }
@@ -240,6 +281,9 @@ export class AuthService {
                     return { profile: null, error: new Error('User not found') }
                 }
 
+                // Generate a unique security string for the profile
+                const securityString = Math.random().toString(36).substring(2, 10)
+                
                 // Create profile from auth user data
                 const newProfile = {
                     id: authUser.user.id,
@@ -255,10 +299,12 @@ export class AuthService {
                     linkedin: null,
                     github: null,
                     portfolio: null,
-                    avatar_url: null,
+                    avatar_url: authUser.user.user_metadata?.avatar_url || null,
                     is_public: true,
                     share_token: null,
-                    profile_views: 0
+                    profile_views: 0,
+                    security_string: securityString, // ✅ FIXED: Added required security_string
+                    security_string_updated_at: new Date().toISOString()
                 }
 
                 try {
