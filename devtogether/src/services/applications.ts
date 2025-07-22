@@ -48,26 +48,68 @@ class ApplicationService {
      */
     async submitApplication(applicationData: ApplicationCreateData): Promise<Application> {
         try {
-            // Insert the application
-            const { data, error } = await supabase
+            // Check if there's an existing application (including removed ones)
+            const { data: existingApp } = await supabase
                 .from('applications')
-                .insert([{
-                    project_id: applicationData.project_id,
-                    developer_id: applicationData.developer_id,
-                    cover_letter: applicationData.cover_letter,
-                    portfolio_links: applicationData.portfolio_links || [],
-                    status: 'pending'
-                }])
-                .select(`
-                    *,
-                    project:projects(
-                        title,
-                        organization_id,
-                        organization:profiles!projects_organization_id_fkey(organization_name)
-                    ),
-                    developer:profiles!applications_developer_id_fkey(first_name, last_name)
-                `)
+                .select('id, status')
+                .eq('project_id', applicationData.project_id)
+                .eq('developer_id', applicationData.developer_id)
                 .single()
+
+            let data, error;
+
+            if (existingApp && existingApp.status === 'removed') {
+                // Update existing removed application to pending
+                const result = await supabase
+                    .from('applications')
+                    .update({
+                        cover_letter: applicationData.cover_letter,
+                        portfolio_links: applicationData.portfolio_links || [],
+                        status: 'pending',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', existingApp.id)
+                    .select(`
+                        *,
+                        project:projects(
+                            title,
+                            organization_id,
+                            organization:profiles!projects_organization_id_fkey(organization_name)
+                        ),
+                        developer:profiles!applications_developer_id_fkey(first_name, last_name)
+                    `)
+                    .single()
+                
+                data = result.data
+                error = result.error
+            } else if (!existingApp) {
+                // Insert new application if none exists
+                const result = await supabase
+                    .from('applications')
+                    .insert([{
+                        project_id: applicationData.project_id,
+                        developer_id: applicationData.developer_id,
+                        cover_letter: applicationData.cover_letter,
+                        portfolio_links: applicationData.portfolio_links || [],
+                        status: 'pending'
+                    }])
+                    .select(`
+                        *,
+                        project:projects(
+                            title,
+                            organization_id,
+                            organization:profiles!projects_organization_id_fkey(organization_name)
+                        ),
+                        developer:profiles!applications_developer_id_fkey(first_name, last_name)
+                    `)
+                    .single()
+                
+                data = result.data
+                error = result.error
+            } else {
+                // Application already exists and is not removed
+                throw new Error('You have already applied to this project')
+            }
 
             if (error) throw error
             if (!data) throw new Error('Failed to create application')

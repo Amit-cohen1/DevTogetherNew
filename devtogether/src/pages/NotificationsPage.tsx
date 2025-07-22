@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Layout } from '../components/layout'
 import { useNotifications } from '../contexts/NotificationContext'
+import { notificationService } from '../services/notificationService'
 import { Button } from '../components/ui/Button'
 import { FormField } from '../components/ui/FormField'
 import { Select } from '../components/ui/Select'
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react'
 import type { Notification as NotificationType } from '../services/notificationService'
 import { useAuth } from '../contexts/AuthContext'
+import { NotificationNavigator } from '../utils/notificationNavigation'
 
 interface FilterOptions {
   type: string
@@ -57,9 +59,13 @@ export default function NotificationsPage() {
     loadNotifications
   } = useNotifications()
 
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
 
+  const [allNotifications, setAllNotifications] = useState<NotificationType[]>([])
   const [filteredNotifications, setFilteredNotifications] = useState<NotificationType[]>([])
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMoreNotifications, setHasMoreNotifications] = useState(true)
+  const [currentOffset, setCurrentOffset] = useState(0)
   const [stats, setStats] = useState<NotificationStats>({
     total: 0,
     unread: 0,
@@ -81,28 +87,62 @@ export default function NotificationsPage() {
     searchQuery: ''
   })
 
+  // Load initial notifications on page load
+  useEffect(() => {
+    loadInitialNotifications()
+  }, [user?.id])
+
+  const loadInitialNotifications = async () => {
+    if (!user?.id) return
+    
+    try {
+      const initialNotifications = await notificationService.getNotifications(user.id, 20, 0)
+      setAllNotifications(initialNotifications)
+      setCurrentOffset(20)
+      setHasMoreNotifications(initialNotifications.length === 20)
+    } catch (error) {
+      console.error('Error loading initial notifications:', error)
+    }
+  }
+
+  const loadMoreNotifications = async () => {
+    if (!user?.id || loadingMore || !hasMoreNotifications) return
+
+    setLoadingMore(true)
+    try {
+      const moreNotifications = await notificationService.getNotifications(user.id, 20, currentOffset)
+      setAllNotifications(prev => [...prev, ...moreNotifications])
+      setCurrentOffset(prev => prev + 20)
+      setHasMoreNotifications(moreNotifications.length === 20)
+    } catch (error) {
+      console.error('Error loading more notifications:', error)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
   // Update stats whenever notifications change
   useEffect(() => {
     const newStats: NotificationStats = {
-      total: notifications.length,
-      unread: notifications.filter(n => !n.read).length,
-      application: notifications.filter(n => n.type === 'application').length,
-      project: notifications.filter(n => n.type === 'project').length,
-      team: notifications.filter(n => n.type === 'team').length,
-      achievement: notifications.filter(n => n.type === 'achievement').length,
-      system: notifications.filter(n => n.type === 'system').length,
-      moderation: notifications.filter(n => n.type === 'moderation').length,
-      chat: notifications.filter(n => n.type === 'chat').length,
-      status_change: notifications.filter(n => n.type === 'status_change').length,
-      feedback: notifications.filter(n => n.type === 'feedback').length,
-      promotion: notifications.filter(n => n.type === 'promotion').length
+      total: allNotifications.length,
+      unread: allNotifications.filter(n => !n.read).length,
+      application: allNotifications.filter(n => n.type === 'application').length,
+      project: allNotifications.filter(n => n.type === 'project').length,
+      team: allNotifications.filter(n => n.type === 'team').length,
+      achievement: allNotifications.filter(n => n.type === 'achievement').length,
+      system: allNotifications.filter(n => n.type === 'system').length,
+      moderation: allNotifications.filter(n => n.type === 'moderation').length,
+      chat: allNotifications.filter(n => n.type === 'chat').length,
+      status_change: allNotifications.filter(n => n.type === 'status_change').length,
+      feedback: allNotifications.filter(n => n.type === 'feedback').length,
+      promotion: allNotifications.filter(n => n.type === 'promotion').length
     }
     setStats(newStats)
-  }, [notifications])
+  }, [allNotifications])
 
   // Apply filters whenever notifications or filter state change
   useEffect(() => {
-    let filtered = [...notifications]
+    let filtered = [...allNotifications]
 
     // Hide moderation notifications for non-admins
     if (profile?.role !== 'admin') {
@@ -130,7 +170,7 @@ export default function NotificationsPage() {
     // Newest first
     filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     setFilteredNotifications(filtered)
-  }, [notifications, filters, profile])
+  }, [allNotifications, filters, profile])
 
   /* Utility Helpers */
   const getNotificationIcon = (type: string) => {
@@ -161,36 +201,10 @@ export default function NotificationsPage() {
   }
 
   const getNotificationLink = (n: NotificationType) => {
-    const data = n.data || {}
-    switch (n.type) {
-      case 'moderation':
-        return data.actionUrl || '/admin'
-      case 'application':
-        if (data.projectId) {
-          return data.applicationId 
-            ? `/projects/${data.projectId}?highlight=application-${data.applicationId}`
-            : `/projects/${data.projectId}`
-        }
-        return '/my-applications'
-      case 'project':
-        return data.projectId ? `/projects/${data.projectId}` : '/dashboard'
-      case 'team':
-        return data.projectId ? `/workspace/${data.projectId}` : '/dashboard'
-      case 'chat':
-        return data.projectId ? `/workspace/${data.projectId}?tab=chat` : '/dashboard'
-      case 'feedback':
-        return data.feedbackId ? `/profile?highlight=feedback-${data.feedbackId}` : '/profile'
-      case 'promotion':
-        return data.projectId ? `/workspace/${data.projectId}` : '/dashboard'
-      case 'status_change':
-        return data.projectId ? `/projects/${data.projectId}` : '/dashboard'
-      case 'achievement':
-        return '/profile?tab=achievements'
-      case 'system':
-        return data.actionUrl || '/dashboard'
-      default:
-        return '/dashboard'
-    }
+    if (!profile?.role || !user?.id) return '/dashboard'
+    
+    const navResult = NotificationNavigator.getNavigationPath(n, profile.role as any, user.id)
+    return NotificationNavigator.buildNavigationUrl(navResult)
   }
 
   const formatDate = (iso: string) => {
@@ -414,10 +428,15 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {filteredNotifications.length >= 20 && (
+        {hasMoreNotifications && (
           <div className="mt-6 text-center">
-            <Button variant="outline" size="lg">
-              Load More Notifications
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={loadMoreNotifications}
+              disabled={loadingMore}
+            >
+              {loadingMore ? 'Loading...' : 'Load More Notifications'}
             </Button>
           </div>
         )}

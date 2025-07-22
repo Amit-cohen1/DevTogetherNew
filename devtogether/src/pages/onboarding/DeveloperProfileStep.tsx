@@ -80,6 +80,20 @@ export const DeveloperProfileStep: React.FC<DeveloperProfileStepProps> = ({
         try {
             setIsSubmitting(true)
 
+            const profileData = {
+                role: 'developer' as const,
+                firstName: data.first_name,
+                lastName: data.last_name,
+                bio: data.bio,
+                skills: selectedSkills,
+                location: data.location || undefined,
+                website: data.website || undefined,
+                github: data.github || undefined,
+                linkedin: data.linkedin || undefined,
+                portfolio: data.portfolio || undefined
+            }
+
+            // Update the profile (all users have profiles now)
             const profileUpdates = {
                 first_name: data.first_name,
                 last_name: data.last_name,

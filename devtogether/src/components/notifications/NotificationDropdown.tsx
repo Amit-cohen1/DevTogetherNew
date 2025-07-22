@@ -19,6 +19,8 @@ import {
 import { useNotifications } from '../../contexts/NotificationContext';
 import { Button } from '../ui/Button';
 import type { Notification } from '../../services/notificationService';
+import { NotificationNavigator } from '../../utils/notificationNavigation';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface NotificationDropdownProps {
     isOpen: boolean;
@@ -31,6 +33,7 @@ const NotificationItem: React.FC<{
     onDelete: (id: string) => void;
 }> = ({ notification, onMarkAsRead, onDelete }) => {
     const [showActions, setShowActions] = useState(false);
+    const { profile, user } = useAuth();
 
     const getNotificationIcon = (type: string) => {
         switch (type) {
@@ -56,44 +59,10 @@ const NotificationItem: React.FC<{
     };
 
     const getNotificationLink = (notification: Notification): string => {
-        const data = notification.data || {};
-
-        switch (notification.type) {
-            case 'application':
-                if (data.projectId) {
-                    return `/projects/${data.projectId}`;
-                }
-                return '/my-applications';
-            case 'project':
-                if (data.projectId) {
-                    return `/workspace/${data.projectId}`;
-                }
-                return '/dashboard';
-            case 'team':
-                if (data.projectId) {
-                    return `/workspace/${data.projectId}`;
-                }
-                return '/dashboard';
-            case 'achievement':
-                return '/profile';
-            case 'moderation':
-                // Admin notifications - redirect to admin dashboard
-                return '/admin';
-            case 'chat':
-                if (data.projectId) {
-                    return `/workspace/${data.projectId}`;
-                }
-                return '/dashboard';
-            case 'status_change':
-                if (data.projectId) {
-                    return `/projects/${data.projectId}`;
-                }
-                return '/dashboard';
-            case 'system':
-                return '/dashboard';
-            default:
-                return '/dashboard';
-        }
+        if (!profile?.role || !user?.id) return '/dashboard'
+        
+        const navResult = NotificationNavigator.getNavigationPath(notification, profile.role as any, user.id)
+        return NotificationNavigator.buildNavigationUrl(navResult)
     };
 
     const formatDate = (dateString: string) => {
@@ -164,26 +133,10 @@ const NotificationItem: React.FC<{
     };
 
     const getTypeLabel = (type: string) => {
-        switch (type) {
-            case 'moderation':
-                return 'Admin';
-            case 'application':
-                return 'Application';
-            case 'project':
-                return 'Project';
-            case 'team':
-                return 'Team';
-            case 'achievement':
-                return 'Achievement';
-            case 'chat':
-                return 'Message';
-            case 'status_change':
-                return 'Status';
-            case 'system':
-                return 'System';
-            default:
-                return 'Notification';
-        }
+        if (!profile?.role) return 'Notification'
+        
+        const context = NotificationNavigator.getNotificationContext(notification)
+        return context.category
     };
 
     return (

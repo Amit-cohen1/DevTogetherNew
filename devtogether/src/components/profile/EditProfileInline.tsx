@@ -6,6 +6,7 @@ import { User } from '../../types/database'
 import { Button } from '../ui/Button'
 import { FormField } from '../ui/FormField'
 import { Textarea } from '../ui/Textarea'
+import { supabase } from '../../utils/supabase'
 // import { SkillsSelector } from './SkillsSelector'
 import { 
     X, 
@@ -133,13 +134,45 @@ const EditProfileInline: React.FC<EditProfileInlineProps> = ({
         toastService.info('Uploading profile picture...')
 
         try {
-            // Simulate upload - replace with actual upload logic
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            const updatedProfile = { ...profile, avatar_url: URL.createObjectURL(file) }
+            // Generate unique filename with user folder structure
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${profile.id}/avatar-${Date.now()}.${fileExt}`
+
+            // Upload to Supabase Storage
+            const { data, error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: true  // Allow overwriting existing files
+                })
+
+            if (uploadError) {
+                console.error('Upload error:', uploadError)
+                throw new Error(`Upload failed: ${uploadError.message}`)
+            }
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(data.path)
+
+            // Update profile immediately via updateProfile
+            const { success, error: updateError } = await updateProfile({
+                avatar_url: publicUrl
+            })
+
+            if (!success || updateError) {
+                throw new Error(updateError || 'Failed to update profile')
+            }
+
+            // Update local profile state immediately
+            const updatedProfile = { ...profile, avatar_url: publicUrl }
             onSave(updatedProfile)
-            toastService.profile.avatarUpdated()
+            toastService.success('Profile picture updated successfully!')
+
         } catch (err) {
-            toastService.error('Failed to upload profile picture. Please try again.')
+            console.error('Avatar upload error:', err)
+            toastService.error(err instanceof Error ? err.message : 'Failed to upload profile picture. Please try again.')
         } finally {
             setUploading(false)
         }
@@ -298,15 +331,15 @@ const EditProfileInline: React.FC<EditProfileInlineProps> = ({
                                         <h3 className="text-xl font-semibold text-gray-900">Basic Information</h3>
                                     </div>
 
-                                    {/* Avatar Upload */}
+                                    {/* Avatar Upload - Enhanced UI */}
                                     <div className="flex items-center gap-6">
-                                        <div className="relative">
-                                            <div className="w-24 h-24 rounded-full bg-white border-4 border-gray-200 overflow-hidden shadow-lg">
+                                        <div className="relative group">
+                                            <div className="w-24 h-24 rounded-full bg-white border-4 border-gray-200 overflow-hidden shadow-lg transition-all duration-300 group-hover:shadow-xl">
                                                 {profile.avatar_url ? (
                                                     <img
                                                         src={profile.avatar_url}
                                                         alt="Profile"
-                                                        className="w-full h-full object-cover"
+                                                        className={`w-full h-full object-cover transition-opacity duration-300 ${uploading ? 'opacity-50' : 'opacity-100'}`}
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
@@ -316,13 +349,24 @@ const EditProfileInline: React.FC<EditProfileInlineProps> = ({
                                                     </div>
                                                 )}
                                             </div>
+                                            
+                                            {/* Upload Progress Overlay */}
                                             {uploading && (
-                                                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                                                    <div className="flex flex-col items-center">
+                                                        <Loader2 className="w-6 h-6 text-white animate-spin mb-1" />
+                                                        <span className="text-white text-xs font-medium">Uploading...</span>
+                                                    </div>
                                                 </div>
                                             )}
-                                            <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-lg">
-                                                <Camera className="w-4 h-4 text-white" />
+                                            
+                                            {/* Camera Upload Button */}
+                                            <label className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg ring-2 ring-white ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:scale-110'}`}>
+                                                {uploading ? (
+                                                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                                ) : (
+                                                    <Camera className="w-4 h-4 text-white" />
+                                                )}
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -332,14 +376,33 @@ const EditProfileInline: React.FC<EditProfileInlineProps> = ({
                                                 />
                                             </label>
                                         </div>
-                                        <div>
-                                            <h4 className="font-medium text-gray-900 mb-1">Profile Picture</h4>
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                                Profile Picture
+                                                {uploading && (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                                        Uploading
+                                                    </span>
+                                                )}
+                                            </h4>
                                             <p className="text-sm text-gray-600 mb-2">
-                                                Upload a professional photo. Max 5MB.
+                                                Upload a professional photo that represents you well.
                                             </p>
-                                            <p className="text-xs text-gray-500">
-                                                JPG, PNG, or GIF format supported.
-                                            </p>
+                                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                    JPG, PNG, GIF
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                    Max 5MB
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                                    Square recommended
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 

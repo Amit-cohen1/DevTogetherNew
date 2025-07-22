@@ -11,12 +11,12 @@ import { Layout } from '../components/layout/Layout';
 
 const DeveloperLandingPage: React.FC = () => {
     const [platformStats] = useState({
-        developers: '750+',
-        organizations: '85+',
-        projects: '120+',
-        successRate: '94%',
+        developers: '9+',
+        organizations: '3+',
+        projects: '2+',
+        successRate: 'Growing',
         avgRating: '4.8',
-        completedProjects: '340+'
+        completedProjects: 'Growing'
     });
 
     const [activeTab, setActiveTab] = useState('frontend');

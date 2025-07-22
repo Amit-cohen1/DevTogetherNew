@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import type { Profile } from '../../types/database';
 import AdminTabHeader from './AdminTabHeader';
 import { AdminDeletionButton } from './AdminDeletionButton';
-import { Crown, Shield, User } from 'lucide-react';
+import { Crown, Shield, User, CheckCircle } from 'lucide-react';
 
 // User Management Component - Manages developers and admin role promotions
 // Only hananel12345@gmail.com can promote developers to admin or demote admins
@@ -239,124 +239,121 @@ const DeveloperManagement: React.FC = () => {
           })}
         </div>
       </AdminTabHeader>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredDevelopers.map((dev) => (
-              <tr key={dev.id} className={dev.blocked ? 'bg-red-50' : ''}>
-                <td className="px-4 py-2 whitespace-nowrap">{(dev.first_name || '')} {(dev.last_name || '')}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{dev.email}</td>
-                <td className="px-4 py-2 whitespace-nowrap">
-                  {canPromoteUsers ? (
-                    <div className="flex items-center gap-2">
-                      {dev.role === 'admin' ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          <Crown className="w-3 h-3 mr-1" />
-                          Admin
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          <User className="w-3 h-3 mr-1" />
-                          Developer
-                        </span>
-                      )}
-                      {dev.id !== profile?.id && (
-                        <button
-                          onClick={() => dev.role === 'admin' ? handleDemoteFromAdmin(dev.id) : handlePromoteToAdmin(dev.id)}
-                          disabled={promotingUserId === dev.id}
-                          className={`text-xs px-2 py-1 rounded border transition-colors ${
-                            dev.role === 'admin' 
-                              ? 'text-orange-600 border-orange-200 hover:bg-orange-50' 
-                              : 'text-purple-600 border-purple-200 hover:bg-purple-50'
-                          }`}
-                          title={dev.role === 'admin' ? 'Demote from Admin' : 'Promote to Admin'}
-                        >
-                          {promotingUserId === dev.id ? (
-                            'Updating...'
-                          ) : dev.role === 'admin' ? (
-                            <>
-                              <Shield className="w-3 h-3 inline mr-1" />
-                              Demote
-                            </>
-                          ) : (
-                            <>
-                              <Crown className="w-3 h-3 inline mr-1" />
-                              Promote
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
+      {/* Mobile-First Card Layout */}
+      <div className="space-y-4">
+        {filteredDevelopers.map((dev) => (
+          <div 
+            key={dev.id} 
+            className={`bg-white rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 ${
+              dev.blocked ? 'border-red-200 bg-red-50' : 'border-gray-200'
+            }`}
+          >
+            {/* Header with Name and Role */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 truncate">
+                  {(dev.first_name || '') + ' ' + (dev.last_name || '') || 'Unnamed User'}
+                </h3>
+                <p className="text-sm text-gray-600 truncate">{dev.email}</p>
+              </div>
+              
+              {/* Status Badge */}
+              <div className="ml-4 flex-shrink-0">
+                {dev.blocked ? (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                    Blocked
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    Active
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Role Section */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {dev.role === 'admin' ? (
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                      <Crown className="w-4 h-4 mr-2" />
+                      Administrator
+                    </span>
                   ) : (
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      dev.role === 'admin' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {dev.role === 'admin' ? (
-                        <>
-                          <Crown className="w-3 h-3 mr-1" />
-                          Admin
-                        </>
-                      ) : (
-                        <>
-                          <User className="w-3 h-3 mr-1" />
-                          Developer
-                        </>
-                      )}
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                      <User className="w-4 h-4 mr-2" />
+                      Developer
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-2 whitespace-nowrap">
-                  {dev.blocked ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Blocked</span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                  )}
-                </td>
-                <td className="px-4 py-2 whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
-                    {dev.blocked ? (
-                      <Button 
-                        onClick={() => handleUnblock(dev.id)} 
-                        size="sm" 
-                        disabled={isProcessing}
-                        className="bg-green-600 hover:bg-green-700 text-white border-0"
-                      >
-                        Unblock
-                      </Button>
+                </div>
+                
+                {/* Role Management Button */}
+                {canPromoteUsers && dev.id !== profile?.id && (
+                  <button
+                    onClick={() => dev.role === 'admin' ? handleDemoteFromAdmin(dev.id) : handlePromoteToAdmin(dev.id)}
+                    disabled={promotingUserId === dev.id}
+                    className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border transition-colors ${
+                      dev.role === 'admin' 
+                        ? 'text-orange-700 border-orange-300 bg-orange-50 hover:bg-orange-100' 
+                        : 'text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100'
+                    }`}
+                  >
+                    {promotingUserId === dev.id ? (
+                      <>
+                        <div className="w-4 h-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full"></div>
+                        Updating...
+                      </>
+                    ) : dev.role === 'admin' ? (
+                      <>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Demote to Developer
+                      </>
                     ) : (
-                      <Button 
-                        onClick={() => { setSelectedDeveloper(dev); setShowBlockModal(true); }} 
-                        size="sm" 
-                        disabled={isProcessing}
-                        className="bg-amber-500 hover:bg-amber-600 text-white border-0"
-                      >
-                        Block
-                      </Button>
+                      <>
+                        <Crown className="w-4 h-4 mr-2" />
+                        Promote to Admin
+                      </>
                     )}
-                    <AdminDeletionButton
-                      targetId={dev.id}
-                      targetType="developer"
-                      targetName={`${dev.first_name || ''} ${dev.last_name || ''}`.trim() || dev.email}
-                      onDeleteSuccess={loadDevelopers}
-                      size="sm"
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              {dev.blocked ? (
+                <Button 
+                  onClick={() => handleUnblock(dev.id)} 
+                  disabled={isProcessing}
+                  className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white border-0 justify-center"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Unblock User
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => { setSelectedDeveloper(dev); setShowBlockModal(true); }} 
+                  disabled={isProcessing}
+                  className="flex-1 sm:flex-none bg-amber-500 hover:bg-amber-600 text-white border-0 justify-center"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Block User
+                </Button>
+              )}
+              
+              <AdminDeletionButton
+                targetId={dev.id}
+                targetType="developer"
+                targetName={`${dev.first_name || ''} ${dev.last_name || ''}`.trim() || dev.email}
+                onDeleteSuccess={loadDevelopers}
+                className="flex-1 sm:flex-none justify-center"
+              />
+            </div>
+          </div>
+        ))}
       </div>
       {showBlockModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">

@@ -16,6 +16,7 @@ import { User, ProjectWithTeamMembers } from '../types/database'
 import { Loader2, AlertCircle, Pencil, Calendar, MapPin, Globe, Github, Linkedin, Mail, Briefcase, X, Plus, Users, Award, Building, Code, Zap, Star, Trophy, ExternalLink, Clock, FolderOpen, Rocket, Target, Shield, Eye, ChevronRight, CheckCircle } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toastService } from '../services/toastService'
+import { supabase } from '../utils/supabase'
 
 const POPULAR_SKILLS = [
     'JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'Java',
@@ -35,6 +36,7 @@ const ProfilePage: React.FC = () => {
     const [selectedSkills, setSelectedSkills] = useState<string[]>([])
     const [customSkill, setCustomSkill] = useState('')
     const [isGuestAccess, setIsGuestAccess] = useState(false)
+    const [uploadingAvatar, setUploadingAvatar] = useState(false)
     
     // NEW: Project showcase and feedback states
     const [developerProjects, setDeveloperProjects] = useState<ProjectWithTeamMembers[]>([])
@@ -311,6 +313,67 @@ const ProfilePage: React.FC = () => {
         }
     }
 
+    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (!file || !profile) return
+
+        if (!file.type.startsWith('image/')) {
+            toastService.error('Please select a valid image file')
+            return
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toastService.error('Image size must be less than 5MB')
+            return
+        }
+
+        setUploadingAvatar(true)
+        toastService.info('Uploading profile picture...')
+
+        try {
+            // Generate unique filename with user folder structure
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${profile.id}/avatar-${Date.now()}.${fileExt}`
+
+            // Upload to Supabase Storage
+            const { data, error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: true  // Allow overwriting existing files
+                })
+
+            if (uploadError) {
+                console.error('Upload error:', uploadError)
+                throw new Error(`Upload failed: ${uploadError.message}`)
+            }
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(data.path)
+
+            // Update profile immediately via updateProfile
+            const { success, error: updateError } = await updateProfile({
+                avatar_url: publicUrl
+            })
+
+            if (!success || updateError) {
+                throw new Error(updateError || 'Failed to update profile')
+            }
+
+            // Update local profile state immediately
+            setProfile({ ...profile, avatar_url: publicUrl })
+            toastService.success('Profile picture updated successfully!')
+
+        } catch (err) {
+            console.error('Avatar upload error:', err)
+            toastService.error(err instanceof Error ? err.message : 'Failed to upload profile picture. Please try again.')
+        } finally {
+            setUploadingAvatar(false)
+        }
+    }
+
     // Helper functions
     const getDisplayName = () => {
         if (profile?.role === 'developer' || profile?.role === 'admin') {
@@ -554,8 +617,20 @@ const ProfilePage: React.FC = () => {
                                                         </span>
                                                     </div>
                                                 )}
-                                                <input type="file" accept="image/*" className="hidden" />
-                                                <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 text-white font-semibold text-xs">Change Photo</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    className="hidden"
+                                                    onChange={handleAvatarUpload}
+                                                />
+                                                <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 text-white font-semibold text-xs">
+                                                    {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
+                                                </span>
+                                                {uploadingAvatar && (
+                                                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                                                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                                    </div>
+                                                )}
                                             </label>
                                         ) : (
                                             profile.avatar_url ? (
@@ -1034,6 +1109,7 @@ const ProfilePage: React.FC = () => {
                                             userId={profile.id} 
                                             showDetails={true}
                                             className="transform hover:scale-[1.02] transition-transform"
+                                            isOwnProfile={false}
                                         />
                                     )}
 
@@ -1105,6 +1181,7 @@ const ProfilePage: React.FC = () => {
                                             <DeveloperRatingDisplay 
                                                 userId={profile.id} 
                                                 showDetails={true}
+                                                isOwnProfile={true}
                                             />
                                             <ProjectShowcase />
                                         </>

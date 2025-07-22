@@ -6,12 +6,14 @@ interface DeveloperRatingDisplayProps {
     userId: string;
     showDetails?: boolean;
     className?: string;
+    isOwnProfile?: boolean;
 }
 
 export const DeveloperRatingDisplay: React.FC<DeveloperRatingDisplayProps> = ({
     userId,
     showDetails = true,
-    className = ''
+    className = '',
+    isOwnProfile = false
 }) => {
     const [ratingStats, setRatingStats] = useState<DeveloperRatingStats | null>(null);
     const [ratingHistory, setRatingHistory] = useState<DeveloperRating[]>([]);
@@ -230,8 +232,8 @@ export const DeveloperRatingDisplay: React.FC<DeveloperRatingDisplayProps> = ({
                     </div>
                 )}
 
-                {/* Call to Action */}
-                {ratingStats.total_rating < 10 && (
+                {/* Call to Action - Only show to profile owner */}
+                {isOwnProfile && ratingStats.total_rating < 10 && (
                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
                         <div className="flex items-start gap-3">
                             <Target className="w-5 h-5 text-blue-600 mt-0.5" />

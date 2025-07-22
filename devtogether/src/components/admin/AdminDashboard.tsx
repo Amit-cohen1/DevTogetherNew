@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { adminService, AdminStats } from '../../services/adminService'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../ui/Button'
@@ -23,14 +24,38 @@ interface AdminDashboardProps {}
 
 const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   const { profile } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'partners' | 'projects' | 'developers'>('overview');
+  
+  // Get initial tab from URL params or default to overview
+  const initialTab = searchParams.get('tab') as 'overview' | 'organizations' | 'partners' | 'projects' | 'developers' || 'overview'
+  const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'partners' | 'projects' | 'developers'>(initialTab);
 
   useEffect(() => {
     loadAdminStats()
   }, [])
+
+  // Update tab when URL params change
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab') as 'overview' | 'organizations' | 'partners' | 'projects' | 'developers'
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [searchParams, activeTab])
+
+  // Update URL when tab changes
+  const handleTabChange = (tab: 'overview' | 'organizations' | 'partners' | 'projects' | 'developers') => {
+    setActiveTab(tab)
+    if (tab === 'overview') {
+      // Remove tab param for overview (default)
+      searchParams.delete('tab')
+    } else {
+      searchParams.set('tab', tab)
+    }
+    setSearchParams(searchParams)
+  }
 
   const loadAdminStats = async () => {
     try {
@@ -105,7 +130,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             {/* Mobile tabs - 2x3 grid */}
             <div className="grid grid-cols-2 gap-1 sm:hidden">
               <button
-                onClick={() => setActiveTab('overview')}
+                onClick={() => handleTabChange('overview')}
                 className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
                   activeTab === 'overview'
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
@@ -115,7 +140,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Overview
               </button>
               <button
-                onClick={() => setActiveTab('organizations')}
+                onClick={() => handleTabChange('organizations')}
                 className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
                   activeTab === 'organizations'
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
@@ -125,7 +150,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Organizations
               </button>
               <button
-                onClick={() => setActiveTab('partners')}
+                onClick={() => handleTabChange('partners')}
                 className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
                   activeTab === 'partners'
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
@@ -135,7 +160,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Partners
               </button>
               <button
-                onClick={() => setActiveTab('projects')}
+                onClick={() => handleTabChange('projects')}
                 className={`py-3 px-2 border-b-2 font-medium text-xs text-center ${
                   activeTab === 'projects'
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
@@ -145,7 +170,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Projects
               </button>
               <button
-                onClick={() => setActiveTab('developers')}
+                onClick={() => handleTabChange('developers')}
                 className={`py-3 px-2 border-b-2 font-medium text-xs text-center col-span-2 ${
                   activeTab === 'developers'
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
@@ -159,7 +184,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             {/* Desktop tabs - horizontal */}
             <div className="hidden sm:flex space-x-8">
               <button
-                onClick={() => setActiveTab('overview')}
+                onClick={() => handleTabChange('overview')}
                 className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'overview'
                     ? 'border-blue-500 text-blue-600'
@@ -169,7 +194,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Overview
               </button>
               <button
-                onClick={() => setActiveTab('organizations')}
+                onClick={() => handleTabChange('organizations')}
                 className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'organizations'
                     ? 'border-blue-500 text-blue-600'
@@ -179,7 +204,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Organizations
               </button>
               <button
-                onClick={() => setActiveTab('partners')}
+                onClick={() => handleTabChange('partners')}
                 className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'partners'
                     ? 'border-blue-500 text-blue-600'
@@ -189,7 +214,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Partner Applications
               </button>
               <button
-                onClick={() => setActiveTab('projects')}
+                onClick={() => handleTabChange('projects')}
                 className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'projects'
                     ? 'border-blue-500 text-blue-600'
@@ -199,7 +224,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Projects
               </button>
               <button
-                onClick={() => setActiveTab('developers')}
+                onClick={() => handleTabChange('developers')}
                 className={`py-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'developers'
                     ? 'border-blue-500 text-blue-600'
@@ -260,7 +285,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Pending Organizations Quick Access */}
               <button
-                onClick={() => setActiveTab('organizations')}
+                onClick={() => handleTabChange('organizations')}
                 className="group bg-white border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-yellow-300 text-left"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -273,7 +298,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
               {/* Pending Projects Quick Access */}
               <button
-                onClick={() => setActiveTab('projects')}
+                onClick={() => handleTabChange('projects')}
                 className="group bg-white border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-yellow-300 text-left"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -286,7 +311,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
               {/* Pending Partner Applications Quick Access */}
               <button
-                onClick={() => setActiveTab('partners')}
+                onClick={() => handleTabChange('partners')}
                 className="group bg-white border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-yellow-300 text-left"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -309,7 +334,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <Button
-                onClick={() => setActiveTab('organizations')}
+                onClick={() => handleTabChange('organizations')}
                 className="w-full justify-start text-sm"
                 variant="secondary"
               >
@@ -317,7 +342,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Manage Organizations ({stats?.pendingOrganizations || 0} pending)
               </Button>
               <Button
-                onClick={() => setActiveTab('partners')}
+                onClick={() => handleTabChange('partners')}
                 className="w-full justify-start text-sm"
                 variant="secondary"
               >
@@ -325,7 +350,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 Review Partner Applications ({stats?.pendingPartnerApplications || 0} pending)
               </Button>
               <Button
-                onClick={() => setActiveTab('projects')}
+                onClick={() => handleTabChange('projects')}
                 className="w-full justify-start text-sm"
                 variant="secondary"
               >
