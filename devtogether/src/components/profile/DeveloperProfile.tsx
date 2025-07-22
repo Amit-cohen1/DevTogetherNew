@@ -109,6 +109,7 @@ export const DeveloperProfile: React.FC<DeveloperProfileProps> = ({
                 userId={profile.id} 
                 showDetails={true}
                 className="order-1"
+                isOwnProfile={isOwnProfile}
             />
 
             {/* Project Portfolio - Core Benefit, moved to high priority */}

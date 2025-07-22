@@ -11,12 +11,12 @@ import { Layout } from '../components/layout/Layout';
 
 const OrganizationLandingPage: React.FC = () => {
     const [platformStats] = useState({
-        developers: '750+',
-        organizations: '85+',
-        projects: '120+',
-        successRate: '96%',
+        developers: '9+',
+        organizations: '3+',
+        projects: '2+',
+        successRate: 'Growing',
         avgProjectTime: '6 weeks',
-        avgCostSavings: '75%'
+        avgCostSavings: 'Efficient'
     });
 
     const [activeFeature, setActiveFeature] = useState('workspace');

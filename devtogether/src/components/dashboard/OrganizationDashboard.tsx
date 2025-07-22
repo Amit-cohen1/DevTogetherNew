@@ -222,7 +222,71 @@ const OrganizationDashboard: React.FC = () => {
                     )}
                 </div>
 
-
+                {/* Admin Workspace Access Requests */}
+                {data?.recentProjects.some(project => project.admin_workspace_access_requested && !project.admin_workspace_access_granted) && (
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                                <Shield className="w-4 h-4 text-amber-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-amber-800">Admin Workspace Access Requests</h3>
+                                <p className="text-sm text-amber-700">Administrators have requested access to project workspaces</p>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {data.recentProjects
+                                .filter(project => project.admin_workspace_access_requested && !project.admin_workspace_access_granted)
+                                .map(project => (
+                                    <div key={project.id} className="bg-white rounded-lg border border-amber-200 p-4">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-medium text-gray-900 mb-1">{project.title}</h4>
+                                                <p className="text-sm text-gray-600 mb-3">
+                                                    An administrator has requested access to this project's workspace for monitoring and support purposes.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                className="bg-green-600 hover:bg-green-700 text-white"
+                                                onClick={async () => {
+                                                    try {
+                                                        await projectService.grantWorkspaceAccess(project.id)
+                                                        loadData() // Refresh data
+                                                        toastService.success('Admin workspace access approved')
+                                                    } catch (error) {
+                                                        toastService.error('Failed to approve access')
+                                                    }
+                                                }}
+                                            >
+                                                <CheckCircle className="w-4 h-4 mr-1" />
+                                                Approve Access
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="text-red-600 border-red-200 hover:bg-red-50"
+                                                onClick={async () => {
+                                                    try {
+                                                        await projectService.denyWorkspaceAccess(project.id)
+                                                        loadData() // Refresh data
+                                                        toastService.success('Admin workspace access denied')
+                                                    } catch (error) {
+                                                        toastService.error('Failed to deny access')
+                                                    }
+                                                }}
+                                            >
+                                                <X className="w-4 h-4 mr-1" />
+                                                Deny Access
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Recent Projects - Consistent Card */}
                 <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">

@@ -261,7 +261,7 @@ export default function ProjectDetailsPage() {
         const isRemoved = userApp?.status === 'removed';
         // Allow reapplication if project is open and user is not currently a team member or pending
         // Removed developers can reapply to open projects (not blocked like rejected)
-        const canApply = project.status === 'open' && !isTeamMember && !isPending && !isRejected;
+        const canApply = project.status === 'open' && !isTeamMember && !isPending && (!userApp || isRemoved);
         const canView =
             (project.status === 'open') ||
             (project.status === 'completed') ||

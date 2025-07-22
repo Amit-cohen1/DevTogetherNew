@@ -41,14 +41,25 @@ export const OrganizationProfileStep: React.FC<OrganizationProfileStepProps> = (
     const onSubmit = async (data: OrganizationProfileFormData) => {
         try {
             setIsSubmitting(true)
+            
+            const profileData = {
+                role: 'organization' as const,
+                organizationName: data.organization_name,
+                bio: data.bio,
+                location: data.location || undefined,
+                website: data.website || undefined
+            }
+
+            // Update the profile (all users have profiles now)
             const profileUpdates = {
                 organization_name: data.organization_name,
                 bio: data.bio,
                 location: data.location || null,
-                website: data.website || null,
-                onboarding_complete: true
+                website: data.website || null
             }
+            
             const { success, error } = await updateProfile(profileUpdates)
+            
             if (success) {
                 toastService.success('Organization profile updated successfully!')
                 onNext()

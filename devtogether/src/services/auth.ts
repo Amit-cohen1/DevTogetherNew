@@ -214,6 +214,8 @@ export class AuthService {
         })
     }
 
+
+
     /**
      * Get user profile from database
      */

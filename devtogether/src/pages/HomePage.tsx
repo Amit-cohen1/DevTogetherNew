@@ -70,9 +70,11 @@ interface DeveloperSpotlightProps {
     developer: Profile | null;
     spotlightDevelopers: Profile[];
     currentIndex: number;
+    onDeveloperChange: (index: number) => void;
+    autoRotation: boolean;
 }
 
-const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer, spotlightDevelopers, currentIndex }) => {
+const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer, spotlightDevelopers, currentIndex, onDeveloperChange, autoRotation }) => {
     const [developerStats, setDeveloperStats] = useState({
         projectsCompleted: 0,
         successRate: 0,
@@ -118,13 +120,24 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer, spot
 
     if (!developer) {
         return (
-            <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-8 h-8 text-gray-400" />
+            <div className="bg-gradient-to-br from-white to-blue-50 border border-blue-200 rounded-xl shadow-lg p-6 text-center relative overflow-hidden">
+                {/* Decorative background */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full opacity-20 transform translate-x-12 -translate-y-12"></div>
+                
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full mx-auto mb-4 flex items-center justify-center relative z-10">
+                    <Users className="w-10 h-10 text-blue-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Developer Spotlight</h3>
-                <p className="text-gray-500 mb-4 text-sm">No featured developer available</p>
-                <Button variant="outline" className="!border-gray-300 !text-gray-600 text-sm">Browse Developers</Button>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 relative z-10">Developer Spotlight</h3>
+                <p className="text-gray-600 mb-4 text-sm relative z-10">
+                    Join our growing community of talented developers and contributors!
+                </p>
+                <div className="relative z-10">
+                    <Link to="/auth/signup">
+                        <Button variant="primary" className="!bg-blue-600 hover:!bg-blue-700 !text-white text-sm">
+                            Join DevTogether
+                        </Button>
+                    </Link>
+                </div>
             </div>
         );
     }
@@ -133,24 +146,38 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer, spot
     const skills = developer.skills || [];
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-            <div className="text-center mb-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3 border-4 border-blue-100 shadow-lg">
-                    {developer.avatar_url ? (
-                        <img
-                            src={developer.avatar_url}
-                            alt={displayName}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
-                            {displayName.charAt(0)}
+        <div className="bg-gradient-to-br from-white to-blue-50 border border-blue-200 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 relative overflow-hidden">
+            {/* Decorative background */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full opacity-20 transform translate-x-16 -translate-y-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-yellow-100 to-orange-100 rounded-full opacity-30 transform -translate-x-12 translate-y-12"></div>
+            
+            <div className="text-center mb-4 relative z-10">
+                <div className="relative">
+                    <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-3 border-4 border-white shadow-xl ring-4 ring-blue-100 transition-transform hover:scale-105">
+                        {developer.avatar_url ? (
+                            <img
+                                src={developer.avatar_url}
+                                alt={displayName}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                                {displayName.charAt(0)}
+                            </div>
+                        )}
+                    </div>
+                    {/* Crown for top developer */}
+                    {currentIndex === 0 && (
+                        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                                👑 Top Rated
+                            </div>
                         </div>
                     )}
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">{displayName}</h3>
                 <p className="text-blue-600 font-semibold mb-2 text-sm">
-                    {developer.role === 'developer' ? 'Developer' : 'Engineer'}
+                    {developer.role === 'developer' ? 'Developer' : developer.role === 'admin' ? 'Administrator' : 'Engineer'}
                 </p>
                 <div className="flex justify-center items-center gap-2 mb-3">
                     <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
@@ -163,62 +190,120 @@ const DeveloperSpotlight: React.FC<DeveloperSpotlightProps> = ({ developer, spot
                     )}
                 </div>
 
-                {/* Rotation indicators */}
+                {/* Enhanced Rotation indicators with click functionality */}
                 {spotlightDevelopers.length > 1 && (
-                    <div className="flex justify-center gap-1 mb-3">
-                        {spotlightDevelopers.map((_, index) => (
-                            <div
-                                key={index}
-                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                    index === currentIndex 
-                                        ? 'bg-blue-500 scale-125' 
-                                        : 'bg-gray-300'
-                                }`}
-                            />
-                        ))}
+                    <div className="flex justify-center gap-2 mb-4">
+                        {spotlightDevelopers.map((dev, index) => {
+                            const devName = `${dev.first_name || ''} ${dev.last_name || ''}`.trim() || 'Developer';
+                            return (
+                                <button
+                                    key={index}
+                                    onClick={() => onDeveloperChange(index)}
+                                    className={`group relative transition-all duration-300 ${
+                                        index === currentIndex 
+                                            ? 'transform scale-110' 
+                                            : 'hover:scale-105'
+                                    }`}
+                                    title={devName}
+                                >
+                                    <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                                        index === currentIndex 
+                                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg' 
+                                            : 'bg-gray-300 hover:bg-gray-400'
+                                    }`} />
+                                    {index === currentIndex && (
+                                        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-blue-600 font-medium whitespace-nowrap">
+                                            {devName.split(' ')[0]}
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 
                 <div className="text-center mb-3">
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                        Developer Spotlight • Changes every 15s
+                        Developer Spotlight • {spotlightDevelopers.length} professionals • {autoRotation ? 'Auto-rotating' : 'Manual mode'} • Click dots to browse
                     </span>
                 </div>
             </div>
 
-            <p className="text-gray-600 text-center mb-4 leading-relaxed text-sm">
-                {developer.bio || "An active developer making a difference through DevTogether projects."}
-            </p>
+            {/* Enhanced Bio Section */}
+            <div className="mb-4">
+                {developer.bio ? (
+                    <p className="text-gray-700 text-center mb-3 leading-relaxed text-sm font-medium">
+                        {developer.bio.length > 150 ? developer.bio.slice(0, 150) + '...' : developer.bio}
+                    </p>
+                ) : (
+                    <p className="text-gray-500 text-center mb-3 leading-relaxed text-sm italic">
+                        "Making a difference through meaningful projects on DevTogether"
+                    </p>
+                )}
+                
+                {/* Location if available */}
+                {developer.location && (
+                    <div className="flex items-center justify-center gap-1 mb-3">
+                        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                        <span className="text-xs text-gray-500 font-medium">{developer.location}</span>
+                    </div>
+                )}
+            </div>
 
+            {/* Enhanced Stats Section */}
             <div className="space-y-3 mb-4">
-                <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
                     <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-700 font-medium">Projects</span>
-                        <span className="font-bold text-blue-800">
-                            {statsLoading ? '...' : developerStats.projectsCompleted}
+                        <span className="text-blue-700 font-semibold">⭐ Stars Earned</span>
+                        <span className="font-bold text-blue-900">
+                            {developer.total_stars_earned || 0}
                         </span>
                     </div>
                 </div>
-                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
-                    <div className="flex justify-between items-center text-sm">
-                        <span className="text-emerald-700 font-medium">Success Rate</span>
-                        <span className="font-bold text-emerald-800">
-                            {statsLoading ? '...' : `${developerStats.successRate}%`}
-                        </span>
-                    </div>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <div className="text-sm mb-2">
-                        <span className="text-gray-700 font-medium">Technologies</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                        {skills.slice(0, 3).map((skill) => (
-                            <span key={skill} className="bg-white text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200">
-                                {skill}
+                
+                {developer.current_rating && parseFloat(developer.current_rating.toString()) > 0 && (
+                    <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-purple-700 font-semibold">📊 Rating</span>
+                            <span className="font-bold text-purple-900">
+                                {parseFloat(developer.current_rating.toString()).toFixed(1)} / 5.0
                             </span>
-                        ))}
+                        </div>
+                    </div>
+                )}
+                
+                <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-lg p-3 border border-emerald-200">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-emerald-700 font-semibold">💼 Projects</span>
+                        <span className="font-bold text-emerald-900">
+                            {statsLoading ? '...' : developerStats.projectsCompleted > 0 ? `${developerStats.projectsCompleted} Completed` : 'Active Member'}
+                        </span>
                     </div>
                 </div>
+                
+                {/* Enhanced Skills Section */}
+                {skills && skills.length > 0 && (
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-3 border border-gray-300">
+                        <div className="text-sm mb-2">
+                            <span className="text-gray-700 font-semibold">🔧 Technologies</span>
+                            {skills.length > 5 && (
+                                <span className="text-xs text-gray-500 ml-1">({skills.length} total)</span>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                            {skills.slice(0, 5).map((skill) => (
+                                <span key={skill} className="bg-white text-gray-700 px-2 py-1 rounded-full text-xs font-medium border border-gray-300 shadow-sm">
+                                    {skill}
+                                </span>
+                            ))}
+                            {skills.length > 5 && (
+                                <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
+                                    +{skills.length - 5} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="flex justify-center gap-3 mb-4">
@@ -269,18 +354,13 @@ const HomePage: React.FC = () => {
     const [currentSpotlightIndex, setCurrentSpotlightIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     
-    // Mock data for marketing purposes - replace with real data when ready
+    // Platform statistics - real data presented attractively
     const [platformStats, setPlatformStats] = useState({
-        activeProjects: '120+',
-        totalDevelopers: '750+',
-        totalOrganizations: '85+',
-        completionRate: '92%'
+        activeProjects: '0',
+        totalDevelopers: '0',
+        totalOrganizations: '0',
+        completionRate: 'Growing'
     });
-    const [developerSpotlightProjects] = useState([
-        { name: 'Community Food Bank Website', status: 'Complete', organization: 'Local Food Network' },
-        { name: 'Youth Mentorship App', status: 'In Progress', organization: 'Future Leaders Org' },
-        { name: 'Environmental Tracker', status: 'Complete', organization: 'Green Earth Initiative' }
-    ]);
     
     const [partnerOrganizations, setPartnerOrganizations] = useState<Array<{
         id: string;
@@ -295,18 +375,25 @@ const HomePage: React.FC = () => {
         loadPartnerOrganizations();
     }, []);
 
-    // Spotlight developer rotation every 15 seconds
+    // Auto-rotation state and logic
+    const [autoRotation, setAutoRotation] = useState(true);
+    const [lastManualChange, setLastManualChange] = useState(0);
+
+    // Spotlight developer rotation every 15 seconds (only if auto-rotation is enabled)
     useEffect(() => {
-        if (spotlightDevelopers.length <= 1) return;
+        if (spotlightDevelopers.length <= 1 || !autoRotation) return;
 
         const interval = setInterval(() => {
-            setCurrentSpotlightIndex((prevIndex) => 
-                (prevIndex + 1) % spotlightDevelopers.length
-            );
+            // Only auto-rotate if no manual interaction in the last 30 seconds
+            if (Date.now() - lastManualChange > 30000) {
+                setCurrentSpotlightIndex((prevIndex) => 
+                    (prevIndex + 1) % spotlightDevelopers.length
+                );
+            }
         }, 15000); // 15 seconds
 
         return () => clearInterval(interval);
-    }, [spotlightDevelopers.length]);
+    }, [spotlightDevelopers.length, autoRotation, lastManualChange]);
 
     // Update featured developer when spotlight changes
     useEffect(() => {
@@ -322,7 +409,7 @@ const HomePage: React.FC = () => {
             const projects = await projectService.getProjects({ status: 'open' });
             setFeaturedProjects(projects.slice(0, 3));
 
-            // Load platform statistics
+            // Load real platform statistics
             const [allProjects, allProfiles] = await Promise.all([
                 projectService.getProjects({}),
                 supabase.from('profiles').select('role').neq('role', null)
@@ -332,49 +419,62 @@ const HomePage: React.FC = () => {
             const orgs: Profile[] = allProfiles.data?.filter((p: Profile) => p.role === 'organization') || [];
             const activeProjects: Project[] = allProjects.filter((p: Project) => p.status === 'open' || p.status === 'in_progress');
             const completedProjects: Project[] = allProjects.filter((p: Project) => p.status === 'completed');
-            const actualCompletionRate = allProjects.length > 0 ? Math.round((completedProjects.length / allProjects.length) * 100) : 0;
             
-            // Marketing-friendly stats - don't show 0% or very low percentages that look bad
-            const displayCompletionRate = actualCompletionRate < 15 ? '92%' : `${actualCompletionRate}%`;
-            const displayActiveProjects = activeProjects.length < 3 ? '120+' : activeProjects.length.toString();
+            // Present real data attractively - avoid showing discouraging numbers
+            let displayActiveProjects = activeProjects.length.toString();
+            let displayDevelopers = devs.length.toString();
+            let displayOrganizations = orgs.length.toString();
+            let displayCompletionRate = 'Growing';
+            
+            // If we have completed projects, show actual completion rate
+            if (completedProjects.length > 0 && allProjects.length > 0) {
+                const actualCompletionRate = Math.round((completedProjects.length / allProjects.length) * 100);
+                displayCompletionRate = `${actualCompletionRate}%`;
+            }
+            
+            // Add "+" for small numbers to indicate growth
+            if (activeProjects.length < 10) {
+                displayActiveProjects = activeProjects.length + '+';
+            }
+            if (devs.length < 50) {
+                displayDevelopers = devs.length + '+';
+            }
+            if (orgs.length < 20) {
+                displayOrganizations = orgs.length + '+';
+            }
             
             setPlatformStats({
                 activeProjects: displayActiveProjects,
-                totalDevelopers: devs.length.toString(),
-                totalOrganizations: orgs.length.toString(),
+                totalDevelopers: displayDevelopers,
+                totalOrganizations: displayOrganizations,
                 completionRate: displayCompletionRate
             });
 
-            // Load top spotlight developers (top 5 by stars + rating)
+            // Load top 5 spotlight developers/admins by stars (respecting privacy settings)
             try {
                 const { data: profiles } = await supabase
                     .from('profiles')
                     .select('*')
-                    .eq('role', 'developer')
+                    .in('role', ['developer', 'admin']) // Include both developers and admins
                     .eq('is_public', true)
                     .eq('spotlight_enabled', true)
-                    .not('avatar_url', 'is', null)
-                    .not('bio', 'is', null)
                     .order('total_stars_earned', { ascending: false })
                     .order('current_rating', { ascending: false })
-                    .order('created_at', { ascending: true }) // Older accounts as final tiebreaker
-                    .limit(10); // Get more than 5 in case some disable spotlight
+                    .order('created_at', { ascending: true }) // Older accounts as tiebreaker
+                    .limit(5);
 
                 if (profiles && profiles.length > 0) {
-                    // Take top 5 spotlight-enabled developers
-                    const topSpotlightDevelopers = profiles.slice(0, 5);
-                    setSpotlightDevelopers(topSpotlightDevelopers);
+                    setSpotlightDevelopers(profiles);
                     setCurrentSpotlightIndex(0);
-                    setFeaturedDeveloper(topSpotlightDevelopers[0]);
+                    setFeaturedDeveloper(profiles[0]);
                 } else {
-                    // Fallback: if no spotlight developers, try without spotlight filter
+                    // Fallback: get top developers/admins even without complete profiles but respect spotlight setting
                     const { data: fallbackProfiles } = await supabase
                         .from('profiles')
                         .select('*')
-                        .eq('role', 'developer')
+                        .in('role', ['developer', 'admin']) // Include both developers and admins
                         .eq('is_public', true)
-                        .not('avatar_url', 'is', null)
-                        .not('bio', 'is', null)
+                        .neq('spotlight_enabled', false) // Include null (default true) and true
                         .order('total_stars_earned', { ascending: false })
                         .order('current_rating', { ascending: false })
                         .limit(5);
@@ -815,44 +915,28 @@ const HomePage: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        <h3 className="text-base font-bold text-gray-900">Platform Achievements</h3>
+                                        <h3 className="text-base font-bold text-gray-900">What Makes Us Different</h3>
                                         <div className="space-y-3">
-                                            {developerSpotlightProjects.length > 0 ? (
-                                                developerSpotlightProjects.map((project, index) => (
-                                                    <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border ${
-                                                        project.status === 'Complete' 
-                                                            ? 'bg-emerald-50 border-emerald-200' 
-                                                            : 'bg-purple-50 border-purple-200'
-                                                    }`}>
-                                                        <div className={`w-2 h-2 rounded-full ${
-                                                            project.status === 'Complete' ? 'bg-emerald-500' : 'bg-purple-500'
-                                                        }`}></div>
-                                                        <div className="flex-1">
-                                                            <span className={`font-semibold block text-sm ${
-                                                                project.status === 'Complete' ? 'text-emerald-800' : 'text-purple-800'
-                                                            }`}>
-                                                                {project.name}
-                                                            </span>
-                                                            <span className={`text-xs ${
-                                                                project.status === 'Complete' ? 'text-emerald-600' : 'text-purple-600'
-                                                            }`}>
-                                                                {project.organization}
-                                                            </span>
-                                                        </div>
-                                                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                                            project.status === 'Complete' 
-                                                                ? 'bg-emerald-100 text-emerald-700' 
-                                                                : 'bg-purple-100 text-purple-700'
-                                                        }`}>
-                                                            {project.status}
-                                                        </span>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="text-gray-500 text-sm p-3 bg-gray-100 rounded-lg border border-gray-200">
-                                                    No recent projects to display
+                                            <div className="text-sm text-gray-600 mb-4">
+                                                <p className="mb-2">
+                                                    <strong>Why developers choose DevTogether:</strong>
+                                                </p>
+                                                <ul className="space-y-1 text-xs">
+                                                    <li>• Contribute to meaningful nonprofit projects</li>
+                                                    <li>• Build real-world experience while giving back</li>
+                                                    <li>• Earn recognition through our star rating system</li>
+                                                    <li>• Join a community focused on social impact</li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                                <div className="text-sm font-medium text-blue-900 mb-1">
+                                                    ⭐ Star-Based Recognition
                                                 </div>
-                                            )}
+                                                <div className="text-xs text-blue-700">
+                                                    Developers earn stars for project contributions and collaboration
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -863,6 +947,15 @@ const HomePage: React.FC = () => {
                                     developer={featuredDeveloper}
                                     spotlightDevelopers={spotlightDevelopers}
                                     currentIndex={currentSpotlightIndex}
+                                    autoRotation={autoRotation}
+                                    onDeveloperChange={(index) => {
+                                        setCurrentSpotlightIndex(index);
+                                        setFeaturedDeveloper(spotlightDevelopers[index]);
+                                        setLastManualChange(Date.now()); // Track manual interaction
+                                        setAutoRotation(false); // Temporarily disable auto-rotation
+                                        // Re-enable auto-rotation after 1 minute
+                                        setTimeout(() => setAutoRotation(true), 60000);
+                                    }}
                                 />
                             </div>
                         </div>

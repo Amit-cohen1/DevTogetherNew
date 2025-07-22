@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout'
 import { DeveloperProfileStep } from './DeveloperProfileStep'
 import { OrganizationProfileStep } from './OrganizationProfileStep'
@@ -44,7 +45,7 @@ const ORGANIZATION_STEPS = [
 
 export const OnboardingPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1)
-    const { profile, loading, isAuthenticated } = useAuth()
+    const { profile, loading, isAuthenticated, updateProfile } = useAuth()
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -54,8 +55,8 @@ export const OnboardingPage: React.FC = () => {
             return
         }
 
-        // If user already has a complete profile, redirect to dashboard
-        if (profile && profile.bio) {
+        // If user already has completed onboarding, redirect to dashboard
+        if (profile && profile.onboarding_complete) {
             const dashboardPath = (profile.role === 'developer' || profile.role === 'admin') ? '/dashboard' : '/organization/dashboard'
             navigate(dashboardPath)
         }
@@ -99,12 +100,24 @@ export const OnboardingPage: React.FC = () => {
         }
     }
 
-    const handleComplete = () => {
-        if (profile.role === 'organization') {
-            navigate('/pending-approval');
-        } else {
-            const dashboardPath = (profile.role === 'developer' || profile.role === 'admin') ? '/dashboard' : '/organization/dashboard';
-            navigate(dashboardPath);
+    const handleComplete = async () => {
+        try {
+            // Mark onboarding as complete
+            const { success, error } = await updateProfile({ onboarding_complete: true })
+            
+            if (success) {
+                // Navigate based on role
+                if (profile?.role === 'organization') {
+                    navigate('/pending-approval')
+                } else {
+                    const dashboardPath = (profile?.role === 'developer' || profile?.role === 'admin') ? '/dashboard' : '/organization/dashboard'
+                    navigate(dashboardPath)
+                }
+            } else {
+                console.error('Failed to complete onboarding:', error)
+            }
+        } catch (error) {
+            console.error('Error completing onboarding:', error)
         }
     }
 
