@@ -37,7 +37,7 @@ export default function StatusManagerNotification({ userIsStatusManager, project
                         <h4 className="font-semibold text-green-900 text-sm sm:text-base">Project Status</h4>
                     </div>
                     <p className="text-green-700 text-xs sm:text-sm">
-                        Change project status from 'open' to 'in_progress' and manage project updates
+                        Start project development by changing status from 'open' to 'in_progress'
                     </p>
                 </div>
 
@@ -54,10 +54,10 @@ export default function StatusManagerNotification({ userIsStatusManager, project
                 <div className="bg-white/60 border border-orange-200 rounded-lg p-3 sm:p-4 sm:col-span-2 lg:col-span-1">
                     <div className="flex items-center gap-2 mb-2">
                         <AlertCircle className="w-4 h-4 text-orange-600" />
-                        <h4 className="font-semibold text-orange-900 text-sm sm:text-base">Limitation</h4>
+                        <h4 className="font-semibold text-orange-900 text-sm sm:text-base">Completion Limit</h4>
                     </div>
                     <p className="text-orange-700 text-xs sm:text-sm">
-                        Only organization owners can set status to 'completed' to award stars
+                        Only organization owners can complete projects to award stars
                     </p>
                 </div>
             </div>

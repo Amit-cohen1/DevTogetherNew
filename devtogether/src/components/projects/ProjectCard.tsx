@@ -101,6 +101,11 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
             rejected: 'border-red-500 bg-red-50',
             pending: 'border-yellow-300 bg-yellow-50',
         }[project.status] || 'border-gray-200 bg-white';
+        
+        if (variant === 'list') {
+            return `group relative rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border overflow-hidden w-full ${statusColor}`;
+        }
+        
         const baseClasses = `group relative rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-gray-300 overflow-hidden w-full flex flex-col h-full backdrop-blur-sm ${statusColor}`;
         switch (variant) {
             case 'featured':
@@ -114,6 +119,8 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
 
     const getContentPadding = () => {
         switch (variant) {
+            case 'list':
+                return 'p-4 sm:p-6'
             case 'large':
                 return 'p-8'
             case 'featured':
@@ -125,6 +132,8 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
 
     const getDescriptionLines = () => {
         switch (variant) {
+            case 'list':
+                return 'line-clamp-1'
             case 'large':
                 return 'line-clamp-4'
             case 'featured':
@@ -236,6 +245,157 @@ export function ProjectCard({ project, variant = 'default', onResubmitted, onRes
         );
     };
 
+    // List variant layout
+    if (variant === 'list') {
+        return (
+            <div className={getCardClasses()}>
+                <div className={`${getContentPadding()} flex flex-col sm:flex-row gap-4`}>
+                    {/* Left Section - Main Info */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(project.status)}`}>
+                                        <CheckCircle className="h-3 w-3 mr-1" />
+                                        {project.status === 'open' && 'Open'}
+                                        {project.status === 'pending' && 'Pending'}
+                                        {project.status === 'in_progress' && 'In Progress'}
+                                        {project.status === 'completed' && 'Completed'}
+                                        {project.status === 'cancelled' && 'Cancelled'}
+                                        {project.status === 'rejected' && 'Rejected'}
+                                    </span>
+                                    {hasWorkspaceAccess && (
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                            <Award className="h-3 w-3 mr-1" />
+                                            Team Member
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                <Link
+                                    to={`/projects/${project.id}`}
+                                    className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors block mb-1 truncate"
+                                >
+                                    {project.title}
+                                </Link>
+                                
+                                <Link
+                                    to={`/profile/${project.organization_id}`}
+                                    className="inline-flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors mb-2"
+                                >
+                                    <Building className="h-3.5 w-3.5 mr-1.5" />
+                                    {project.organization?.organization_name || 'Organization'}
+                                </Link>
+                                
+                                <p className={`text-gray-700 text-sm leading-relaxed mb-3 ${getDescriptionLines()}`}>
+                                    {project.description}
+                                </p>
+                            </div>
+                            
+                            <button
+                                onClick={() => setIsBookmarked(!isBookmarked)}
+                                className={`p-2 rounded-lg transition-colors sm:ml-4 ${isBookmarked
+                                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                            </button>
+                        </div>
+
+                        {/* Technology Stack - Compact */}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                            {project.technology_stack.slice(0, 4).map((tech, index) => (
+                                <span
+                                    key={index}
+                                    className="inline-block px-2 py-1 rounded-md bg-gray-100 text-gray-700 text-xs font-medium"
+                                >
+                                    {tech}
+                                </span>
+                            ))}
+                            {project.technology_stack.length > 4 && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium">
+                                    +{project.technology_stack.length - 4}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right Section - Metadata & Actions */}
+                    <div className="sm:w-64 flex flex-col justify-between">
+                        {/* Team Members */}
+                        {project.team_members && project.team_members.length > 0 && (
+                            <div className="bg-blue-50 rounded-lg p-3 mb-3">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium text-blue-800">Team</span>
+                                    <span className="text-xs text-blue-700">{project.team_members.length} members</span>
+                                </div>
+                                <div className="flex -space-x-2">
+                                    {project.team_members.slice(0, 4).map(renderTeamMemberAvatar)}
+                                    {project.team_members.length > 4 && (
+                                        <div className="w-7 h-7 rounded-full bg-blue-200 border-2 border-blue-200 flex items-center justify-center">
+                                            <span className="text-xs text-blue-800 font-medium">
+                                                +{project.team_members.length - 4}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Quick Info */}
+                        <div className="space-y-2 mb-4">
+                            <div className="flex items-center justify-between text-xs text-gray-600">
+                                <div className="flex items-center">
+                                    <Star className="h-3 w-3 mr-1" />
+                                    <span>{difficultyInfo?.label}</span>
+                                </div>
+                                {project.estimated_duration && (
+                                    <div className="flex items-center">
+                                        <Clock className="h-3 w-3 mr-1" />
+                                        <span>{project.estimated_duration}</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {project.deadline && (
+                                <div className="flex items-center text-xs">
+                                    <Calendar className="h-3 w-3 mr-1.5 text-gray-500" />
+                                    <span className={`${isDeadlineSoon(project.deadline) ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+                                        {formatDate(project.deadline)}
+                                        {isDeadlineSoon(project.deadline) && <span className="ml-1 text-orange-500">(Soon)</span>}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
+                            {hasWorkspaceAccess && (
+                                <Link
+                                    to={`/workspace/${project.id}`}
+                                    className="inline-flex items-center px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                                >
+                                    <Settings className="h-3 w-3 mr-1" />
+                                    Workspace
+                                </Link>
+                            )}
+
+                            <Link
+                                to={`/projects/${project.id}`}
+                                className="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200 flex-1 justify-center"
+                            >
+                                View Details
+                                <ArrowRight className="h-3 w-3 ml-1" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Grid variant layout (existing)
     return (
         <div className={getCardClasses()}>
             {/* Professional Header */}

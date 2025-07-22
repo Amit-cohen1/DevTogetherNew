@@ -8,7 +8,7 @@ import { projectService } from '../../services/projects'
 import { ApplicationCard } from '../../components/applications/ApplicationCard'
 import { ApplicationReviewModal } from '../../components/applications/ApplicationReviewModal'
 import { Button } from '../../components/ui/Button'
-import { FormField } from '../../components/ui/FormField'
+import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import {
     Search,
@@ -18,14 +18,28 @@ import {
     Check,
     X,
     Loader2,
-    AlertCircle,
+    AlertTriangle,
     Users,
     Clock,
     CheckCircle,
     XCircle,
     Archive,
     MoreHorizontal,
-    RefreshCw
+    RefreshCw,
+    Target,
+    TrendingUp,
+    Award,
+    Activity,
+    FileText,
+    Building,
+    Grid3X3,
+    List,
+    Plus,
+    BarChart3,
+    Zap,
+    Calendar,
+    Star,
+    Briefcase
 } from 'lucide-react'
 import { Project } from '../../types/database'
 
@@ -45,9 +59,24 @@ interface FilterOptions {
 }
 
 interface SortOption {
-    field: 'created_at' | 'developer_name' | 'status'
+    field: string
     direction: 'asc' | 'desc'
 }
+
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'All Applications', count: 0, color: 'bg-gray-50 text-gray-700', icon: Target },
+    { value: 'pending', label: 'Pending Review', count: 0, color: 'bg-yellow-50 text-yellow-700', icon: Clock },
+    { value: 'accepted', label: 'Accepted', count: 0, color: 'bg-green-50 text-green-700', icon: CheckCircle },
+    { value: 'rejected', label: 'Rejected', count: 0, color: 'bg-red-50 text-red-700', icon: XCircle },
+    { value: 'withdrawn', label: 'Withdrawn', count: 0, color: 'bg-gray-50 text-gray-500', icon: Archive },
+];
+
+const SORT_OPTIONS = [
+    { value: 'created_at', label: 'Application Date' },
+    { value: 'developer_name', label: 'Developer Name' },
+    { value: 'status', label: 'Status' },
+    { value: 'project_name', label: 'Project Name' },
+];
 
 export default function ApplicationsDashboard() {
     const { user, isOrganization } = useAuth()
@@ -73,17 +102,16 @@ export default function ApplicationsDashboard() {
     const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set())
     const [showBulkActions, setShowBulkActions] = useState(false)
 
-    // Filter and sort state
-    const [filters, setFilters] = useState<FilterOptions>({
-        status: 'all',
-        project: 'all',
-        dateRange: 'all',
-        searchQuery: ''
-    })
-    const [sort, setSort] = useState<SortOption>({
-        field: 'created_at',
-        direction: 'desc'
-    })
+    // Enhanced filtering and UI states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [projectFilter, setProjectFilter] = useState('all');
+    const [dateRangeFilter, setDateRangeFilter] = useState('all');
+    const [sortBy, setSortBy] = useState('created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+    const [showFilters, setShowFilters] = useState(false);
+    const [showAnalytics, setShowAnalytics] = useState(false);
 
     // Redirect if not organization
     useEffect(() => {
@@ -102,7 +130,7 @@ export default function ApplicationsDashboard() {
     // Apply filters and sorting
     useEffect(() => {
         applyFiltersAndSort()
-    }, [applications, filters, sort])
+    }, [applications, searchQuery, statusFilter, projectFilter, dateRangeFilter, sortBy, sortOrder])
 
     // Update bulk actions visibility
     useEffect(() => {
@@ -149,18 +177,18 @@ export default function ApplicationsDashboard() {
         let filtered = [...applications]
 
         // Apply status filter
-        if (filters.status !== 'all') {
-            filtered = filtered.filter(app => app.status === filters.status)
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(app => app.status === statusFilter)
         }
 
         // Apply project filter
-        if (filters.project !== 'all') {
-            filtered = filtered.filter(app => app.project_id === filters.project)
+        if (projectFilter !== 'all') {
+            filtered = filtered.filter(app => app.project_id === projectFilter)
         }
 
         // Apply search filter
-        if (filters.searchQuery) {
-            const query = filters.searchQuery.toLowerCase()
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase()
             filtered = filtered.filter(app =>
                 `${app.developer.first_name} ${app.developer.last_name}`.toLowerCase().includes(query) ||
                 app.developer.email.toLowerCase().includes(query) ||
@@ -170,11 +198,11 @@ export default function ApplicationsDashboard() {
         }
 
         // Apply date range filter
-        if (filters.dateRange !== 'all') {
+        if (dateRangeFilter !== 'all') {
             const now = new Date()
             const filterDate = new Date()
 
-            switch (filters.dateRange) {
+            switch (dateRangeFilter) {
                 case 'today':
                     filterDate.setHours(0, 0, 0, 0)
                     break
@@ -186,7 +214,7 @@ export default function ApplicationsDashboard() {
                     break
             }
 
-            if (filters.dateRange !== 'all') {
+            if (dateRangeFilter !== 'all') {
                 filtered = filtered.filter(app => new Date(app.created_at) >= filterDate)
             }
         }
@@ -196,7 +224,7 @@ export default function ApplicationsDashboard() {
             let aValue: any
             let bValue: any
 
-            switch (sort.field) {
+            switch (sortBy) {
                 case 'created_at':
                     aValue = new Date(a.created_at).getTime()
                     bValue = new Date(b.created_at).getTime()
@@ -209,12 +237,16 @@ export default function ApplicationsDashboard() {
                     aValue = a.status
                     bValue = b.status
                     break
+                case 'project_name':
+                    aValue = a.project.title.toLowerCase()
+                    bValue = b.project.title.toLowerCase()
+                    break
                 default:
                     aValue = a.created_at
                     bValue = b.created_at
             }
 
-            if (sort.direction === 'asc') {
+            if (sortOrder === 'asc') {
                 return aValue > bValue ? 1 : -1
             } else {
                 return aValue < bValue ? 1 : -1
@@ -223,6 +255,27 @@ export default function ApplicationsDashboard() {
 
         setFilteredApplications(filtered)
     }
+
+    // Calculate enhanced metrics
+    const enhancedMetrics = {
+        totalApplications: stats.total,
+        pendingReview: stats.pending,
+        totalProjects: userProjects.length,
+        acceptanceRate: stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0,
+        averagePerProject: userProjects.length > 0 ? Math.round((stats.total / userProjects.length) * 10) / 10 : 0,
+        thisWeekApplications: applications.filter(app => {
+            const appDate = new Date(app.created_at);
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return appDate >= weekAgo;
+        }).length
+    };
+
+    // Update status counts for tabs
+    const statusOptionsWithCounts = STATUS_OPTIONS.map(option => ({
+        ...option,
+        count: option.value === 'all' ? stats.total : stats[option.value as keyof ApplicationStats] || 0
+    }));
 
     const handleReviewApplication = (application: ApplicationWithDetails) => {
         setSelectedApplication(application)
@@ -302,27 +355,21 @@ export default function ApplicationsDashboard() {
         return null
     }
 
-    if (loading) {
-        return (
-            <Layout>
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                    <div className="text-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-4" />
-                        <p className="text-gray-600">Loading applications...</p>
-                    </div>
-                </div>
-            </Layout>
-        )
-    }
-
     if (error) {
         return (
             <Layout>
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                    <div className="text-center">
-                        <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
-                        <p className="text-red-600 mb-4">{error}</p>
-                        <Button onClick={loadData}>Try Again</Button>
+                <div className="min-h-screen bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center max-w-md mx-auto">
+                            <div className="text-red-600 mb-4">
+                                <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+                                <h3 className="text-lg font-semibold">Applications Error</h3>
+                            </div>
+                            <p className="text-red-700 mb-6">{error}</p>
+                            <Button onClick={loadData} className="w-full">
+                                Try Again
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </Layout>
@@ -332,233 +379,414 @@ export default function ApplicationsDashboard() {
     return (
         <Layout>
             <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-                    {/* Header - Mobile Optimized */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+                {/* Enhanced Header with Gradient */}
+                <div className="relative bg-gradient-to-br from-violet-900 via-purple-800 to-indigo-900 overflow-hidden">
+                    <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:60px_60px]" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-900/90 via-purple-800/80 to-indigo-900/90" />
+                    
+                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
+                        {/* Header Content */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Applications Dashboard</h1>
-                            <p className="text-gray-600 mt-1 sm:mt-2">Manage applications for your projects</p>
+                                <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium mb-3">
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Applications Dashboard
+                                </div>
+                                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                                    Application Management
+                                </h1>
+                                <p className="text-blue-100 text-lg">Review and manage developer applications for your projects</p>
                         </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    onClick={() => setShowAnalytics(!showAnalytics)}
+                                    variant="outline"
+                                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    icon={<BarChart3 className="w-4 h-4" />}
+                                >
+                                    Analytics
+                                </Button>
+                                <Button
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    variant="outline"
+                                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    icon={<Filter className="w-4 h-4" />}
+                                >
+                                    Filters
+                                </Button>
                         <Button 
                             onClick={loadData} 
                             variant="outline" 
-                            className="flex items-center gap-2 w-full sm:w-auto justify-center"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            <span>Refresh</span>
+                                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    icon={<RefreshCw className="w-4 h-4" />}
+                                >
+                                    Refresh
+                                </Button>
+                                <Button 
+                                    onClick={() => navigate('/projects/create')}
+                                    className="bg-white text-violet-900 hover:bg-blue-50 shadow-lg border border-blue-200"
+                                    icon={<Plus className="w-4 h-4" />}
+                                >
+                                    Create Project
                         </Button>
-                    </div>
+                            </div>
+                        </div>
 
-                    {/* Stats - Enhanced Mobile Grid */}
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-gray-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                        {/* Enhanced Metrics Dashboard */}
+                        {!loading && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <FileText className="w-5 h-5 text-white/80" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.totalApplications}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Total Apps</p>
                                 </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.total}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Total</p>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Clock className="w-5 h-5 text-yellow-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.pendingReview}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Pending</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Briefcase className="w-5 h-5 text-blue-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.totalProjects}</span>
+                            </div>
+                                    <p className="text-white/70 text-sm font-medium">Projects</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <TrendingUp className="w-5 h-5 text-green-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.acceptanceRate}%</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Accept Rate</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <BarChart3 className="w-5 h-5 text-purple-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.averagePerProject}</span>
+                            </div>
+                                    <p className="text-white/70 text-sm font-medium">Avg/Project</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Calendar className="w-5 h-5 text-cyan-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.thisWeekApplications}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">This Week</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Analytics Panel */}
+                        {showAnalytics && (
+                            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 mb-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5" />
+                                    Application Analytics
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Application Insights */}
+                                    <div>
+                                        <h4 className="text-white/90 font-medium mb-3">Application Metrics</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Acceptance Rate</span>
+                                                <span className="text-white font-medium">{enhancedMetrics.acceptanceRate}%</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Average per Project</span>
+                                                <span className="text-white font-medium">{enhancedMetrics.averagePerProject} apps</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Weekly Applications</span>
+                                                <span className="text-white font-medium">{enhancedMetrics.thisWeekApplications} new</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Status Breakdown */}
+                                    <div>
+                                        <h4 className="text-white/90 font-medium mb-3">Status Breakdown</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Pending Review</span>
+                                                <span className="text-yellow-300 font-medium">{stats.pending}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Accepted</span>
+                                                <span className="text-green-300 font-medium">{stats.accepted}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Rejected</span>
+                                                <span className="text-red-300 font-medium">{stats.rejected}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-yellow-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
+                                    {/* Performance Insights */}
+                                    <div>
+                                        <h4 className="text-white/90 font-medium mb-3">Performance</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Active Projects</span>
+                                                <span className="text-white font-medium">{enhancedMetrics.totalProjects}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Response Rate</span>
+                                                <span className="text-white font-medium">
+                                                    {stats.total > 0 ? Math.round(((stats.accepted + stats.rejected) / stats.total) * 100) : 0}%
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-white/70">Average Turnaround</span>
+                                                <span className="text-white font-medium">2-4 days</span>
+                                            </div>
+                                        </div>
                                 </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.pending}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Pending</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-green-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-                                </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.accepted}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Accepted</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-red-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-                                </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.rejected}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Rejected</p>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-gray-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <Archive className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
-                                </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.withdrawn}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Withdrawn</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Filters and Controls - Mobile Enhanced */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                            {/* Search */}
-                            <FormField label="Search">
+                        {/* Filters Panel */}
+                        {showFilters && (
+                            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 mb-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <Filter className="w-5 h-5" />
+                                    Advanced Filtering & Search
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-white/90 text-sm font-medium mb-2">Search Applications</label>
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 h-4 w-4" />
                                     <input
                                         type="text"
-                                        placeholder="Search applications..."
-                                        value={filters.searchQuery}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                                        className="w-full pl-10 pr-3 py-3 sm:py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-base sm:text-sm"
+                                                placeholder="Search developers, projects, or notes..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-10 pr-3 py-2 bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
                                     />
                                 </div>
-                            </FormField>
-
-                            {/* Status Filter */}
-                            <FormField label="Status">
-                                <Select
-                                    value={filters.status}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                                    className="py-3 sm:py-2 text-base sm:text-sm"
-                                >
-                                    <option value="all">All Statuses</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="accepted">Accepted</option>
-                                    <option value="rejected">Rejected</option>
-                                    <option value="withdrawn">Withdrawn</option>
-                                </Select>
-                            </FormField>
-
-                            {/* Project Filter */}
-                            <FormField label="Project">
-                                <Select
-                                    value={filters.project}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, project: e.target.value }))}
-                                    className="py-3 sm:py-2 text-base sm:text-sm"
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-white/90 text-sm font-medium mb-2">Filter by Project</label>
+                                        <select
+                                            value={projectFilter}
+                                            onChange={(e) => setProjectFilter(e.target.value)}
+                                            className="w-full py-2 px-3 bg-white/10 border border-white/20 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
                                 >
                                     <option value="all">All Projects</option>
                                     {userProjects.map(project => (
-                                        <option key={project.id} value={project.id}>
+                                                <option key={project.id} value={project.id} className="text-gray-900">
                                             {project.title}
                                         </option>
                                     ))}
-                                </Select>
-                            </FormField>
-
-                            {/* Date Range Filter */}
-                            <FormField label="Date Range">
-                                <Select
-                                    value={filters.dateRange}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
-                                    className="py-3 sm:py-2 text-base sm:text-sm"
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-white/90 text-sm font-medium mb-2">Date Range</label>
+                                        <select
+                                            value={dateRangeFilter}
+                                            onChange={(e) => setDateRangeFilter(e.target.value)}
+                                            className="w-full py-2 px-3 bg-white/10 border border-white/20 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
                                 >
                                     <option value="all">All Time</option>
-                                    <option value="today">Today</option>
-                                    <option value="week">Past Week</option>
-                                    <option value="month">Past Month</option>
-                                </Select>
-                            </FormField>
+                                            <option value="today" className="text-gray-900">Today</option>
+                                            <option value="week" className="text-gray-900">This Week</option>
+                                            <option value="month" className="text-gray-900">This Month</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-white/90 text-sm font-medium">Sort by:</label>
+                                        <select
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value)}
+                                            className="py-1 px-2 bg-white/10 border border-white/20 text-white rounded text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                                        >
+                                            {SORT_OPTIONS.map(option => (
+                                                <option key={option.value} value={option.value} className="text-gray-900">
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
                         </div>
 
-                        {/* Sort and Bulk Actions - Mobile Optimized */}
-                        <div className="border-t border-gray-200 pt-4">
-                            <div className="flex flex-col gap-4">
-                                {/* Sort */}
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
-                                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort by:</span>
-                                        <Select
-                                            value={`${sort.field}-${sort.direction}`}
-                                            onChange={(e) => {
-                                                const [field, direction] = e.target.value.split('-') as [typeof sort.field, typeof sort.direction]
-                                                setSort({ field, direction })
-                                            }}
-                                            className="w-full sm:w-auto py-2 text-sm"
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setSortOrder('desc')}
+                                            className={`flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors ${
+                                                sortOrder === 'desc' 
+                                                    ? 'bg-white/20 text-white' 
+                                                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                                            }`}
                                         >
-                                            <option value="created_at-desc">Newest First</option>
-                                            <option value="created_at-asc">Oldest First</option>
-                                            <option value="developer_name-asc">Name A-Z</option>
-                                            <option value="developer_name-desc">Name Z-A</option>
-                                            <option value="status-asc">Status A-Z</option>
-                                        </Select>
+                                            <SortDesc className="w-3 h-3" />
+                                            Desc
+                                        </button>
+                                        <button
+                                            onClick={() => setSortOrder('asc')}
+                                            className={`flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors ${
+                                                sortOrder === 'asc' 
+                                                    ? 'bg-white/20 text-white' 
+                                                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                                            }`}
+                                        >
+                                            <SortAsc className="w-3 h-3" />
+                                            Asc
+                                        </button>
                                     </div>
 
-                                    {/* Select All - Mobile Friendly */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedApplications.size === filteredApplications.length && filteredApplications.length > 0}
-                                                onChange={handleSelectAll}
-                                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                            />
-                                            <span className="whitespace-nowrap">
-                                                Select All ({filteredApplications.length})
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            className={`flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors ${
+                                                viewMode === 'list' 
+                                                    ? 'bg-white/20 text-white' 
+                                                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                                            }`}
+                                        >
+                                            <List className="w-3 h-3" />
+                                            List
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('grid')}
+                                            className={`flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors ${
+                                                viewMode === 'grid' 
+                                                    ? 'bg-white/20 text-white' 
+                                                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                                            }`}
+                                        >
+                                            <Grid3X3 className="w-3 h-3" />
+                                            Grid
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="text-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-violet-600 mx-auto mb-4" />
+                                <p className="text-gray-600">Loading applications...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Enhanced Status Tabs */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
+                                <div className="border-b border-gray-200">
+                                    <div className="flex overflow-x-auto scrollbar-hide">
+                                        {statusOptionsWithCounts.map((status) => {
+                                            const Icon = status.icon;
+                                            const isActive = statusFilter === status.value;
+                                            
+                                            return (
+                                                <button
+                                                    key={status.value}
+                                                    onClick={() => setStatusFilter(status.value)}
+                                                    className={`flex items-center gap-3 px-6 py-4 whitespace-nowrap border-b-2 transition-colors ${
+                                                        isActive
+                                                            ? 'border-violet-500 bg-violet-50'
+                                                            : 'border-transparent hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <Icon className={`w-4 h-4 ${isActive ? 'text-violet-600' : 'text-gray-400'}`} />
+                                                    <span className={`font-medium ${isActive ? 'text-violet-900' : 'text-gray-700'}`}>
+                                                        {status.label}
+                                                    </span>
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                        isActive ? 'bg-violet-100 text-violet-800' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                        {status.count}
                                             </span>
-                                        </label>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
-                                {/* Bulk Actions - Mobile Enhanced */}
+                                {/* Bulk Actions Bar */}
                                 {showBulkActions && (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
-                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                                            <span className="text-sm font-medium text-blue-900 text-center sm:text-left">
+                                    <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-blue-800">
                                                 {selectedApplications.size} application{selectedApplications.size === 1 ? '' : 's'} selected
                                             </span>
-                                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                            <div className="flex items-center gap-2">
                                                 <Button
+                                                    onClick={handleSelectAll}
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => handleBulkAction('accept')}
-                                                    className="flex-1 sm:flex-none text-green-600 border-green-300 hover:bg-green-50 justify-center"
                                                 >
-                                                    <Check className="w-4 h-4 mr-2" />
+                                                    {selectedApplications.size === filteredApplications.length ? 'Deselect All' : 'Select All'}
+                                                </Button>
+                                                <Button
+                                                    onClick={() => handleBulkAction('accept')}
+                                                    size="sm"
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                    icon={<Check className="w-4 h-4" />}
+                                                >
                                                     Accept Selected
                                                 </Button>
                                                 <Button
+                                                    onClick={() => handleBulkAction('reject')}
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => handleBulkAction('reject')}
-                                                    className="flex-1 sm:flex-none text-red-600 border-red-300 hover:bg-red-50 justify-center"
+                                                    className="text-red-600 border-red-300 hover:bg-red-50"
+                                                    icon={<X className="w-4 h-4" />}
                                                 >
-                                                    <X className="w-4 h-4 mr-2" />
                                                     Reject Selected
                                                 </Button>
                                             </div>
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        </div>
                     </div>
 
-                    {/* Applications List - Enhanced Mobile Layout */}
+                            {/* Applications Content */}
                     {filteredApplications.length === 0 ? (
-                        <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center">
-                            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-                            <p className="text-gray-600 px-4">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Users className="h-8 w-8 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                        {applications.length === 0 ? 'No Applications Yet' : 'No Matching Applications'}
+                                    </h3>
+                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
                                 {applications.length === 0
                                     ? "You don't have any applications yet. Applications will appear here as developers apply to your projects."
-                                    : "No applications match your current filters. Try adjusting your search criteria."
+                                            : "No applications match your current search criteria. Try adjusting your filters or search terms."
                                 }
                             </p>
+                                    {applications.length === 0 && (
+                                        <Button 
+                                            onClick={() => navigate('/projects/create')} 
+                                            className="inline-flex items-center gap-2"
+                                            icon={<Plus className="w-4 h-4" />}
+                                        >
+                                            Create Your First Project
+                                        </Button>
+                                    )}
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -572,6 +800,8 @@ export default function ApplicationsDashboard() {
                                 />
                             ))}
                         </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

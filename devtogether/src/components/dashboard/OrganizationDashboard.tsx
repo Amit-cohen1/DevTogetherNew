@@ -25,7 +25,21 @@ import {
     FolderOpen,
     Award,
     Shield,
-    X
+    X,
+    RefreshCw,
+    Target,
+    Zap,
+    Activity,
+    FileText,
+    Search,
+    BarChart3,
+    Building,
+    Sparkles,
+    Calendar,
+    Star,
+    Heart,
+    Code,
+    Briefcase
 } from 'lucide-react';
 import type { Profile } from '../../types/database';
 import { ResubmitProjectModal } from '../projects/ResubmitProjectModal';
@@ -47,8 +61,9 @@ const OrganizationDashboard: React.FC = () => {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [resubmitProject, setResubmitProject] = useState<DashboardProject | null>(null);
-    // Remove resubmitTitle, resubmitDescription, resubmitError, resubmitSuccess, resubmitLoading
     const [orgProfileStats, setOrgProfileStats] = useState<ProfileStatsType | null>(null);
+    const [showQuickActions, setShowQuickActions] = useState(false);
+    const [showAnalytics, setShowAnalytics] = useState(false);
 
     const loadData = useCallback(async () => {
         try {
@@ -67,6 +82,19 @@ const OrganizationDashboard: React.FC = () => {
             setLoading(false);
         }
     }, [user]);
+
+    const refreshDashboard = async () => {
+        if (!user?.id) return;
+        
+        try {
+            setLoading(true);
+            await loadData();
+        } catch (err) {
+            console.error('Error refreshing dashboard:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (user && profile?.role === 'organization') {
@@ -106,9 +134,23 @@ const OrganizationDashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="min-h-screen bg-gray-50">
+                {/* Loading Header */}
+                <div className="relative bg-gradient-to-br from-purple-900 via-blue-800 to-indigo-900 overflow-hidden">
+                    <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:60px_60px]" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 via-blue-800/80 to-indigo-900/90" />
+                    
+                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
+                        <div className="animate-pulse">
+                            <div className="h-8 bg-white/20 rounded w-1/3 mb-4"></div>
+                            <div className="h-12 bg-white/20 rounded w-1/2 mb-2"></div>
+                            <div className="h-6 bg-white/20 rounded w-2/3"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="animate-pulse space-y-8">
-                    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[...Array(3)].map((_, i) => (
                             <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
@@ -117,6 +159,7 @@ const OrganizationDashboard: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div className="h-96 bg-gray-200 rounded-lg"></div>
                         <div className="h-96 bg-gray-200 rounded-lg"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,26 +170,34 @@ const OrganizationDashboard: React.FC = () => {
 
     const { stats, recentProjects, pendingApplications } = data;
 
+    // Calculate enhanced metrics
+    const enhancedMetrics = {
+        totalProjects: stats.totalProjects,
+        activeProjects: stats.activeProjects,
+        completedProjects: stats.completedProjects,
+        pendingProjects: stats.totalProjects - stats.activeProjects - stats.completedProjects,
+        rejectedProjects: stats.rejectedApplications, // Using rejected applications as proxy
+        totalApplications: stats.totalApplications,
+        pendingApplications: stats.pendingApplications,
+        acceptedApplications: stats.acceptedApplications,
+        totalTeamMembers: stats.totalTeamMembers || 0,
+        averageTeamSize: stats.totalProjects > 0 ? Math.round((stats.totalTeamMembers || 0) / stats.totalProjects * 10) / 10 : 0,
+        successRate: stats.totalProjects > 0 ? Math.round((stats.completedProjects / stats.totalProjects) * 100) : 0,
+        applicationRate: stats.totalProjects > 0 ? Math.round((stats.totalApplications / stats.totalProjects) * 10) / 10 : 0,
+    };
+
     const handleResubmit = async () => {
         if (!resubmitProject) return;
-        // setResubmitLoading(true); // This state was removed
-        // setResubmitError(null); // This state was removed
         try {
-            // Remove title/description update logic, as modal now handles all fields
             const ok = await projectService.resubmitProject(resubmitProject.id);
             if (ok) {
-                // setResubmitSuccess(true); // This state was removed
                 setTimeout(() => {
                     setResubmitProject(null);
                     loadData();
                 }, 1200);
-            } else {
-                // setResubmitError('Failed to resubmit project.'); // This state was removed
             }
         } catch (err: any) {
-            // setResubmitError(err.message || 'Failed to resubmit project.'); // This state was removed
-        } finally {
-            // setResubmitLoading(false); // This state was removed
+            console.error('Resubmit error:', err);
         }
     };
 
@@ -163,288 +214,468 @@ const OrganizationDashboard: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Greeting Banner */}
-                <GreetingBanner
-                    name={organizationName}
-                />
-                {/* ProfileStats (Platform Statistics) */}
-                {orgProfileStats && (
-                    <div className="mb-8">
-                        <ProfileStatsComponent stats={orgProfileStats} />
+        <div className="min-h-screen bg-gray-50">
+            {/* Enhanced Header with Gradient */}
+            <div className="relative bg-gradient-to-br from-purple-900 via-blue-800 to-indigo-900 overflow-hidden">
+                <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:60px_60px]" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 via-blue-800/80 to-indigo-900/90" />
+                
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
+                    {/* Header Content */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium mb-3">
+                                <Building className="h-4 w-4 mr-2" />
+                                Organization Dashboard
+                            </div>
+                            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                                Welcome back, {organizationName}!
+                            </h1>
+                            <p className="text-blue-100 text-lg">Manage your project portfolio and team development</p>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                            <Button
+                                onClick={() => setShowAnalytics(!showAnalytics)}
+                                variant="outline"
+                                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                icon={<BarChart3 className="w-4 h-4" />}
+                            >
+                                Analytics
+                            </Button>
+                            <Button
+                                onClick={() => setShowQuickActions(!showQuickActions)}
+                                variant="outline"
+                                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                icon={<Zap className="w-4 h-4" />}
+                            >
+                                Quick Actions
+                            </Button>
+                            <Button 
+                                onClick={refreshDashboard} 
+                                variant="outline" 
+                                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                icon={<RefreshCw className="w-4 h-4" />}
+                            >
+                                Refresh
+                            </Button>
+                            <Button 
+                                onClick={() => navigate('/projects/create')}
+                                className="bg-purple-600 text-white hover:bg-purple-700 shadow-lg border border-purple-600"
+                                icon={<Plus className="w-4 h-4" />}
+                            >
+                                Create Project
+                            </Button>
+                        </div>
                     </div>
-                )}
 
-                {/* Recent Applications - Compact Section */}
-                <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900">Recent Applications</h3>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => navigate('/applications')}
-                            icon={<ArrowRight className="w-4 h-4" />}
-                        >
-                            View All
-                        </Button>
+                    {/* Enhanced Metrics Dashboard */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-6">
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <Target className="w-5 h-5 text-white/80" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.totalProjects}</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Total Projects</p>
+                        </div>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <Activity className="w-5 h-5 text-blue-300" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.activeProjects}</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Active Now</p>
+                        </div>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <CheckCircle className="w-5 h-5 text-green-300" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.completedProjects}</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Completed</p>
+                        </div>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <Clock className="w-5 h-5 text-yellow-300" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.pendingProjects}</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Pending</p>
+                        </div>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <Users className="w-5 h-5 text-purple-300" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.totalTeamMembers}</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Team Members</p>
+                        </div>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <FileText className="w-5 h-5 text-orange-300" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.totalApplications}</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Applications</p>
+                        </div>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <TrendingUp className="w-5 h-5 text-green-300" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.successRate}%</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Success Rate</p>
+                        </div>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <Star className="w-5 h-5 text-yellow-300" />
+                                <span className="text-2xl font-bold text-white">{enhancedMetrics.averageTeamSize}</span>
+                            </div>
+                            <p className="text-white/70 text-sm font-medium">Avg Team Size</p>
+                        </div>
                     </div>
-                    {pendingApplications.length === 0 ? (
-                        <div className="text-center py-6 text-gray-500 text-sm">No recent applications.</div>
-                    ) : (
-                        <div className="divide-y divide-gray-100">
-                            {pendingApplications.slice(0, 5).map((application) => (
-                                <div key={application.id} className="flex items-center py-2 gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
-                                        {((application.developer.first_name || 'A').charAt(0) + (application.developer.last_name || 'B').charAt(0))}
+
+                    {/* Analytics Panel */}
+                    {showAnalytics && (
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 mb-6">
+                            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5" />
+                                Organization Analytics
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Project Insights */}
+                                <div>
+                                    <h4 className="text-white/90 font-medium mb-3">Project Insights</h4>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Project Success Rate</span>
+                                            <span className="text-white font-medium">{enhancedMetrics.successRate}%</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Average Team Size</span>
+                                            <span className="text-white font-medium">{enhancedMetrics.averageTeamSize} members</span>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-900 text-sm truncate">
-                                                {`${application.developer.first_name || ''} ${application.developer.last_name || ''}`.trim() || 'Anonymous'}
-                                            </span>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : application.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Rejection Rate</span>
+                                            <span className="text-white font-medium">
+                                                {enhancedMetrics.totalProjects > 0 
+                                                    ? Math.round((enhancedMetrics.rejectedProjects / enhancedMetrics.totalProjects) * 100)
+                                                    : 0}%
                                             </span>
                                         </div>
-                                        <div className="text-xs text-gray-500 truncate">{application.project.title}</div>
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => navigate('/applications')}
-                                    >
-                                        Review
-                                    </Button>
                                 </div>
-                            ))}
+                                
+                                {/* Application Insights */}
+                                <div>
+                                    <h4 className="text-white/90 font-medium mb-3">Application Insights</h4>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Applications per Project</span>
+                                            <span className="text-white font-medium">{enhancedMetrics.applicationRate} avg</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Pending Applications</span>
+                                            <span className="text-white font-medium">{enhancedMetrics.pendingApplications}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Acceptance Rate</span>
+                                            <span className="text-white font-medium">
+                                                {enhancedMetrics.totalApplications > 0 
+                                                    ? Math.round((enhancedMetrics.acceptedApplications / enhancedMetrics.totalApplications) * 100)
+                                                    : 0}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Growth Metrics */}
+                                <div>
+                                    <h4 className="text-white/90 font-medium mb-3">Growth Metrics</h4>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Project Portfolio</span>
+                                            <span className="text-white font-medium">{enhancedMetrics.totalProjects} projects</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Active Team Members</span>
+                                            <span className="text-white font-medium">{enhancedMetrics.totalTeamMembers}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-white/70">Organization Status</span>
+                                            <span className="text-green-300 font-medium">Verified</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quick Actions Panel */}
+                    {showQuickActions && (
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 mb-6">
+                            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <Zap className="w-5 h-5" />
+                                Quick Actions
+                            </h3>
+                            
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <button
+                                    onClick={() => navigate('/projects/create')}
+                                    className="flex flex-col items-center gap-2 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <Plus className="w-6 h-6 text-white" />
+                                    <span className="text-white text-sm font-medium">Create Project</span>
+                                </button>
+                                
+                                <button
+                                    onClick={() => navigate('/applications')}
+                                    className="flex flex-col items-center gap-2 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors relative"
+                                >
+                                    {enhancedMetrics.pendingApplications > 0 && (
+                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                            {enhancedMetrics.pendingApplications}
+                </div>
+                                    )}
+                                    <FileText className="w-6 h-6 text-white" />
+                                    <span className="text-white text-sm font-medium">Review Applications</span>
+                                </button>
+                                
+                                <button
+                                    onClick={() => navigate('/dashboard/projects')}
+                                    className="flex flex-col items-center gap-2 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <Briefcase className="w-6 h-6 text-white" />
+                                    <span className="text-white text-sm font-medium">My Projects</span>
+                                </button>
+                                
+                                <button
+                                    onClick={() => navigate('/profile')}
+                                    className="flex flex-col items-center gap-2 p-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <Settings className="w-6 h-6 text-white" />
+                                    <span className="text-white text-sm font-medium">Organization Profile</span>
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Admin Workspace Access Requests */}
-                {data?.recentProjects.some(project => project.admin_workspace_access_requested && !project.admin_workspace_access_granted) && (
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mb-6">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                                <Shield className="w-4 h-4 text-amber-600" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold text-amber-800">Admin Workspace Access Requests</h3>
-                                <p className="text-sm text-amber-700">Administrators have requested access to project workspaces</p>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            {data.recentProjects
-                                .filter(project => project.admin_workspace_access_requested && !project.admin_workspace_access_granted)
-                                .map(project => (
-                                    <div key={project.id} className="bg-white rounded-lg border border-amber-200 p-4">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <h4 className="font-medium text-gray-900 mb-1">{project.title}</h4>
-                                                <p className="text-sm text-gray-600 mb-3">
-                                                    An administrator has requested access to this project's workspace for monitoring and support purposes.
-                                                </p>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Enhanced Content Sections */}
+                
+                {/* Recent Applications - Enhanced Design */}
+                {pendingApplications.length > 0 && (
+                    <div className="mb-8">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 px-6 py-4 border-b border-gray-200">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-yellow-100 rounded-lg">
+                                            <FileText className="w-5 h-5 text-yellow-600" />
                                             </div>
+                                        <div>
+                                            <h2 className="text-xl font-semibold text-gray-900">Pending Applications</h2>
+                                            <p className="text-gray-600 text-sm">Applications waiting for your review</p>
                                         </div>
-                                        <div className="flex gap-2">
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                                            {pendingApplications.length} pending
+                                        </span>
                                             <Button
+                                            onClick={() => navigate('/applications')}
+                                            variant="outline"
                                                 size="sm"
-                                                className="bg-green-600 hover:bg-green-700 text-white"
-                                                onClick={async () => {
-                                                    try {
-                                                        await projectService.grantWorkspaceAccess(project.id)
-                                                        loadData() // Refresh data
-                                                        toastService.success('Admin workspace access approved')
-                                                    } catch (error) {
-                                                        toastService.error('Failed to approve access')
-                                                    }
-                                                }}
-                                            >
-                                                <CheckCircle className="w-4 h-4 mr-1" />
-                                                Approve Access
+                                            icon={<ArrowRight className="w-4 h-4" />}
+                                        >
+                                            Review All
                                             </Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <div className="space-y-4">
+                                    {pendingApplications.slice(0, 3).map((app) => (
+                                        <div key={app.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                    <Users className="w-5 h-5 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900">
+                                                        {app.developer.first_name && app.developer.last_name 
+                                                            ? `${app.developer.first_name} ${app.developer.last_name}`
+                                                            : app.developer.email
+                                                        }
+                                                    </h4>
+                                                    <p className="text-sm text-gray-600">{app.project.title}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-gray-500">
+                                                    {new Date(app.created_at).toLocaleDateString()}
+                                                </span>
                                             <Button
+                                                    onClick={() => navigate('/applications')}
                                                 size="sm"
                                                 variant="outline"
-                                                className="text-red-600 border-red-200 hover:bg-red-50"
-                                                onClick={async () => {
-                                                    try {
-                                                        await projectService.denyWorkspaceAccess(project.id)
-                                                        loadData() // Refresh data
-                                                        toastService.success('Admin workspace access denied')
-                                                    } catch (error) {
-                                                        toastService.error('Failed to deny access')
-                                                    }
-                                                }}
-                                            >
-                                                <X className="w-4 h-4 mr-1" />
-                                                Deny Access
+                                                >
+                                                    Review
                                             </Button>
                                         </div>
                                     </div>
                                 ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Recent Projects - Consistent Card */}
-                <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900">Recent Projects</h3>
+                {/* Recent Projects - Enhanced Design */}
+                {recentProjects.length > 0 && (
+                    <div className="mb-8">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-blue-100 rounded-lg">
+                                            <Briefcase className="w-5 h-5 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-semibold text-gray-900">Recent Projects</h2>
+                                            <p className="text-gray-600 text-sm">Your latest project activity</p>
+                                        </div>
+                                    </div>
                         <Button
-                            variant="primary"
+                                        onClick={() => navigate('/dashboard/projects')}
+                                        variant="outline"
                             size="sm"
-                            onClick={() => navigate('/dashboard/projects')}
                             icon={<ArrowRight className="w-4 h-4" />}
                         >
                             View All
                         </Button>
                     </div>
-                    {recentProjects.length === 0 ? (
-                        <div className="text-center py-16 px-6 border-2 border-dashed border-gray-300 rounded-lg">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Building2 className="w-8 h-8 text-gray-400" />
                             </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Launch Your First Initiative</h3>
-                            <p className="text-gray-600 mb-6 max-w-md mx-auto">Create a new project to connect with skilled developers and bring your ideas to life.</p>
-                            {isVerified && (
-                                <Button onClick={() => navigate('/projects/create')} variant="primary">
-                                    <Plus className="w-5 h-5 mr-2" />
-                                    Create New Project
-                                </Button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {recentProjects.map((project) => {
-                                // Status-based color and icon
-                                let cardBg = 'bg-gray-50 border-gray-200';
-                                let statusColor = 'bg-gray-100 text-gray-800 border-gray-300';
-                                let statusIcon = <FolderOpen className="h-3 w-3 mr-1" />;
-                                if (project.status === 'open') {
-                                    cardBg = 'bg-green-50 border-green-200';
-                                    statusColor = 'bg-green-100 text-green-800 border-green-300';
-                                    statusIcon = <CheckCircle className="h-3 w-3 mr-1" />;
-                                } else if (project.status === 'in_progress') {
-                                    cardBg = 'bg-blue-50 border-blue-200';
-                                    statusColor = 'bg-blue-100 text-blue-800 border-blue-300';
-                                    statusIcon = <Clock className="h-3 w-3 mr-1" />;
-                                } else if (project.status === 'completed') {
-                                    cardBg = 'bg-green-50 border-green-200 ring-2 ring-green-300';
-                                    statusColor = 'bg-green-100 text-green-800 border-green-300';
-                                    statusIcon = <Award className="h-3 w-3 mr-1 text-green-500 animate-bounce" />;
-                                } else if (project.status === 'rejected') {
-                                    cardBg = 'bg-red-50 border-red-200';
-                                    statusColor = 'bg-red-100 text-red-800 border-red-300';
-                                    statusIcon = <AlertTriangle className="h-3 w-3 mr-1" />;
-                                } else if (project.status === 'cancelled') {
-                                    cardBg = 'bg-gray-100 border-gray-300';
-                                    statusColor = 'bg-gray-200 text-gray-500 border-gray-300';
-                                    statusIcon = <AlertTriangle className="h-3 w-3 mr-1" />;
-                                }
-                                return (
-                                    <div key={project.id} className={`flex items-center p-4 rounded-2xl shadow border transition-colors ${cardBg}`}>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
-                                                    {statusIcon}
-                                                    {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                            <div className="p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {recentProjects.map((project) => (
+                                        <div key={project.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-colors">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                    project.status === 'open' ? 'bg-green-100 text-green-800' :
+                                                    project.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                                                    project.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                    project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                    {project.status.replace('_', ' ').toUpperCase()}
                                                 </span>
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 ml-2">
-                                                    <Users className="h-3 w-3 mr-1" />
-                                                    {project.teamMemberCount} members
+                                                <span className="text-xs text-gray-500">
+                                                    {new Date(project.created_at).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <h3 className="font-semibold text-gray-900 text-base mb-1 mt-1">{project.title}</h3>
-                                            {project.status === 'rejected' && project.rejection_reason && (
-                                                <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs font-semibold">
-                                                    <AlertTriangle className="inline w-4 h-4 mr-1 align-text-bottom" />
-                                                    {project.rejection_reason}
+                                            <h4 className="font-medium text-gray-900 mb-2 line-clamp-1">{project.title}</h4>
+                                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{project.description}</p>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Users className="w-4 h-4 text-gray-400" />
+                                                    <span className="text-xs text-gray-600">{project.applicationCount || 0} applications</span>
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col gap-2 ml-4 min-w-[120px] items-end">
-                                            {project.status === 'rejected' && (
                                                 <Button
-                                                    variant="primary"
+                                                    onClick={() => navigate(`/projects/${project.id}`)}
                                                     size="sm"
-                                                    className="w-full"
-                                                    onClick={() => {
-                                                        setResubmitProject(project);
-                                                    }}
+                                                    variant="ghost"
                                                 >
-                                                    Resubmit
+                                                    View
                                                 </Button>
-                                            )}
-                                            <Button
-                                                variant="secondary"
-                                                size="sm"
-                                                className="w-full"
-                                                onClick={() => navigate(`/workspace/${project.id}`)}
-                                                icon={<MessageSquare className="w-4 h-4" />}
-                                            >
-                                                Workspace
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="w-full"
-                                                onClick={() => navigate(`/projects/${project.id}`)}
-                                                icon={<Eye className="w-4 h-4" />}
-                                            >
-                                                Project Page
-                                            </Button>
+                                            </div>
+                                        </div>
+                                    ))}
                                         </div>
                                     </div>
-                                );
-                            })}
+                        </div>
                         </div>
                     )}
-                </div> {/* End of Recent Projects card */}
 
-                {/* Remove empty Main Content Area grid for valid JSX */}
-
-                {/* Quick Actions Footer - Empowering & Clean */}
-                <div className="mt-12 bg-gray-100 rounded-xl p-8 border border-gray-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-                        <div 
-                            className={`group p-4 rounded-lg transition-all duration-300 ${!isVerified ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white cursor-pointer'}`}
-                            onClick={() => isVerified && navigate('/projects/create')}
-                        >
-                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <Plus className="h-6 w-6 text-blue-600" />
+                {/* Organization Stats Cards - Enhanced Design */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-green-100 rounded-lg">
+                                <TrendingUp className="w-5 h-5 text-green-600" />
                             </div>
-                            <h3 className="font-semibold text-gray-900">Create Project</h3>
-                             {!isVerified && (
-                                <p className="text-xs text-gray-500 mt-1">Verification needed</p>
-                            )}
+                            <h3 className="text-lg font-semibold text-gray-900">Performance Overview</h3>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Project Success Rate</span>
+                                <span className="font-medium text-green-600">{enhancedMetrics.successRate}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Total Team Members</span>
+                                <span className="font-medium">{enhancedMetrics.totalTeamMembers}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Average Team Size</span>
+                                <span className="font-medium">{enhancedMetrics.averageTeamSize}</span>
+                            </div>
+                        </div>
             </div>
 
-                        <div className="group p-4 rounded-lg hover:bg-white cursor-pointer transition-all duration-300" onClick={() => navigate('/applications')}>
-                            <div className="relative w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                {stats.pendingApplications > 0 && (
-                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow">
-                                        {stats.pendingApplications}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                                <FileText className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Application Insights</h3>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Total Applications</span>
+                                <span className="font-medium">{enhancedMetrics.totalApplications}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Applications per Project</span>
+                                <span className="font-medium">{enhancedMetrics.applicationRate}</span>
                                     </div>
-                                )}
-                                <Users className="h-6 w-6 text-green-600" />
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Acceptance Rate</span>
+                                <span className="font-medium text-blue-600">
+                                    {enhancedMetrics.totalApplications > 0 
+                                        ? Math.round((enhancedMetrics.acceptedApplications / enhancedMetrics.totalApplications) * 100)
+                                        : 0}%
+                                </span>
                             </div>
-                            <h3 className="font-semibold text-gray-900">Review Applications</h3>
+                        </div>
                 </div>
 
-                        <div className="group p-4 rounded-lg hover:bg-white cursor-pointer transition-all duration-300" onClick={() => navigate('/dashboard/projects')}>
-                            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <Building2 className="h-6 w-6 text-purple-600" />
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-purple-100 rounded-lg">
+                                <Star className="w-5 h-5 text-purple-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Platform Impact</h3>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Projects Created</span>
+                                <span className="font-medium">{enhancedMetrics.totalProjects}</span>
                 </div>
-                            <h3 className="font-semibold text-gray-900">Manage Projects</h3>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Projects Completed</span>
+                                <span className="font-medium text-green-600">{enhancedMetrics.completedProjects}</span>
             </div>
-
-                        <div className="group p-4 rounded-lg hover:bg-white cursor-pointer transition-all duration-300" onClick={() => navigate('/profile')}>
-                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <Settings className="h-6 w-6 text-gray-600" />
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Verification Status</span>
+                                <span className="font-medium text-green-600 flex items-center gap-1">
+                                    <Shield className="w-4 h-4" />
+                                    Verified
+                                </span>
                             </div>
-                            <h3 className="font-semibold text-gray-900">Organization Settings</h3>
                         </div>
             </div>
                 </div>
@@ -453,9 +684,12 @@ const OrganizationDashboard: React.FC = () => {
     {/* Resubmit Modal */}
     <ResubmitProjectModal
       open={!!resubmitProject}
-      project={resubmitProject ? toProjectWithTeamMembers(resubmitProject) : null}
+                project={toProjectWithTeamMembers(resubmitProject)}
       onClose={() => setResubmitProject(null)}
-      onSuccess={() => { setResubmitProject(null); loadData(); }}
+                onSuccess={() => {
+                    setResubmitProject(null);
+                    loadData();
+                }}
     />
         </div>
     );

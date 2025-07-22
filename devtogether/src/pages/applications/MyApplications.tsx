@@ -4,7 +4,7 @@ import { Layout } from '../../components/layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { applicationService, ApplicationWithDetails } from '../../services/applications'
 import { Button } from '../../components/ui/Button'
-import { FormField } from '../../components/ui/FormField'
+import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { toastService } from '../../services/toastService'
 import {
@@ -13,7 +13,7 @@ import {
     Clock,
     ExternalLink,
     Eye,
-    AlertCircle,
+    AlertTriangle,
     CheckCircle,
     XCircle,
     Archive,
@@ -22,7 +22,22 @@ import {
     Building,
     MapPin,
     Star,
-    RefreshCw
+    RefreshCw,
+    Filter,
+    TrendingUp,
+    Award,
+    Users,
+    Target,
+    Activity,
+    Code,
+    Briefcase,
+    Grid3X3,
+    List,
+    Sparkles,
+    Plus,
+    BarChart3,
+    Heart,
+    Zap
 } from 'lucide-react'
 
 interface ApplicationStats {
@@ -37,6 +52,14 @@ interface FilterOptions {
     status: string
     searchQuery: string
 }
+
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'All Applications', count: 0, color: 'bg-gray-50 text-gray-700', icon: Target },
+    { value: 'pending', label: 'Under Review', count: 0, color: 'bg-yellow-50 text-yellow-700', icon: Clock },
+    { value: 'accepted', label: 'Accepted', count: 0, color: 'bg-green-50 text-green-700', icon: CheckCircle },
+    { value: 'rejected', label: 'Not Selected', count: 0, color: 'bg-red-50 text-red-700', icon: XCircle },
+    { value: 'withdrawn', label: 'Withdrawn', count: 0, color: 'bg-gray-50 text-gray-500', icon: Archive },
+];
 
 export default function MyApplications() {
     const { user, isDeveloper } = useAuth()
@@ -55,11 +78,11 @@ export default function MyApplications() {
         withdrawn: 0
     })
 
-    // Filter state
-    const [filters, setFilters] = useState<FilterOptions>({
-        status: 'all',
-        searchQuery: ''
-    })
+    // Enhanced filtering and UI states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [showFilters, setShowFilters] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
     // Redirect if not developer
     useEffect(() => {
@@ -78,7 +101,7 @@ export default function MyApplications() {
     // Apply filters
     useEffect(() => {
         applyFilters()
-    }, [applications, filters])
+    }, [applications, searchQuery, statusFilter])
 
     const loadApplications = async () => {
         try {
@@ -109,13 +132,13 @@ export default function MyApplications() {
         let filtered = [...applications]
 
         // Apply status filter
-        if (filters.status !== 'all') {
-            filtered = filtered.filter(app => app.status === filters.status)
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(app => app.status === statusFilter)
         }
 
         // Apply search filter
-        if (filters.searchQuery) {
-            const query = filters.searchQuery.toLowerCase()
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase()
             filtered = filtered.filter(app =>
                 app.project.title.toLowerCase().includes(query) ||
                 app.project.organization.organization_name?.toLowerCase().includes(query) ||
@@ -128,6 +151,26 @@ export default function MyApplications() {
 
         setFilteredApplications(filtered)
     }
+
+    // Calculate enhanced metrics
+    const enhancedMetrics = {
+        totalApplications: stats.total,
+        pendingReview: stats.pending,
+        successRate: stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0,
+        activeWorkspaces: stats.accepted,
+        averageResponseTime: '3-5 days', // Could be calculated from real data
+        thisMonthApplications: applications.filter(app => {
+            const appDate = new Date(app.created_at);
+            const now = new Date();
+            return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear();
+        }).length
+    };
+
+    // Update status counts for tabs
+    const statusOptionsWithCounts = STATUS_OPTIONS.map(option => ({
+        ...option,
+        count: option.value === 'all' ? stats.total : stats[option.value as keyof ApplicationStats] || 0
+    }));
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -215,27 +258,21 @@ export default function MyApplications() {
         return null
     }
 
-    if (loading) {
-        return (
-            <Layout>
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                    <div className="text-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-4" />
-                        <p className="text-gray-600">Loading your applications...</p>
-                    </div>
-                </div>
-            </Layout>
-        )
-    }
-
     if (error) {
         return (
             <Layout>
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                    <div className="text-center">
-                        <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
-                        <p className="text-red-600 mb-4">{error}</p>
-                        <Button onClick={loadApplications}>Try Again</Button>
+                <div className="min-h-screen bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center max-w-md mx-auto">
+                            <div className="text-red-600 mb-4">
+                                <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+                                <h3 className="text-lg font-semibold">Applications Error</h3>
+                            </div>
+                            <p className="text-red-700 mb-6">{error}</p>
+                            <Button onClick={loadApplications} className="w-full">
+                                Try Again
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </Layout>
@@ -245,237 +282,350 @@ export default function MyApplications() {
     return (
         <Layout>
             <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-                    {/* Header - Mobile Optimized */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-                        <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Applications</h1>
-                            <p className="text-gray-600 mt-1 sm:mt-2">Track the status of your project applications</p>
-                        </div>
-                        <Button 
-                            onClick={loadApplications} 
-                            variant="outline" 
-                            className="flex items-center gap-2 w-full sm:w-auto justify-center"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            <span className="sm:inline">Refresh</span>
-                        </Button>
-                    </div>
-
-                    {/* Stats - Enhanced Mobile Grid */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-gray-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                {/* Enhanced Header with Gradient */}
+                <div className="relative bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 overflow-hidden">
+                    <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:60px_60px]" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/90 via-teal-800/80 to-cyan-900/90" />
+                    
+                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
+                        {/* Header Content */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                            <div>
+                                <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium mb-3">
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    My Applications
                                 </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.total}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Total</p>
-                                </div>
+                                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                                    Application Tracker
+                                </h1>
+                                <p className="text-blue-100 text-lg">Track your project applications and opportunities</p>
                             </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-yellow-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
-                                </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.pending}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Pending</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-green-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-                                </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.accepted}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Accepted</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <div className="p-2 bg-red-100 rounded-lg w-fit mx-auto sm:mx-0">
-                                    <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-                                </div>
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{stats.rejected}</h3>
-                                    <p className="text-xs sm:text-sm text-gray-600">Rejected</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Filters - Mobile Optimized */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Search */}
-                            <FormField label="Search">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search applications..."
-                                        value={filters.searchQuery}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                                        className="w-full pl-10 pr-3 py-3 sm:py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-base sm:text-sm"
-                                    />
-                                </div>
-                            </FormField>
-
-                            {/* Status Filter */}
-                            <FormField label="Status">
-                                <Select
-                                    value={filters.status}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                                    className="py-3 sm:py-2 text-base sm:text-sm"
+                            
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    variant="outline"
+                                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    icon={<Filter className="w-4 h-4" />}
                                 >
-                                    <option value="all">All Statuses</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="accepted">Accepted</option>
-                                    <option value="rejected">Rejected</option>
-                                    <option value="withdrawn">Withdrawn</option>
-                                </Select>
-                            </FormField>
-                        </div>
-                    </div>
-
-                    {/* Applications List - Enhanced Mobile Layout */}
-                    {filteredApplications.length === 0 ? (
-                        <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center">
-                            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-                            <p className="text-gray-600 mb-4 px-4">
-                                {applications.length === 0
-                                    ? "You haven't applied to any projects yet. Start by browsing available projects."
-                                    : "No applications match your current filters."
-                                }
-                            </p>
-                            {applications.length === 0 && (
-                                <Button onClick={() => navigate('/projects')} className="w-full sm:w-auto">
-                                    Browse Projects
+                                    Filters
                                 </Button>
-                            )}
+                                <Button 
+                                    onClick={loadApplications} 
+                                    variant="outline" 
+                                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    icon={<RefreshCw className="w-4 h-4" />}
+                                >
+                                    Refresh
+                                </Button>
+                                <Button 
+                                    onClick={() => navigate('/projects')}
+                                    className="bg-white text-emerald-900 hover:bg-blue-50 shadow-lg border border-blue-200"
+                                    icon={<Plus className="w-4 h-4" />}
+                                >
+                                    Apply to Projects
+                                </Button>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="space-y-4 sm:space-y-6">
-                            {filteredApplications.map((application) => {
-                                const projectStatus = application.project.status;
-                                const isAccepted = application.status === 'accepted';
-                                const isPending = application.status === 'pending';
-                                const isRejected = application.status === 'rejected';
-                                const canGoToWorkspace = isAccepted && projectStatus !== 'rejected';
-                                const canViewProject = (
-                                    (isAccepted && (projectStatus === 'rejected' || projectStatus === 'cancelled')) ||
-                                    (isPending && projectStatus === 'open') ||
-                                    (isRejected && projectStatus === 'open')
-                                );
-                                const canWithdraw = isPending && projectStatus === 'open';
+
+                        {/* Enhanced Metrics Dashboard */}
+                        {!loading && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <FileText className="w-5 h-5 text-white/80" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.totalApplications}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Total Apps</p>
+                                </div>
                                 
-                                // Auto-withdraw pending if project is not open
-                                if (isPending && projectStatus !== 'open') {
-                                    application.status = 'withdrawn';
-                                }
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Clock className="w-5 h-5 text-yellow-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.pendingReview}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Under Review</p>
+                                </div>
                                 
-                                return (
-                                    <div key={application.id} className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
-                                        {/* Mobile-Enhanced Header */}
-                                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-start gap-3 sm:gap-4">
-                                                    {/* Organization Avatar */}
-                                                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                        {application.project.organization.avatar_url ? (
-                                                            <img
-                                                                src={application.project.organization.avatar_url}
-                                                                alt={application.project.organization.organization_name || 'Organization'}
-                                                                className="w-12 h-12 rounded-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <Building className="w-6 h-6 text-gray-400" />
-                                                        )}
-                                                    </div>
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <CheckCircle className="w-5 h-5 text-green-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.activeWorkspaces}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Active</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <TrendingUp className="w-5 h-5 text-green-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.successRate}%</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Success Rate</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Calendar className="w-5 h-5 text-blue-300" />
+                                        <span className="text-2xl font-bold text-white">{enhancedMetrics.thisMonthApplications}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">This Month</p>
+                                </div>
+                                
+                                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Activity className="w-5 h-5 text-purple-300" />
+                                        <span className="text-lg font-bold text-white">{enhancedMetrics.averageResponseTime}</span>
+                                    </div>
+                                    <p className="text-white/70 text-sm font-medium">Avg Response</p>
+                                </div>
+                            </div>
+                        )}
 
-                                                    {/* Project Info */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
-                                                            {application.project.title}
-                                                        </h3>
-                                                        <p className="text-gray-600 text-sm mb-2 truncate">
-                                                            {application.project.organization.organization_name}
-                                                        </p>
-                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500">
-                                                            <div className="flex items-center gap-1">
-                                                                <Calendar className="w-4 h-4 flex-shrink-0" />
-                                                                <span>Applied {formatDate(application.created_at)}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Status Badge - Mobile Positioned */}
-                                            <div className="flex sm:flex-col items-start sm:items-end gap-3">
-                                                <span className={`inline-flex items-center px-3 py-1.5 sm:py-1 rounded-full text-sm font-medium border ${getStatusColor(application.status)}`}>
-                                                    {getStatusIcon(application.status)}
-                                                    <span className="ml-1.5 sm:ml-1">{application.status.toUpperCase()}</span>
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Status Message */}
-                                        <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mb-4">
-                                            <p className="text-sm text-gray-700">
-                                                {getStatusMessage(application.status)}
-                                            </p>
-                                        </div>
-
-                                        {/* Mobile-Optimized Actions */}
-                                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                                            {canGoToWorkspace && (
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => navigate(`/workspace/${application.project_id}`)}
-                                                    className="flex items-center justify-center gap-2 w-full sm:w-auto"
-                                                >
-                                                    <ExternalLink className="w-4 h-4" />
-                                                    Enter Workspace
-                                                </Button>
-                                            )}
-                                            
-                                            {canViewProject && (
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => navigate(`/projects/${application.project_id}`)}
-                                                    className="flex items-center justify-center gap-2 w-full sm:w-auto"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    View Project
-                                                </Button>
-                                            )}
-                                            
-                                            {canWithdraw && (
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => handleWithdrawApplication(application.id)}
-                                                    className="flex items-center justify-center gap-2 w-full sm:w-auto text-red-600 border-red-300 hover:bg-red-50"
-                                                >
-                                                    <Archive className="w-4 h-4" />
-                                                    Withdraw Application
-                                                </Button>
-                                            )}
+                        {/* Filters Panel */}
+                        {showFilters && (
+                            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 mb-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <Filter className="w-5 h-5" />
+                                    Search & Filter Applications
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-white/90 text-sm font-medium mb-2">Search Applications</label>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 h-4 w-4" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search by project, organization, or notes..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-10 pr-3 py-2 bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
+                                            />
                                         </div>
                                     </div>
-                                );
-                            })}
+                                    
+                                    <div>
+                                        <label className="block text-white/90 text-sm font-medium mb-2">View Mode</label>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setViewMode('grid')}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                                                    viewMode === 'grid' 
+                                                        ? 'bg-white/20 text-white' 
+                                                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                                                }`}
+                                            >
+                                                <Grid3X3 className="w-4 h-4" />
+                                                Grid
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('list')}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                                                    viewMode === 'list' 
+                                                        ? 'bg-white/20 text-white' 
+                                                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                                                }`}
+                                            >
+                                                <List className="w-4 h-4" />
+                                                List
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="text-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-emerald-600 mx-auto mb-4" />
+                                <p className="text-gray-600">Loading your applications...</p>
+                            </div>
                         </div>
+                    ) : (
+                        <>
+                            {/* Enhanced Status Tabs */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
+                                <div className="border-b border-gray-200">
+                                    <div className="flex overflow-x-auto scrollbar-hide">
+                                        {statusOptionsWithCounts.map((status) => {
+                                            const Icon = status.icon;
+                                            const isActive = statusFilter === status.value;
+                                            
+                                            return (
+                                                <button
+                                                    key={status.value}
+                                                    onClick={() => setStatusFilter(status.value)}
+                                                    className={`flex items-center gap-3 px-6 py-4 whitespace-nowrap border-b-2 transition-colors ${
+                                                        isActive
+                                                            ? 'border-emerald-500 bg-emerald-50'
+                                                            : 'border-transparent hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`} />
+                                                    <span className={`font-medium ${isActive ? 'text-emerald-900' : 'text-gray-700'}`}>
+                                                        {status.label}
+                                                    </span>
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                        isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                        {status.count}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Applications Content */}
+                            {filteredApplications.length === 0 ? (
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <FileText className="h-8 w-8 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                        {applications.length === 0 ? 'No Applications Yet' : 'No Matching Applications'}
+                                    </h3>
+                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                        {applications.length === 0
+                                            ? "You haven't applied to any projects yet. Start by exploring exciting opportunities and applying to projects that match your skills."
+                                            : "No applications match your current search criteria. Try adjusting your filters or search terms."
+                                        }
+                                    </p>
+                                    {applications.length === 0 && (
+                                        <Button 
+                                            onClick={() => navigate('/projects')} 
+                                            className="inline-flex items-center gap-2"
+                                            icon={<Search className="w-4 h-4" />}
+                                        >
+                                            Discover Projects
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className={`${
+                                    viewMode === 'grid' 
+                                        ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' 
+                                        : 'space-y-4'
+                                }`}>
+                                    {filteredApplications.map((application) => {
+                                        const projectStatus = application.project.status;
+                                        const isAccepted = application.status === 'accepted';
+                                        const isPending = application.status === 'pending';
+                                        const isRejected = application.status === 'rejected';
+                                        const canGoToWorkspace = isAccepted && projectStatus !== 'rejected';
+                                        const canViewProject = (
+                                            (isAccepted && (projectStatus === 'rejected' || projectStatus === 'cancelled')) ||
+                                            (isPending && projectStatus === 'open') ||
+                                            (isRejected && projectStatus === 'open')
+                                        );
+                                        const canWithdraw = isPending && projectStatus === 'open';
+
+                                        return (
+                                            <div key={application.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                                                {/* Application Header */}
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-cyan-100 rounded-lg flex items-center justify-center">
+                                                            <Building className="w-6 h-6 text-emerald-600" />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+                                                                {application.project.title}
+                                                            </h3>
+                                                            <p className="text-gray-600 text-sm">
+                                                                {application.project.organization.organization_name}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(application.status)}`}>
+                                                            {getStatusIcon(application.status)}
+                                                            {application.status.charAt(0).toUpperCase() + application.status.slice(1).replace('_', ' ')}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500">
+                                                            Applied {formatDate(application.created_at)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                                                                 {/* Application Description */}
+                                                 <div className="mb-4">
+                                                     {(application.project as any).description && (
+                                                         <p className="text-gray-600 text-sm line-clamp-2 mb-2">
+                                                             {(application.project as any).description}
+                                                         </p>
+                                                     )}
+                                                     
+                                                     {/* Technology Stack */}
+                                                     {(application.project as any).technology_stack && (application.project as any).technology_stack.length > 0 && (
+                                                         <div className="flex flex-wrap gap-1 mb-2">
+                                                             {(application.project as any).technology_stack.slice(0, 3).map((tech: string, index: number) => (
+                                                                 <span key={index} className="inline-flex items-center px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium">
+                                                                     {tech}
+                                                                 </span>
+                                                             ))}
+                                                             {(application.project as any).technology_stack.length > 3 && (
+                                                                 <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-50 text-gray-600 text-xs font-medium">
+                                                                     +{(application.project as any).technology_stack.length - 3} more
+                                                                 </span>
+                                                             )}
+                                                         </div>
+                                                     )}
+                                                 </div>
+
+                                                {/* Status Message */}
+                                                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                    <p className="text-sm text-gray-700">
+                                                        {getStatusMessage(application.status)}
+                                                    </p>
+                                                </div>
+
+                                                {/* Application Actions */}
+                                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                                    {canGoToWorkspace && (
+                                                        <Button
+                                                            onClick={() => navigate(`/workspace/${application.project_id}`)}
+                                                            className="flex items-center justify-center gap-2 flex-1"
+                                                            icon={<ExternalLink className="w-4 h-4" />}
+                                                        >
+                                                            Enter Workspace
+                                                        </Button>
+                                                    )}
+                                                    
+                                                    {canViewProject && (
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => navigate(`/projects/${application.project_id}`)}
+                                                            className="flex items-center justify-center gap-2 flex-1"
+                                                            icon={<Eye className="w-4 h-4" />}
+                                                        >
+                                                            View Project
+                                                        </Button>
+                                                    )}
+                                                    
+                                                    {canWithdraw && (
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => handleWithdrawApplication(application.id)}
+                                                            className="flex items-center justify-center gap-2 text-red-600 border-red-300 hover:bg-red-50"
+                                                            icon={<Archive className="w-4 h-4" />}
+                                                        >
+                                                            Withdraw
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

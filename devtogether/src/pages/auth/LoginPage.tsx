@@ -21,13 +21,21 @@ export const LoginPage: React.FC = () => {
     const navigate = useNavigate()
     const location = useLocation()
 
+    // Check for registration success message
+    const registrationMessage = (location.state as any)?.message
+    const prefillEmail = (location.state as any)?.email
+
     const from = (location.state as any)?.from || null;
 
     const {
         register,
         handleSubmit,
         formState: { errors }
-    } = useForm<LoginFormData>()
+    } = useForm<LoginFormData>({
+        defaultValues: {
+            email: prefillEmail || ''
+        }
+    })
 
     const onSubmit = async (data: LoginFormData) => {
         try {
@@ -94,12 +102,19 @@ export const LoginPage: React.FC = () => {
                             <span className="text-2xl font-bold text-gray-900">DevTogether</span>
                         </Link>
                         <h2 className="mt-6 text-3xl font-bold text-gray-900">
-                            Welcome back
+                            Welcome to DevTogether
                         </h2>
                         <p className="mt-2 text-sm text-gray-600">
-                            Sign in to your DevTogether account
+                            Connect with projects and developers
                         </p>
                     </div>
+
+                    {/* Registration Success Message */}
+                    {registrationMessage && (
+                        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                            <div className="text-sm text-green-600">{registrationMessage}</div>
+                        </div>
+                    )}
 
                     {/* Error Alert */}
                     {authError && (
@@ -152,7 +167,8 @@ export const LoginPage: React.FC = () => {
                         </Button>
                     </div>
 
-                    {/* Divider */}
+                    {/* COMMENTED OUT FOR PRESENTATION - Email Login
+                    Divider 
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-300" />
@@ -162,63 +178,7 @@ export const LoginPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Login Form */}
-                    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-                        <div className="space-y-4">
-                            <Input
-                                label="Email address"
-                                type="email"
-                                required
-                                icon={<Mail className="w-5 h-5" />}
-                                placeholder="Enter your email"
-                                error={errors.email?.message}
-                                {...register('email', {
-                                    required: 'Email is required',
-                                    pattern: {
-                                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                        message: 'Please enter a valid email address'
-                                    }
-                                })}
-                            />
-
-                            <Input
-                                label="Password"
-                                type="password"
-                                required
-                                icon={<Lock className="w-5 h-5" />}
-                                placeholder="Enter your password"
-                                error={errors.password?.message}
-                                {...register('password', {
-                                    required: 'Password is required',
-                                    minLength: {
-                                        value: 6,
-                                        message: 'Password must be at least 6 characters'
-                                    }
-                                })}
-                            />
-                        </div>
-
-                        {/* Forgot Password Link */}
-                        <div className="flex items-center justify-end">
-                            <Link
-                                to="/auth/forgot-password"
-                                className="text-sm text-primary-600 hover:text-primary-500 font-medium"
-                            >
-                                Forgot your password?
-                            </Link>
-                        </div>
-
-                        {/* Submit Button */}
-                        <Button
-                            type="submit"
-                            size="lg"
-                            className="w-full"
-                            loading={isSubmitting}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Signing in...' : 'Sign in'}
-                        </Button>
-                    </form>
+                    END COMMENTED SECTION */}
 
                     {/* Sign Up Link */}
                     <div className="text-center">

@@ -1,22 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Smile, Paperclip } from 'lucide-react';
+import { Send, Smile, Paperclip, X, Upload } from 'lucide-react';
+import { fileService } from '../../../services/fileService';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface MessageInputProps {
-    onSendMessage: (content: string) => void;
+    projectId: string;
+    onSendMessage: (content: string, attachmentId?: string) => void;
     onTyping: (isTyping: boolean) => void;
     disabled?: boolean;
     placeholder?: string;
 }
 
 export default function MessageInput({
+    projectId,
     onSendMessage,
     onTyping,
     disabled = false,
     placeholder = "Type a message..."
 }: MessageInputProps) {
+    const { user } = useAuth();
     const [message, setMessage] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadingFile, setUploadingFile] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Auto-resize textarea
@@ -57,10 +65,35 @@ export default function MessageInput({
         };
     }, [message, isTyping, onTyping]);
 
-    const handleSend = () => {
-        if (message.trim() && !disabled) {
-            onSendMessage(message.trim());
+    const handleSend = async () => {
+        if (!user || disabled || uploadingFile) return;
+        
+        let attachmentId: string | undefined = undefined;
+        
+        // Upload file first if one is selected
+        if (selectedFile) {
+            setUploadingFile(true);
+            const result = await fileService.uploadFile(
+                projectId,
+                user.id,
+                selectedFile,
+                fileService.getFileCategory(selectedFile.type)
+            );
+            
+            if (result.success && result.file) {
+                attachmentId = result.file.id;
+            } else {
+                setUploadingFile(false);
+                return; // Don't send message if file upload failed
+            }
+            setUploadingFile(false);
+        }
+        
+        // Send message (can be empty if it's just a file)
+        if (message.trim() || attachmentId) {
+            onSendMessage(message.trim(), attachmentId);
             setMessage('');
+            setSelectedFile(null);
             setIsTyping(false);
             onTyping(false);
         }
@@ -73,18 +106,76 @@ export default function MessageInput({
         }
     };
 
-    const canSend = message.trim().length > 0 && !disabled;
+    const handleFileSelect = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+        }
+    };
+
+    const removeSelectedFile = () => {
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const canSend = (message.trim().length > 0 || selectedFile) && !disabled && !uploadingFile;
 
     return (
         <div className="border-t border-gray-200 bg-white p-4">
+            {/* Hidden file input */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept="image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
+            />
+            
+            {/* File preview */}
+            {selectedFile && (
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="text-2xl">
+                                {fileService.getFileIcon(selectedFile.type)}
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-blue-900">{selectedFile.name}</p>
+                                <p className="text-xs text-blue-600">
+                                    {fileService.formatFileSize(selectedFile.size)}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={removeSelectedFile}
+                            className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                            title="Remove file"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
+            
             <div className="flex items-end gap-3">
-                {/* Attachment button (future feature) */}
+                {/* Attachment button */}
                 <button
-                    disabled
-                    className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
-                    title="File attachments (coming soon)"
+                    onClick={handleFileSelect}
+                    disabled={disabled || uploadingFile}
+                    className="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
+                    title="Attach file"
                 >
+                    {uploadingFile ? (
+                        <Upload className="w-5 h-5 animate-pulse" />
+                    ) : (
                     <Paperclip className="w-5 h-5" />
+                    )}
                 </button>
 
                 {/* Message input container */}
@@ -128,9 +219,13 @@ export default function MessageInput({
                             ? 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
-                    title={canSend ? 'Send message' : 'Type a message to send'}
+                    title={uploadingFile ? 'Uploading...' : canSend ? 'Send message' : 'Type a message or attach a file to send'}
                 >
+                    {uploadingFile ? (
+                        <Upload className="w-5 h-5 animate-spin" />
+                    ) : (
                     <Send className="w-5 h-5" />
+                    )}
                 </button>
             </div>
 

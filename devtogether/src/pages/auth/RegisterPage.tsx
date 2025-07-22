@@ -61,8 +61,13 @@ export const RegisterPage: React.FC = () => {
                 if (data.role === 'organization') {
                     navigate('/pending-approval')
                 } else {
-                    navigate('/auth/verify-email', {
-                        state: { email: data.email }
+                    // For development: Skip email verification step
+                    // Users can login directly after registration
+                    navigate('/auth/login', {
+                        state: { 
+                            message: 'Registration successful! You can now sign in.',
+                            email: data.email 
+                        }
                     })
                 }
             } else {
@@ -108,11 +113,19 @@ export const RegisterPage: React.FC = () => {
                             <span className="text-2xl font-bold text-gray-900">DevTogether</span>
                         </Link>
                         <h2 className="mt-6 text-3xl font-bold text-gray-900">
-                            Create your account
+                            Join DevTogether
                         </h2>
                         <p className="mt-2 text-sm text-gray-600">
-                            Join DevTogether and start collaborating
+                            Connect developers with meaningful projects
                         </p>
+                        
+                        {/* Simple and clean for presentation */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mt-4">
+                            <p className="text-sm text-blue-800 text-center">
+                                🚀 <strong>Quick & Secure Registration</strong><br/>
+                                Choose your preferred method below
+                            </p>
+                        </div>
                     </div>
 
                     {/* Error Alert */}
@@ -166,7 +179,8 @@ export const RegisterPage: React.FC = () => {
                         </Button>
                     </div>
 
-                    {/* Divider */}
+                    {/* COMMENTED OUT FOR PRESENTATION - Email Registration
+                    Divider 
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-300" />
@@ -176,152 +190,7 @@ export const RegisterPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Registration Form */}
-                    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-                        {/* Role Selection */}
-                        <div className="space-y-3">
-                            <label className="block text-sm font-medium text-gray-700">
-                                I am a... <span className="text-red-500">*</span>
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => handleRoleChange('developer')}
-                                    className={`p-4 border-2 rounded-lg text-center transition-colors ${selectedRole === 'developer'
-                                        ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <User className="w-6 h-6 mx-auto mb-2" />
-                                    <div className="font-medium text-sm">Developer</div>
-                                    <div className="text-xs text-gray-500">Looking for projects</div>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleRoleChange('organization')}
-                                    className={`p-4 border-2 rounded-lg text-center transition-colors ${selectedRole === 'organization'
-                                        ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <Building className="w-6 h-6 mx-auto mb-2" />
-                                    <div className="font-medium text-sm">Organization</div>
-                                    <div className="text-xs text-gray-500">Posting projects</div>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <Input
-                                label="Email address"
-                                type="email"
-                                required
-                                icon={<Mail className="w-5 h-5" />}
-                                placeholder="Enter your email"
-                                error={errors.email?.message}
-                                {...register('email', {
-                                    required: 'Email is required',
-                                    pattern: {
-                                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                        message: 'Please enter a valid email address'
-                                    }
-                                })}
-                            />
-
-                            {selectedRole === 'developer' ? (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Input
-                                        label="First name"
-                                        required
-                                        placeholder="First name"
-                                        error={errors.firstName?.message}
-                                        {...register('firstName', {
-                                            required: 'First name is required'
-                                        })}
-                                    />
-
-                                    <Input
-                                        label="Last name"
-                                        required
-                                        placeholder="Last name"
-                                        error={errors.lastName?.message}
-                                        {...register('lastName', {
-                                            required: 'Last name is required'
-                                        })}
-                                    />
-                                </div>
-                            ) : (
-                                <Input
-                                    label="Organization name"
-                                    required
-                                    placeholder="Enter organization name"
-                                    error={errors.organizationName?.message}
-                                    {...register('organizationName', {
-                                        required: 'Organization name is required'
-                                    })}
-                                />
-                            )}
-
-                            <Input
-                                label="Password"
-                                type="password"
-                                required
-                                icon={<Lock className="w-5 h-5" />}
-                                placeholder="Create a password"
-                                error={errors.password?.message}
-                                {...register('password', {
-                                    required: 'Password is required',
-                                    minLength: {
-                                        value: 8,
-                                        message: 'Password must be at least 8 characters'
-                                    },
-                                    pattern: {
-                                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                                        message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-                                    }
-                                })}
-                            />
-
-                            <Input
-                                label="Confirm password"
-                                type="password"
-                                required
-                                icon={<Lock className="w-5 h-5" />}
-                                placeholder="Confirm your password"
-                                error={errors.confirmPassword?.message}
-                                {...register('confirmPassword', {
-                                    required: 'Please confirm your password',
-                                    validate: value =>
-                                        value === password || 'Passwords do not match'
-                                })}
-                            />
-                        </div>
-
-                        {/* Terms Agreement */}
-                        <div className="text-xs text-gray-500">
-                            By creating an account, you agree to our{' '}
-                            <Link to="/terms" className="text-primary-600 hover:text-primary-500">
-                                Terms of Service
-                            </Link>{' '}
-                            and{' '}
-                            <Link to="/privacy" className="text-primary-600 hover:text-primary-500">
-                                Privacy Policy
-                            </Link>
-                            .
-                        </div>
-
-                        {/* Submit Button */}
-                        <Button
-                            type="submit"
-                            size="lg"
-                            className="w-full"
-                            loading={isSubmitting}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Creating account...' : 'Create account'}
-                        </Button>
-                    </form>
+                    END COMMENTED SECTION */}
 
                     {/* Sign In Link */}
                     <div className="text-center">

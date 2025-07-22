@@ -56,15 +56,15 @@ export default function ProjectStatus({ project, isOwner, canEditStatus, onStatu
             allowedStatusOptions = statusOptions.filter(option => option.value !== 'open' && option.value !== 'pending');
         }
     } else if (canEditStatus) {
-        // Status manager - limited control (cannot set to completed)
+        // Status manager - can only move from 'open' to 'in_progress'
         allowedStatusOptions = statusOptions.filter(option => {
-            // Status managers can change between 'open' and 'in_progress' only
+            // Status managers can only start projects, cannot complete them
             if (project.status === 'open') {
-                return option.value === 'open' || option.value === 'in_progress';
-            } else if (project.status === 'in_progress') {
-                return option.value === 'open' || option.value === 'in_progress';
+                // From 'open' can only go to 'in_progress'
+                return option.value === 'in_progress';
             }
-            // Cannot change completed/cancelled projects
+            // Cannot change projects that are already in_progress, completed, or cancelled
+            // Only organization owners can complete projects to award stars
             return false;
         });
     }
@@ -121,7 +121,7 @@ export default function ProjectStatus({ project, isOwner, canEditStatus, onStatu
                         <div>
                             <h4 className="font-semibold text-blue-900 text-sm sm:text-base">Status Manager Controls</h4>
                             <p className="text-blue-700 text-xs sm:text-sm mt-1">
-                                You can change project status between 'open' and 'in_progress'. Only organization owners can mark projects as 'completed' to award completion stars.
+                                You can start projects by changing status from 'open' to 'in_progress'. Only organization owners can complete projects to award completion stars.
                             </p>
                         </div>
                     </div>
@@ -136,7 +136,7 @@ export default function ProjectStatus({ project, isOwner, canEditStatus, onStatu
                             <TrendingUp className="w-5 h-5 text-blue-500" />
                             Project Status
                         </h3>
-                        {canEdit && !isEditing && allowedStatusOptions.length > 1 && (
+                        {canEdit && !isEditing && allowedStatusOptions.length > 0 && (
                             <button
                                 onClick={() => setIsEditing(true)}
                                 className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
@@ -208,15 +208,15 @@ export default function ProjectStatus({ project, isOwner, canEditStatus, onStatu
                                 </div>
                             </div>
 
-                            {/* Status Manager Warning */}
-                            {isStatusManager && editingStatus.currentPhase === 'completed' && (
+                            {/* Status Manager Info */}
+                            {isStatusManager && project.status === 'in_progress' && (
                                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                                     <div className="flex items-start gap-3">
                                         <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                                         <div>
-                                            <h4 className="font-semibold text-orange-900 text-sm">Permission Required</h4>
+                                            <h4 className="font-semibold text-orange-900 text-sm">Project Completion</h4>
                                             <p className="text-orange-700 text-xs sm:text-sm mt-1">
-                                                Only organization owners can set projects to 'completed' status as this awards completion stars to developers.
+                                                Only organization owners can mark projects as 'completed' since this awards completion stars to developers.
                                             </p>
                                         </div>
                                     </div>
@@ -227,7 +227,7 @@ export default function ProjectStatus({ project, isOwner, canEditStatus, onStatu
                             <div className="flex flex-col sm:flex-row gap-3 pt-4">
                                 <button
                                     onClick={handleSaveStatus}
-                                    disabled={loading || (isStatusManager && editingStatus.currentPhase === 'completed')}
+                                    disabled={loading}
                                     className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                                 >
                                     <Save className="w-4 h-4" />
