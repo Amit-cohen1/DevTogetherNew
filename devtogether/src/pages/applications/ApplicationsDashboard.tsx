@@ -423,13 +423,6 @@ export default function ApplicationsDashboard() {
                                 >
                                     Refresh
                                 </Button>
-                                <Button 
-                                    onClick={() => navigate('/projects/create')}
-                                    className="bg-white text-violet-900 hover:bg-blue-50 shadow-lg border border-blue-200"
-                                    icon={<Plus className="w-4 h-4" />}
-                                >
-                                    Create Project
-                        </Button>
                             </div>
                         </div>
 

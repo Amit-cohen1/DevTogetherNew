@@ -390,8 +390,42 @@ export default function ProjectWorkspace() {
                 {isMobileMenuOpen && (
                     <div className="lg:hidden bg-white border-b border-gray-200 shadow-lg">
                         <div className="p-4">
-                            <nav className="grid grid-cols-2 gap-3" aria-label="Mobile workspace navigation">
-                                {navigationItems.map((item) => {
+                            <nav className="space-y-3" aria-label="Mobile workspace navigation">
+                                {/* Primary tabs - 2 columns grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {navigationItems.slice(0, 6).map((item) => {
+                                        const IconComponent = item.icon;
+                                        return (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    setActiveSection(item.id);
+                                                    setIsMobileMenuOpen(false);
+                                                }}
+                                                className={`flex flex-col items-center gap-2 p-3 rounded-xl font-medium text-sm transition-all ${
+                                                    activeSection === item.id
+                                                        ? 'bg-indigo-50 text-indigo-600 border-2 border-indigo-200'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200'
+                                                }`}
+                                            >
+                                                <IconComponent className="w-5 h-5" />
+                                                <span className="text-xs">{item.label}</span>
+                                                {item.badge && (
+                                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                                        activeSection === item.id 
+                                                            ? 'bg-indigo-100 text-indigo-700' 
+                                                            : 'bg-gray-200 text-gray-600'
+                                                    }`}>
+                                                        {typeof item.badge === 'number' ? item.badge : item.badge}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                
+                                {/* Status tab - full width */}
+                                {navigationItems.slice(6).map((item) => {
                                     const IconComponent = item.icon;
                                     return (
                                         <button
@@ -400,7 +434,7 @@ export default function ProjectWorkspace() {
                                                 setActiveSection(item.id);
                                                 setIsMobileMenuOpen(false);
                                             }}
-                                            className={`flex flex-col items-center gap-2 p-4 rounded-xl font-medium text-sm transition-all ${
+                                            className={`w-full flex items-center justify-center gap-3 p-3 rounded-xl font-medium text-sm transition-all ${
                                                 activeSection === item.id
                                                     ? 'bg-indigo-50 text-indigo-600 border-2 border-indigo-200'
                                                     : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200'
@@ -751,58 +785,61 @@ export default function ProjectWorkspace() {
 
                         {/* Meetings Section */}
                         {activeSection === 'meetings' && (
-                            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div>
-                                        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                                            <Calendar className="w-5 h-5 text-indigo-600" />
-                                            Team Meetings
-                                        </h2>
-                                        <p className="text-gray-600 text-sm mt-1">
-                                            {meetings.length > 0 ? `${meetings.filter(m => new Date(m.meeting_date) >= new Date()).length} upcoming meeting${meetings.filter(m => new Date(m.meeting_date) >= new Date()).length !== 1 ? 's' : ''}` : 'Schedule and manage team meetings'}
-                                        </p>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        {canStartVideoCall && (
-                                            <button
-                                                onClick={() => {
-                                                    const meetingUrl = `https://meet.jit.si/devtogether-${project.id.slice(0, 8)}-${Date.now()}`;
-                                                    window.open(meetingUrl, '_blank', 'width=1200,height=800');
-                                                    if (window.confirm(`Video call started!\n\nRoom URL: ${meetingUrl}\n\nClick OK to copy the URL and share with your team.`)) {
-                                                        navigator.clipboard.writeText(meetingUrl);
-                                                    }
-                                                }}
-                                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                            >
-                                                <Video className="w-4 h-4" />
-                                                Start Video Call
-                                            </button>
-                                        )}
-                                        {canCreateMeetings && (
+                            <div className="bg-white rounded-lg border border-gray-200">
+                                <div className="p-4 sm:p-6 border-b border-gray-200">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                        <div>
+                                            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                                                <Calendar className="w-5 h-5 text-indigo-600" />
+                                                Team Meetings
+                                            </h2>
+                                            <p className="text-gray-600 text-sm mt-1">
+                                                {meetings.length > 0 ? `${meetings.filter(m => new Date(m.meeting_date) >= new Date()).length} upcoming meeting${meetings.filter(m => new Date(m.meeting_date) >= new Date()).length !== 1 ? 's' : ''}` : 'Schedule and manage team meetings'}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                            {canStartVideoCall && (
+                                                <button
+                                                    onClick={() => {
+                                                        const meetingUrl = `https://meet.jit.si/devtogether-${project.id.slice(0, 8)}-${Date.now()}`;
+                                                        window.open(meetingUrl, '_blank', 'width=1200,height=800');
+                                                        if (window.confirm(`Video call started!\n\nRoom URL: ${meetingUrl}\n\nClick OK to copy the URL and share with your team.`)) {
+                                                            navigator.clipboard.writeText(meetingUrl);
+                                                        }
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                                                >
+                                                    <Video className="w-4 h-4" />
+                                                    Start Video Call
+                                                </button>
+                                            )}
+                                            {canCreateMeetings && (
+                                                <button 
+                                                    onClick={() => setShowMeetingScheduler(true)}
+                                                    className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                    Schedule Meeting
+                                                </button>
+                                            )}
                                             <button 
-                                                onClick={() => setShowMeetingScheduler(true)}
-                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                                                onClick={() => setShowScheduledMeetings(true)}
+                                                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                                             >
-                                                <Plus className="w-4 h-4" />
-                                                Schedule Meeting
+                                                <Calendar className="w-4 h-4" />
+                                                View All Meetings
                                             </button>
-                                        )}
-                                        <button 
-                                            onClick={() => setShowScheduledMeetings(true)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                        >
-                                            <Calendar className="w-4 h-4" />
-                                            View All Meetings
-                                        </button>
-                                        {!canCreateMeetings && !canStartVideoCall && (
-                                            <div className="text-gray-500 text-sm italic">
-                                                Only project owners and status managers can create meetings and start video calls.
-                                            </div>
-                                        )}
+                                            {!canCreateMeetings && !canStartVideoCall && (
+                                                <div className="text-gray-500 text-xs sm:text-sm italic">
+                                                    Only project owners and status managers can create meetings and start video calls.
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                {/* Meeting Notifications */}
+                                <div className="p-4 sm:p-6">
+                                    {/* Meeting Notifications */}
                                 {meetingNotifications.length > 0 && (
                                     <div className="mb-6">
                                         {meetingNotifications.map((notification, index) => (
@@ -1005,6 +1042,7 @@ export default function ProjectWorkspace() {
                                         )}
                                     </div>
                                 )}
+                                </div>
                             </div>
                         )}
 
