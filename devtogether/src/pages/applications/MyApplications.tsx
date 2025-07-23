@@ -320,7 +320,7 @@ export default function MyApplications() {
                                 </Button>
                                 <Button 
                                     onClick={() => navigate('/projects')}
-                                    className="bg-white text-emerald-900 hover:bg-blue-50 shadow-lg border border-blue-200"
+                                    className="bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg border border-emerald-600"
                                     icon={<Plus className="w-4 h-4" />}
                                 >
                                     Apply to Projects

@@ -393,24 +393,46 @@ export default function GitRepository({ projectId, isOwner, canManageRepository 
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                </div>
+                
+                {/* Mobile: Buttons one under the other */}
+                <div className="block sm:hidden mt-3 space-y-2">
+                    <button
+                        onClick={() => window.open(repository.repository_url, '_blank')}
+                        className="w-full px-3 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                    >
+                        <ExternalLink className="w-4 h-4 inline mr-2" />
+                        View Repository
+                    </button>
+                    {(isOwner || canManageRepository) && (
                         <button
-                            onClick={() => window.open(repository.repository_url, '_blank')}
-                            className="flex items-center gap-2 px-3 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            onClick={handleDisconnectRepository}
+                            className="w-full px-3 py-2 text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors text-sm"
                         >
-                            <ExternalLink className="w-4 h-4" />
-                            View Repository
+                            <Trash2 className="w-4 h-4 inline mr-2" />
+                            Disconnect
                         </button>
-                        {(isOwner || canManageRepository) && (
-                            <button
-                                onClick={handleDisconnectRepository}
-                                className="flex items-center gap-2 px-3 py-2 text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                Disconnect
-                            </button>
-                        )}
-                    </div>
+                    )}
+                </div>
+
+                {/* Desktop: Buttons side by side */}
+                <div className="hidden sm:flex items-center gap-2 mt-3">
+                    <button
+                        onClick={() => window.open(repository.repository_url, '_blank')}
+                        className="flex items-center gap-2 px-3 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                        View Repository
+                    </button>
+                    {(isOwner || canManageRepository) && (
+                        <button
+                            onClick={handleDisconnectRepository}
+                            className="flex items-center gap-2 px-3 py-2 text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Disconnect
+                        </button>
+                    )}
                 </div>
 
                 {repository.sync_error_message && (
@@ -427,7 +449,41 @@ export default function GitRepository({ projectId, isOwner, canManageRepository 
             {/* Repository Tabs */}
             <div className="bg-white rounded-lg border border-gray-200">
                 <div className="border-b border-gray-200">
-                    <nav className="flex gap-6 px-6 py-4">
+                    {/* Mobile Tabs - 2x2 Grid */}
+                    <div className="sm:hidden p-4">
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                { id: 'overview', label: 'Overview', icon: Github },
+                                { id: 'commits', label: `Commits (${commits.length})`, icon: GitCommit },
+                                { id: 'branches', label: `Branches (${branches.length})`, icon: GitBranch },
+                                { id: 'contributors', label: `Contributors (${contributors.length})`, icon: Users }
+                            ].map((tab) => {
+                                const IconComponent = tab.icon;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id as any)}
+                                        className={`flex flex-col items-center gap-1 p-3 text-xs font-medium rounded-lg transition-colors ${
+                                            activeTab === tab.id
+                                                ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-200'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border-2 border-gray-200'
+                                        }`}
+                                    >
+                                        <IconComponent className="w-4 h-4" />
+                                        <span className="text-center leading-tight">{tab.label.split(' ')[0]}</span>
+                                        {tab.label.includes('(') && (
+                                            <span className="text-[10px] opacity-75">
+                                                ({tab.label.match(/\((\d+)\)/)?.[1] || '0'})
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Desktop Tabs - Horizontal */}
+                    <nav className="hidden sm:flex gap-6 px-6 py-4">
                         {[
                             { id: 'overview', label: 'Overview', icon: Github },
                             { id: 'commits', label: `Commits (${commits.length})`, icon: GitCommit },
