@@ -13,7 +13,7 @@ interface LoginFormData {
     password: string
 }
 
-export const LoginPage: React.FC = () => {
+const LoginPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [authError, setAuthError] = useState<string | null>(null)
 
@@ -167,8 +167,7 @@ export const LoginPage: React.FC = () => {
                         </Button>
                     </div>
 
-                    {/* COMMENTED OUT FOR PRESENTATION - Email Login
-                    Divider 
+                    {/* Divider */}
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-300" />
@@ -178,7 +177,78 @@ export const LoginPage: React.FC = () => {
                         </div>
                     </div>
 
-                    END COMMENTED SECTION */}
+                    {/* Email/Password Form */}
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                Email address
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    id="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    required
+                                    {...register('email', {
+                                        required: 'Email is required',
+                                        pattern: {
+                                            value: /^\S+@\S+$/i,
+                                            message: 'Invalid email address'
+                                        }
+                                    })}
+                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    placeholder="Enter your email"
+                                />
+                                {errors.email && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                Password
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    id="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    required
+                                    {...register('password', {
+                                        required: 'Password is required'
+                                    })}
+                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    placeholder="Enter your password"
+                                />
+                                {errors.password && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm">
+                                <Link
+                                    to="/auth/forgot-password"
+                                    className="font-medium text-primary-600 hover:text-primary-500"
+                                >
+                                    Forgot your password?
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Button
+                                type="submit"
+                                size="lg"
+                                className="w-full"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Signing in...' : 'Sign in'}
+                            </Button>
+                        </div>
+                    </form>
 
                     {/* Sign Up Link */}
                     <div className="text-center">
